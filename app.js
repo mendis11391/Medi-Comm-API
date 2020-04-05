@@ -63,9 +63,9 @@ done(null, obj);
 passport.use(
 new FacebookStrategy(
   {
-    clientID: process.env.FB_APP_ID,
-    clientSecret: process.env.FB_CLIENT_SECRET,
-    callbackURL: constants.facebookCallbackfullurl,
+    clientID: '356629928555679',
+    clientSecret: '324f33ea1a83490d4b6a3bce532b0180',
+    callbackURL: 'http://localhost:3000/auth/facebook/callback',
     profileFields: ["email", "name"]
   },
   function(accessToken, refreshToken, profile, done) {
@@ -82,9 +82,9 @@ new FacebookStrategy(
 );
 
 passport.use(new GoogleStrategy({
-clientID: process.env.GOOGLE_CLIENT_ID,
-clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-callbackURL: "http://localhost:3000/auth/google/callback"
+  clientID: '499813159230-9cmbhghe7bvhauibvkohie1p09uu1ft4.apps.googleusercontent.com',
+  clientSecret: 'VvyZw4p9_C14yiEExxlOWW1j',
+  callbackURL: "http://localhost:3000/auth/google/callback"
 },
 function(accessToken, refreshToken, profile, done) {
 console.log(profile);

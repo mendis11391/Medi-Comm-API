@@ -46,17 +46,14 @@ function verifyToken(req, res, next) {
 }
 
 // Get all products
-router.get("/", verifyToken, (req, res) => {
+router.get("/", (req, res) => {
   sql.query(
-    `SELECT a.prod_id, b.proddtl_id, a.prod_brand_id, a.prod_cat_id,
-  b.proddtl_name, b.proddtl_price, b.proddtl_img, b.proddtl_description, b.proddtl_qnty, b.proddtl_add_date,
-  c.brand_name, c.brand_description, c.brand_image
-  FROM products a, prod_details b, brand c WHERE a.prod_id = b.proddtl_id and a.prod_brand_id = c.brand_id`,
+    `SELECT * FROM products a, prod_details b, brand c WHERE a.prod_id = b.prod_id and a.prod_brand_id = c.brand_id`,
     (err, rows, fields) => {
       if (!err) {
         rows.forEach((row, i) => {
-          var splitPath = row.proddtl_img.split("[--split--]");
-          row.proddtl_img = splitPath;
+          var splitPath = row.prod_img.split("[--split--]");
+          row.prod_img = splitPath;
         });
         res.send(rows);
       } else {
@@ -71,19 +68,16 @@ router.get("/", verifyToken, (req, res) => {
 
 // Get product by product id
 router.get("/:id", (req, res) => {
-  let queryDta = `SELECT a.prod_id, b.proddtl_id, a.prod_brand_id, a.prod_cat_id,
-  b.proddtl_name, b.proddtl_price, b.proddtl_img, b.proddtl_description, b.proddtl_qnty,
-  b.proddtl_add_date, c.brand_name, c.brand_description, c.brand_image FROM
-  products a, prod_details b, brand c WHERE a.prod_id = '${req.params.id}' &&
-  a.prod_brand_id = c.brand_id`;
+  let queryDta = `SELECT * FROM products a, prod_details b, brand c WHERE a.prod_id = '${req.params.id}' 
+  && a.prod_id = b.prod_id && c.brand_id = a.prod_brand_id`;
 
   let arr = [];
   sql.query(queryDta, [req.params.id], (err, rows) => {
     if (!err) {
       rows.forEach((row, i) => {
         if (row.proddtl_id === row.prod_id) {
-          var splitPath = row.proddtl_img.split("[--split--]");
-          row.proddtl_img = splitPath;
+          var splitPath = row.prod_img.split("[--split--]");
+          row.prod_img = splitPath;
           arr.push(row);
         }
       });
@@ -97,16 +91,19 @@ router.get("/:id", (req, res) => {
   });
 });
 
-// Delete a product by id
-router.delete("/:id", (req, res) => {
-  sql.query("delete from employee where id = ?", [req.params.id], (err) => {
-    if (!err) res.send({ res: "Deleted succesfully" });
-    else
-      res.render("error", {
-        message: "Oops something went wrong",
-        error: { status: 400, stack: "" },
-      });
-  });
+// Delete a products by id
+router.delete('/:id', verifyToken, (req, res) => {
+  mysqlConnection.query('delete from products where prod_id = ?', [req.params.id], (err) => {
+    if (!err) {
+      mysqlConnection.query('delete from product_tenure where product_id = ?', [req.params.id], (err) => {
+        res.send('Deleted succesfully');
+      })
+    }
+     else{
+      res.send({ error: 'Error' });
+    }
+      
+  })
 });
 
 // Update a product information
@@ -115,7 +112,7 @@ router.put(":id", (req, res) => {
   var id = req.params.id;
 
   var sqlUpdate =
-    "UPDATE `prod_details` SET `proddtl_name`= ?,`proddtl_price`= ?,`proddtl_img`= ?,`proddtl_description`= ?, `proddtl_qnty`= ?, `proddtl_add_date`=?  WHERE `proddtl_id` = ?";
+    "UPDATE `prod_details` SET `proddtl_name`= ?,`proddtl_price`= ?,`prod_img`= ?,`proddtl_description`= ?, `proddtl_qnty`= ?, `proddtl_add_date`=?  WHERE `proddtl_id` = ?";
   var sqlGet = "select * from prod_details where id = ?";
   sql.query(
     sqlUpdate,
@@ -123,7 +120,7 @@ router.put(":id", (req, res) => {
       emp.proddtl_id,
       emp.prod_details,
       emp.proddtl_price,
-      emp.proddtl_img,
+      emp.prod_img,
       emp.proddtl_description,
       emp.proddtl_qnty,
       emp.proddtl_add_date,
@@ -140,11 +137,11 @@ router.put(":id", (req, res) => {
   );
 });
 
-router.post("/", upload.array("proddtl_img", 12), function (req, res, next) {
+router.post("/", upload.array("prod_img", 12), function (req, res, next) {
   var imgName = productImgArr.join("[--split--]");
   productImgArr = [];
   var sqlInsert =
-    "INSERT INTO `prod_details`(`proddtl_id`, `proddtl_name`,`proddtl_price`, `proddtl_img`, `proddtl_description`, `proddtl_qnty`, `proddtl_add_date`) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO `prod_details`(`proddtl_id`, `proddtl_name`,`proddtl_price`, `prod_img`, `proddtl_description`, `proddtl_qnty`, `proddtl_add_date`) VALUES (?, ?, ?, ?, ?, ?, ?)";
   var sqlBrandIns =
     "INSERT INTO `products`(`prod_id`,`prod_brand_id`,`prod_cat_id`,`prod_status`) values (?, ?, ?, ?)";
   sql.query(
