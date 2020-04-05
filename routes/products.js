@@ -46,7 +46,7 @@ function verifyToken(req, res, next) {
 }
 
 // Get all products
-router.get("/", (req, res) => {
+router.get("/", verifyToken, (req, res) => {
   sql.query(
     `SELECT * FROM products a, prod_details b, brand c WHERE a.prod_id = b.prod_id and a.prod_brand_id = c.brand_id`,
     (err, rows, fields) => {
@@ -74,12 +74,18 @@ router.get("/:id", (req, res) => {
   let arr = [];
   sql.query(queryDta, [req.params.id], (err, rows) => {
     if (!err) {
-      rows.forEach((row, i) => {
-        if (row.proddtl_id === row.prod_id) {
-          var splitPath = row.prod_img.split("[--split--]");
-          row.prod_img = splitPath;
-          arr.push(row);
-        }
+      rows.forEach((row) => {
+        var splitPath = row.product_image.split("[--split--]");
+        row.product_image = splitPath;
+      });
+
+      rows.forEach((row) => {
+        var arr = [];
+        tenureSplit = row.price_list.split('[--split--]');
+        tenureSplit.forEach((a) => {
+          arr.push(a.split(':'));
+        });
+        row.price_list = arr;
       });
       res.send(arr);
     } else {
@@ -112,18 +118,18 @@ router.put(":id", (req, res) => {
   var id = req.params.id;
 
   var sqlUpdate =
-    "UPDATE `prod_details` SET `proddtl_name`= ?,`proddtl_price`= ?,`prod_img`= ?,`proddtl_description`= ?, `proddtl_qnty`= ?, `proddtl_add_date`=?  WHERE `proddtl_id` = ?";
+    "UPDATE `prod_details` SET `prod_name`= ?,`prod_price`= ?,`prod_img`= ?,`prod_description`= ?, `prod_qnty`= ?, `prod_add_date`=?  WHERE `prod_id` = ?";
   var sqlGet = "select * from prod_details where id = ?";
   sql.query(
     sqlUpdate,
     [
-      emp.proddtl_id,
+      emp.prod_id,
       emp.prod_details,
-      emp.proddtl_price,
+      emp.prod_price,
       emp.prod_img,
-      emp.proddtl_description,
-      emp.proddtl_qnty,
-      emp.proddtl_add_date,
+      emp.prod_description,
+      emp.prod_qnty,
+      emp.prod_add_date,
     ],
     (err) => {
       if (!err)
@@ -141,25 +147,23 @@ router.post("/", upload.array("prod_img", 12), function (req, res, next) {
   var imgName = productImgArr.join("[--split--]");
   productImgArr = [];
   var sqlInsert =
-    "INSERT INTO `prod_details`(`proddtl_id`, `proddtl_name`,`proddtl_price`, `prod_img`, `proddtl_description`, `proddtl_qnty`, `proddtl_add_date`) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO `prod_details`(`prod_id`, `prod_name`,`prod_price`, `prod_img`, `prod_description`) VALUES (?, ?, ?, ?, ?)";
   var sqlBrandIns =
     "INSERT INTO `products`(`prod_id`,`prod_brand_id`,`prod_cat_id`,`prod_status`) values (?, ?, ?, ?)";
   sql.query(
     sqlInsert,
     [
-      req.body.proddtl_id,
-      req.body.proddtl_name,
-      req.body.proddtl_price,
+      req.body.prod_id,
+      req.body.prod_name,
+      req.body.prod_price,
       imgName,
-      req.body.proddtl_description,
-      req.body.proddtl_qnty,
-      req.body.proddtl_add_date,
+      req.body.prod_description
     ],
     (err) => {
       if (!err) {
         sql.query(
           sqlBrandIns,
-          [req.body.proddtl_id, req.body.brand_name, "cat1234", "1"],
+          [req.body.prod_id, req.body.brand_name, "cat1234", "1"],
           (err1) => {
             if (!err1) {
               res.send({ res: "Inserted succesfully" });
