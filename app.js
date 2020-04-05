@@ -16,6 +16,7 @@ const port = process.env.PORT || 3000;
 var indexRouter = require('./routes/index');
 var productsRouter = require('./routes/products');
 var authRouter = require('./auth/auth');
+var categoryRouter = require('./routes/categories');
 
 var app = express();
 
@@ -96,6 +97,7 @@ app.listen(port, () => console.log(`App is running in ${port}`));
 
 app.use('/', authRouter);
 app.use('/products', productsRouter);
+app.use('/category', categoryRouter)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
