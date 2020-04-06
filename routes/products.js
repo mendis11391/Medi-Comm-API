@@ -1,5 +1,6 @@
 var express = require("express");
 var multer = require("multer");
+const TokenGenerator = require("uuid-token-generator");
 
 var productImgArr = [];
 
@@ -68,68 +69,72 @@ router.get("/", verifyToken, (req, res) => {
 
 // Get product by product id
 router.get("/:id", (req, res) => {
-  let queryDta = `SELECT * FROM products a, prod_details b, brand c WHERE a.prod_id = '${req.params.id}' 
-  && a.prod_id = b.prod_id && c.brand_id = a.prod_brand_id`;
+  let queryDta = `SELECT * FROM products a, prod_details b, brand c WHERE a.prod_id = '${req.params.id}' && a.prod_id = b.prod_id && c.brand_id = a.prod_brand_id`;
 
   let arr = [];
   sql.query(queryDta, [req.params.id], (err, rows) => {
     if (!err) {
       rows.forEach((row) => {
-        var splitPath = row.product_image.split("[--split--]");
-        row.product_image = splitPath;
+        var splitPath = row.prod_img.split("[--split--]");
+        row.prod_img = splitPath;
       });
 
       rows.forEach((row) => {
-        var arr = [];
-        tenureSplit = row.price_list.split('[--split--]');
+        tenureSplit = row.prod_tenure.split("[--split--]");
         tenureSplit.forEach((a) => {
-          arr.push(a.split(':'));
+          arr.push(a.split(":"));
         });
-        row.price_list = arr;
+        row.prod_tenure = arr;
       });
-      res.send(arr);
+      res.send(rows);
     } else {
-      res.render("error", {
-        message: "Oops something went wrong",
-        error: { status: 400, stack: queryDta },
-      });
+      res.send({ error });
     }
   });
 });
 
 // Delete a products by id
-router.delete('/:id', verifyToken, (req, res) => {
-  mysqlConnection.query('delete from products where prod_id = ?', [req.params.id], (err) => {
-    if (!err) {
-      mysqlConnection.query('delete from product_tenure where product_id = ?', [req.params.id], (err) => {
-        res.send('Deleted succesfully');
-      })
+router.delete("/:id", verifyToken, (req, res) => {
+  mysqlConnection.query(
+    "delete from products where prod_id = ?",
+    [req.params.id],
+    (err) => {
+      if (!err) {
+        mysqlConnection.query(
+          "delete from product_tenure where product_id = ?",
+          [req.params.id],
+          (err) => {
+            res.send("Deleted succesfully");
+          }
+        );
+      } else {
+        res.send({ error: "Error" });
+      }
     }
-     else{
-      res.send({ error: 'Error' });
-    }
-      
-  })
+  );
 });
 
 // Update a product information
-router.put(":id", (req, res) => {
-  var emp = req.body;
+router.put("/:id", (req, res) => {
   var id = req.params.id;
 
   var sqlUpdate =
-    "UPDATE `prod_details` SET `prod_name`= ?,`prod_price`= ?,`prod_img`= ?,`prod_description`= ?, `prod_qnty`= ?, `prod_add_date`=?  WHERE `prod_id` = ?";
-  var sqlGet = "select * from prod_details where id = ?";
+  `UPDATE prod_details SET prod_name= '${req.body.title}',prod_price= '${req.body.price}',prod_description= '${req.body.description}',prod_ram= '${req.body.ram}',prod_disktype= '${req.body.disk_type}',prod_disksize= '${req.body.disk_size}',prod_specification= '${req.body.specifications}',prod_status= '${req.body.status}',prod_processor= '${req.body.processor}',prod_screensize= '${req.body.screen_size}',prod_tenure= '${req.body.tenureFinal}' WHERE prod_id = '${id}'`;
+  var sqlGet = "select * from prod_details where prod_id = ?";
   sql.query(
     sqlUpdate,
     [
-      emp.prod_id,
-      emp.prod_details,
-      emp.prod_price,
-      emp.prod_img,
-      emp.prod_description,
-      emp.prod_qnty,
-      emp.prod_add_date,
+      req.body.title,
+      req.body.price,
+      req.body.description,
+      req.body.ram,
+      req.body.disk_type,
+      req.body.disk_size,
+      req.body.specifications,
+      req.body.status,
+      req.body.processor,
+      req.body.screen_size,
+      req.body.tenureFinal,
     ],
     (err) => {
       if (!err)
@@ -138,32 +143,44 @@ router.put(":id", (req, res) => {
             res.send(rows);
           } else res.send("Error");
         });
-      else res.send("Error");
+      else {
+        res.send("Error");
+      }
     }
   );
 });
 
-router.post("/", upload.array("prod_img", 12), function (req, res, next) {
+router.post("/", upload.array("product_image", 12), function (req, res, next) {
   var imgName = productImgArr.join("[--split--]");
   productImgArr = [];
+  const tokgen = new TokenGenerator(256, TokenGenerator.BASE71);
+  const prodId = `irentout-${tokgen.generate()}`;
   var sqlInsert =
-    "INSERT INTO `prod_details`(`prod_id`, `prod_name`,`prod_price`, `prod_img`, `prod_description`) VALUES (?, ?, ?, ?, ?)";
+    "INSERT INTO `prod_details`(`prod_id`, `prod_name`, `prod_price`, `prod_img`, `prod_description`, `prod_ram`, `prod_disktype`, `prod_disksize`, `prod_specification`, `prod_status`, `prod_processor`, `prod_screensize`, `prod_tenure`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   var sqlBrandIns =
     "INSERT INTO `products`(`prod_id`,`prod_brand_id`,`prod_cat_id`,`prod_status`) values (?, ?, ?, ?)";
   sql.query(
     sqlInsert,
     [
-      req.body.prod_id,
-      req.body.prod_name,
-      req.body.prod_price,
+      prodId,
+      req.body.name,
+      req.body.price,
       imgName,
-      req.body.prod_description
+      req.body.description,
+      req.body.ram,
+      req.body.disk_type,
+      req.body.disk_size,
+      req.body.specifications,
+      req.body.status,
+      req.body.processor,
+      req.body.screen_size,
+      req.body.tenure
     ],
     (err) => {
       if (!err) {
         sql.query(
           sqlBrandIns,
-          [req.body.prod_id, req.body.brand_name, "cat1234", "1"],
+          [prodId, req.body.brand, req.body.category, req.body.status],
           (err1) => {
             if (!err1) {
               res.send({ res: "Inserted succesfully" });
@@ -171,10 +188,7 @@ router.post("/", upload.array("prod_img", 12), function (req, res, next) {
           }
         );
       } else {
-        res.render("error", {
-          message: "Oops something went wrong",
-          error: { status: 400, stack: "" },
-        });
+        res.send(err);
       }
     }
   );
