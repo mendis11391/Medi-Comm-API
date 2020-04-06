@@ -158,7 +158,7 @@ router.post("/login", (req, res) => {
 router.post("/userlogin", (req, res) => {
   sql.query(
     `SELECT uname from users WHERE uname = ? and upass = ? and logintype = ?`,
-    [req.body.userName, req.body.password, req.body.logintype],
+    [req.body.username, req.body.password, req.body.logintype],
     (err, rows) => {
       if (!err) {
         if (rows.length > 0) {
@@ -167,7 +167,7 @@ router.post("/userlogin", (req, res) => {
           const updateTokenQuery = `UPDATE users SET token = ? where uname= ? and upass = ? and logintype = ?`;
           sql.query(
             updateTokenQuery,
-            [token, req.body.userName, req.body.password, req.body.logintype],
+            [token, req.body.username, req.body.password, req.body.logintype],
             (err, rows) => {
               if (!err) {
                 res.send({ token: token, authenticated: true });
@@ -184,27 +184,35 @@ router.post("/userlogin", (req, res) => {
   );
 });
 
-
+/*
+User Registration:
+@Parameters
+username
+password
+email
+*/
 router.post("/register", (req, res) => {
   const uidtokgen = new TokenGenerator();
-  tokgen.generate();
+  const userToken = `irentout-${uidtokgen.generate()}`;
   const logintokgen = new TokenGenerator(256, TokenGenerator.BASE71);
   const logintoken = logintokgen.generate();
   let insQuery = 'INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `token`) VALUES (?, ?, ?, ?, ?, ?)'
   let checkUser = 'select * from users where uname = ? and email = ?';
   sql.query(
     checkUser,
-    [res.body.username, res.body.email],
+    [req.body.username, req.body.email],
     (err, rows) => {
       if(!err) {
         if(rows.length === 0) {
-          sql.query(insQuery, [uidtokgen, res.body.name, res.body.password, res.body.email, 'web', logintoken], (err, rows) => {
+          sql.query(insQuery, [userToken, req.body.username, req.body.password, req.body.email, 'web', logintoken], (err, rows) => {
             if(!err) {
-              res.send({token: logintoken, authenticated: true});
+              res.send({status: 'Successfully Registered', token: logintoken, authenticated: true});
             } else {
               res.send({authenticated: false});
             }
           })
+        } else {
+          res.send({status: 'User with this emil is already registered', authenticated: false});
         }
       } else {
         res.send({error: 'Query Error'});
