@@ -69,7 +69,7 @@ router.get("/", verifyToken, (req, res) => {
 
 // Get product by product id
 router.get("/:id", (req, res) => {
-  let queryDta = `SELECT * FROM products a, prod_details b, brand c WHERE a.prod_id = '${req.params.id}' && a.prod_id = b.prod_id && c.brand_id = a.prod_brand_id`;
+  let queryDta = `SELECT * FROM products a, prod_details b, brand c WHERE a.prod_id = "${req.params.id}" && a.prod_id = b.prod_id && c.brand_id = a.prod_brand_id`;
 
   let arr = [];
   sql.query(queryDta, [req.params.id], (err, rows) => {
@@ -88,20 +88,20 @@ router.get("/:id", (req, res) => {
       });
       res.send(rows);
     } else {
-      res.send({ error });
+      res.send({ error: 'error' });
     }
   });
 });
 
 // Delete a products by id
 router.delete("/:id", verifyToken, (req, res) => {
-  mysqlConnection.query(
+  sql.query(
     "delete from products where prod_id = ?",
     [req.params.id],
     (err) => {
       if (!err) {
-        mysqlConnection.query(
-          "delete from product_tenure where product_id = ?",
+        sql.query(
+          "delete from product_details where prod_id = ?",
           [req.params.id],
           (err) => {
             res.send("Deleted succesfully");
