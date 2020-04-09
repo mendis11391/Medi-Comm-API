@@ -165,14 +165,31 @@ router.post("/login", (req, res) => {
         if (rows.length > 0) {
 
           const tokgen = new TokenGenerator(256, TokenGenerator.BASE71);
-          const token = tokgen.generate();
+          let token = tokgen.generate();
+
+          const NoDtToken = token;
+
+          const timeRef = new Date();
+          const year = timeRef.getFullYear();
+          const month = timeRef.getMonth();
+          const curdate = timeRef.getDate();
+          const curhours = timeRef.getHours();
+          const curmin = timeRef.getMinutes();
+          const cursec = timeRef.getSeconds();
+          const curmilsec = timeRef.getMilliseconds();
+
+          const finalCurTime = `${year},${month},${curdate},${curhours},${curmin},${cursec},${curmilsec}`;
+
+
+          token += ' ' + finalCurTime;
+          
           const updateTokenQuery = `UPDATE admin SET token=? where uname= ? and passcode = ?`;
           sql.query(
             updateTokenQuery,
             [token, req.body.userName, adpass],
             (err, rows) => {
               if (!err) {
-                res.send({ token: token, authenticated: true});
+                res.send({ token: NoDtToken, authenticated: true});
               }
             }
           );

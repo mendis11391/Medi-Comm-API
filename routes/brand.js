@@ -21,28 +21,80 @@ var router = express.Router();
 
 var sql = require("../db.js");
 
+// Verify token and session valid time
 function verifyToken(req, res, next) {
   if (!req.headers.authorization) {
     return res.status(401).send("Unauthorized request");
   }
   let token = req.headers.authorization.split(" ")[1];
+  let reqTime = req.headers.authorization.split(" ")[2];
+
+  const refreshToken = `${token} ${reqTime}`;
+
+  const currentTime = new Date();
+  const reqTimeSplit = reqTime.split(",");
+  const reqCameTime = new Date(
+    reqTimeSplit[0],
+    reqTimeSplit[1],
+    reqTimeSplit[2],
+    reqTimeSplit[3],
+    reqTimeSplit[4],
+    reqTimeSplit[5],
+    reqTimeSplit[6]
+  );
 
   if (token === "null") {
     return res.status(401).send("Unauthorized request");
   }
 
-  sql.query("select uname from admin where token = ?", [token], (err, rows) => {
-    if (!err) {
-      if (rows.length > 0) {
-        req.userId = rows;
-        next();
+  sql.query(
+    "select uname, token from admin where token LIKE CONCAT('%', ?, '%')",
+    [token],
+    (err, rows) => {
+      if (!err) {
+        if (rows.length > 0) {
+          const uname = rows[0].uname;
+          const tkn = rows[0].token;
+          const tkn1 = tkn.split(" ")[1];
+          const reqTimeSplit = tkn1.split(",");
+          const dbTime = new Date(
+            reqTimeSplit[0],
+            reqTimeSplit[1],
+            reqTimeSplit[2],
+            reqTimeSplit[3],
+            reqTimeSplit[4],
+            reqTimeSplit[5],
+            reqTimeSplit[6]
+          );
+
+          if (isTimeValid(dbTime, currentTime) > 2) {
+            return res.status(403).send("Session Expired");
+          } else {
+            sql.query(
+              "update admin set token = ? where uname = ? and token LIKE CONCAT('%', ?, '%')",
+              [refreshToken, uname, token],
+              (err, rows) => {
+                if (!err) {
+                  req.userId = rows;
+                  next();
+                }
+              }
+            );
+          }
+        } else {
+          return res.status(401).send("Unauthorized request");
+        }
       } else {
         return res.status(401).send("Unauthorized request");
       }
-    } else {
-      return res.status(401).send("Unauthorized request");
     }
-  });
+  );
+}
+
+function isTimeValid(dt2, dt1) {
+  var diff = (dt2.getTime() - dt1.getTime()) / 1000;
+  diff /= 60;
+  return Math.abs(Math.round(diff));
 }
 
 // Get all brands
