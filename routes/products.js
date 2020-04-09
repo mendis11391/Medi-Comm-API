@@ -96,19 +96,21 @@ router.get("/:id", (req, res) => {
 // Delete a products by id
 router.delete("/:id", verifyToken, (req, res) => {
   sql.query(
-    "delete from products where prod_id = ?",
+    'delete from products where prod_id = ?',
     [req.params.id],
     (err) => {
       if (!err) {
         sql.query(
-          "delete from product_details where prod_id = ?",
+          'delete from prod_details where prod_id = ?',
           [req.params.id],
           (err) => {
-            res.send("Deleted succesfully");
+            if (!err) {
+              res.send({'message': 'Deleted Successfully'});
+            }
           }
         );
       } else {
-        res.send({ error: "Error" });
+        res.send({ 'message': "Error in query execution" });
       }
     }
   );
