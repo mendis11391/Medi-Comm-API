@@ -120,6 +120,7 @@ router.delete("/:id", verifyToken, (req, res) => {
 router.put("/:id", (req, res) => {
   var id = req.params.id;
 
+  var prodUpdate = "UPDATE `products` SET `prod_brand_id`=?,`prod_cat_id`=?,`prod_status`=? WHERE `prod_id` = ?";
   var sqlUpdate =
   `UPDATE prod_details SET prod_name= '${req.body.title}',prod_price= '${req.body.price}',prod_description= '${req.body.description}',prod_ram= '${req.body.ram}',prod_disktype= '${req.body.disk_type}',prod_disksize= '${req.body.disk_size}',prod_specification= '${req.body.specifications}',prod_status= '${req.body.status}',prod_processor= '${req.body.processor}',prod_screensize= '${req.body.screen_size}',prod_tenure= '${req.body.tenureFinal}' WHERE prod_id = '${id}'`;
   var sqlGet = "select * from prod_details where prod_id = ?";
@@ -139,12 +140,15 @@ router.put("/:id", (req, res) => {
       req.body.tenureFinal,
     ],
     (err) => {
-      if (!err)
-        sql.query(sqlGet, [id], (err, rows) => {
-          if (!err) {
-            res.send(rows);
-          } else res.send("Error");
+      if (!err){
+        sql.query(prodUpdate, [req.body.brand, req.body.category, req.body.status, id], (err) => {
+          if(!err) {
+            res.send({'message': 'Update Successfully'});
+          } else {
+            res.send({'message': 'Query failure'});
+          }
         });
+      }
       else {
         res.send("Error");
       }

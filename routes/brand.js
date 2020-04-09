@@ -45,7 +45,7 @@ function verifyToken(req, res, next) {
   });
 }
 
-// Get all products
+// Get all brands
 router.get("/", verifyToken, (req, res) => {
   sql.query(
     `SELECT * FROM brand`,
@@ -59,7 +59,7 @@ router.get("/", verifyToken, (req, res) => {
   );
 });
 
-// Get product by product id
+// Get brand by product id
 router.get("/:id", (req, res) => {
   let queryDta = `SELECT * FROM brand WHERE brand_id = '${req.params.id}'`;
 
@@ -72,7 +72,7 @@ router.get("/:id", (req, res) => {
   });
 });
 
-// Delete a products by id
+// Delete a brand by id
 router.delete('/:id', verifyToken, (req, res) => {
   mysqlConnection.query('delete from brand where brand_id = ?', [req.params.id], (err) => {
     if (!err) {
@@ -85,11 +85,12 @@ router.delete('/:id', verifyToken, (req, res) => {
   })
 });
 
-// Update a product information
+// Update a brand information
 router.put(":id", (req, res) => {
   var emp = req.body;
   var id = req.params.id;
 
+  
   var sqlUpdate =
     "UPDATE `prod_details` SET `prod_name`= ?,`prod_price`= ?,`prod_img`= ?,`prod_description`= ?, `prod_qnty`= ?, `prod_add_date`=?  WHERE `prod_id` = ?";
   var sqlGet = "select * from prod_details where id = ?";
@@ -105,13 +106,18 @@ router.put(":id", (req, res) => {
       emp.prod_add_date,
     ],
     (err) => {
-      if (!err)
+      if (!err){
         sql.query(sqlGet, [id], (err, rows) => {
           if (!err) {
-            res.send(rows);
+            sql.query(prodUpdate, [emp.brand], (err) => {
+              if(!err) {
+                res.send({'message': 'Update Successfully'});
+              }
+            });
           } else res.send("Error");
         });
-      else res.send("Error");
+      }
+      else {res.send("Error")};
     }
   );
 });
