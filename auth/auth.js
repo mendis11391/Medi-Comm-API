@@ -26,25 +26,26 @@ router.get(
     fbId += secretkey.final("hex");
 
     sql.query(
-      `select * from users where email = ?`,
+      `select * from users where email = ? and logintype = 'Facebook'`,
       [req.user._json.email],
       (err, rows) => {
         if (!err) {
           if (rows.length <= 0) {
             sql.query(
-              "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `token`) VALUES (?, ?, ?, ?, ?, ?)",
+              "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `token`) VALUES (?, ?, ?, ?, ?, ?, ?)",
               [
                 fbId,
                 `${req.user._json.first_name} ${req.user._json.last_name}`,
                 "",
                 req.user._json.email,
                 "Facebook",
+                "N/A",
                 token,
               ],
               (err, rows) => {
                 if (!err) {
                   return res.redirect(
-                    `http://localhost:4200/dashboard/default?id=${req.user.id}&token=${token}&login=google&existing=false`
+                    `http://localhost:4200?id=${req.user.id}&token=${token}&login=google&existing=false`
                   );
                 } else {
                   res.send({
@@ -63,7 +64,7 @@ router.get(
               (err, rows) => {
                 if (!err) {
                   return res.redirect(
-                    `http://localhost:4200/dashboard/default?id=${req.user.id}&token=${token}&login=google&existing=true`
+                    `http://localhost:4200?id=${req.user.id}&token=${token}&login=google&existing=true`
                   );
                 }
               }
@@ -101,19 +102,20 @@ router.get(
     gpId += secretkey.final("hex");
 
     sql.query(
-      `select * from users where email = ?`,
+      `select * from users where email = ? and logintype = 'Google'`,
       [req.user._json.email],
       (err, rows) => {
         if (!err) {
           if (rows.length <= 0) {
             sql.query(
-              "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `token`) VALUES (?, ?, ?, ?, ?, ?)",
+              "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `token`) VALUES (?, ?, ?, ?, ?, ?, ?)",
               [
                 gpId,
                 req.user._json.name,
                 "",
                 req.user._json.email,
                 "Google",
+                "N/A",
                 token,
               ],
               (err, rows) => {
@@ -205,23 +207,23 @@ router.post("/login", (req, res) => {
 
 // Customer Login
 /* Required Parameters 
-@username
+@email
 @password
 @logintype
 */
 router.post("/userlogin", (req, res) => {
   sql.query(
-    `SELECT uname from users WHERE uname = ? and upass = ? and logintype = ?`,
-    [req.body.username, req.body.password, req.body.logintype],
+    `SELECT uname from users WHERE email = ? and upass = ? and logintype = ?`,
+    [req.body.email, req.body.password, req.body.logintype],
     (err, rows) => {
       if (!err) {
         if (rows.length > 0) {
           const tokgen = new TokenGenerator(256, TokenGenerator.BASE71);
           const token = tokgen.generate();
-          const updateTokenQuery = `UPDATE users SET token = ? where uname= ? and upass = ? and logintype = ?`;
+          const updateTokenQuery = `UPDATE users SET token = ? where email= ? and upass = ? and logintype = ?`;
           sql.query(
             updateTokenQuery,
-            [token, req.body.username, req.body.password, req.body.logintype],
+            [token, req.body.email, req.body.password, req.body.logintype],
             (err, rows) => {
               if (!err) {
                 res.send({ token: token, authenticated: true });
@@ -244,6 +246,7 @@ User Registration:
 username
 password
 email
+phone
 */
 router.post("/register", (req, res) => {
   const uidtokgen = new TokenGenerator();
@@ -251,9 +254,9 @@ router.post("/register", (req, res) => {
   const logintokgen = new TokenGenerator(256, TokenGenerator.BASE71);
   const logintoken = logintokgen.generate();
   let insQuery =
-    "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `token`) VALUES (?, ?, ?, ?, ?, ?)";
-  let checkUser = "select * from users where uname = ? and email = ?";
-  sql.query(checkUser, [req.body.username, req.body.email], (err, rows) => {
+    "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `token`) VALUES (?, ?, ?, ?, ?, ?, ?)";
+  let checkUser = "select * from users where email = ? and logintype = 'web'";
+  sql.query(checkUser, [req.body.email], (err, rows) => {
     if (!err) {
       if (rows.length === 0) {
         sql.query(
@@ -264,6 +267,7 @@ router.post("/register", (req, res) => {
             req.body.password,
             req.body.email,
             "web",
+            req.body.phone,
             logintoken,
           ],
           (err, rows) => {

@@ -102,13 +102,22 @@ function isTimeValid(dt2, dt1) {
 
 // Get all products
 router.get("/", (req, res) => {
+  let arr = [];
   sql.query(
-    `SELECT * FROM products a, prod_details b, brand c WHERE a.prod_id = b.prod_id and a.prod_brand_id = c.brand_id`,
+    `SELECT * FROM products a, prod_details b, brand c, category d WHERE a.prod_id = b.prod_id and a.prod_brand_id = c.brand_id and a.prod_cat_id = d.cat_id and a.prod_status = '1'`,
     (err, rows, fields) => {
       if (!err) {
         rows.forEach((row, i) => {
           var splitPath = row.prod_img.split("[--split--]");
           row.prod_img = splitPath;
+        });
+        rows.forEach((row) => {
+          tenureSplit = row.prod_tenure.split("[--split--]");
+          tenureSplit.forEach((a) => {
+            arr.push(a.split(":"));
+          });
+          row.prod_tenure = arr;
+          arr = [];
         });
         res.send(rows);
       } else {
