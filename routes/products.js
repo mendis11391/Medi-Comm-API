@@ -1,6 +1,6 @@
 var express = require("express");
 var multer = require("multer");
-const TokenGenerator = require("uuid-token-generator");
+// const TokenGenerator = require("uuid-token-generator");
 
 var productImgArr = [];
 
@@ -36,15 +36,15 @@ function verifyToken(req, res, next) {
 
   const currentTime = new Date();
   const reqTimeSplit = reqTime.split(",");
-  const reqCameTime = new Date(
-    reqTimeSplit[0],
-    reqTimeSplit[1],
-    reqTimeSplit[2],
-    reqTimeSplit[3],
-    reqTimeSplit[4],
-    reqTimeSplit[5],
-    reqTimeSplit[6]
-  );
+  // const reqCameTime = new Date(
+  //   reqTimeSplit[0],
+  //   reqTimeSplit[1],
+  //   reqTimeSplit[2],
+  //   reqTimeSplit[3],
+  //   reqTimeSplit[4],
+  //   reqTimeSplit[5],
+  //   reqTimeSplit[6]
+  // );
 
   if (token === "null") {
     return res.status(401).send("Unauthorized request");
@@ -70,7 +70,7 @@ function verifyToken(req, res, next) {
             reqTimeSplit[6]
           );
 
-          if (isTimeValid(dbTime, currentTime) > 2) {
+          if (isTimeValid(dbTime, currentTime) >= 60) {
             return res.status(403).send("Session Expired");
           } else {
             sql.query(
@@ -101,7 +101,7 @@ function isTimeValid(dt2, dt1) {
 }
 
 // Get all products
-router.get("/", verifyToken, (req, res) => {
+router.get("/", (req, res) => {
   sql.query(
     `SELECT * FROM products a, prod_details b, brand c WHERE a.prod_id = b.prod_id and a.prod_brand_id = c.brand_id`,
     (err, rows, fields) => {
@@ -140,7 +140,7 @@ router.get("/:id", (req, res) => {
         });
         row.prod_tenure = arr;
       });
-      res.send(rows);
+      res.send(rows[0]);
     } else {
       res.send({ error: "error" });
     }

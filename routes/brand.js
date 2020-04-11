@@ -67,7 +67,7 @@ function verifyToken(req, res, next) {
             reqTimeSplit[6]
           );
 
-          if (isTimeValid(dbTime, currentTime) > 2) {
+          if (isTimeValid(dbTime, currentTime) >= 60) {
             return res.status(403).send("Session Expired");
           } else {
             sql.query(
