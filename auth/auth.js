@@ -255,7 +255,7 @@ router.post("/register", (req, res) => {
   const logintoken = logintokgen.generate();
   let insQuery =
     "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `token`) VALUES (?, ?, ?, ?, ?, ?, ?)";
-  let checkUser = "select * from users where email = ? and logintype = 'web'";
+  let checkUser = "select uname from users where email = ? and logintype = 'web'";
   sql.query(checkUser, [req.body.email], (err, rows) => {
     if (!err) {
       if (rows.length === 0) {
@@ -296,6 +296,20 @@ router.post("/register", (req, res) => {
 
 router.get("/failure", (req, res) => {
   return res.redirect("http://localhost:4200/login");
+});
+
+
+router.post('/userdetails', (req, res) => {
+  let getDetails = "select uid, uname, logintype from users where token = ?";
+  sql.query(getDetails, [req.body.token], (err, rows) => {
+    if (!err) {
+      if (rows.length > 0) {
+       res.send({'data': rows, authenticated: true});
+      } else {
+        res.send({'data': {}, authenticated: false});
+      }
+    }
+  });
 });
 
 module.exports = router;
