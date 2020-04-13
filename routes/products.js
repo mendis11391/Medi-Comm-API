@@ -121,10 +121,11 @@ router.get("/", (req, res) => {
         });
         res.send(rows);
       } else {
-        res.render("error", {
-          message: "Oops something went wrong",
-          error: { status: 400, stack: "" },
-        });
+        // res.render("error", {
+        //   message: "Oops something went wrong",
+        //   error: { status: 400, stack: "" },
+        // });
+        res.send({ error: err });
       }
     }
   );
@@ -151,7 +152,7 @@ router.get("/:id", (req, res) => {
       });
       res.send(rows[0]);
     } else {
-      res.send({ error: "error" });
+      res.send({ error: err });
     }
   });
 });
@@ -173,7 +174,7 @@ router.delete("/:id", verifyToken, (req, res) => {
           }
         );
       } else {
-        res.send({ message: "Error in query execution" });
+        res.send({ error: err });
       }
     }
   );
@@ -216,7 +217,7 @@ router.put("/:id", (req, res) => {
           }
         );
       } else {
-        res.send("Error");
+        res.send({"Error": err});
       }
     }
   );
@@ -281,7 +282,7 @@ router.post("/", upload.array("product_image", 12), function (req, res, next) {
           }
         );
       } else {
-        res.send(err);
+        res.send({error:err});
       }
     }
   );
