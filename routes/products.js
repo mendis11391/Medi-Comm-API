@@ -257,6 +257,14 @@ router.put("/:id", (req, res) => {
 router.post("/", upload.array("product_image", 12), function (req, res, next) {
   var imgName = productImgArr.join("[--split--]");
   productImgArr = [];
+
+  let prodModel = req.body.name.split(' ');
+  prodModel = prodModel.reverse();
+  prodModel = prodModel[0];
+
+  let categoryCode = req.body.categoryName;
+  categoryCode = categoryCode.substr(0, 3).toLocaleUpperCase();
+
   // const tokgen = new TokenGenerator(256, TokenGenerator.BASE71);
   // const prodId = `irentout-${tokgen.generate()}`;
   var dte = new Date();
@@ -279,10 +287,12 @@ router.post("/", upload.array("product_image", 12), function (req, res, next) {
     "-" +
     dte.getMilliseconds();
 
+  const prodCode = `IRO${categoryCode}${prodModel}${rand}`;
+
   var sqlInsert =
     "INSERT INTO `prod_details`(`prod_id`, `prod_name`, `prod_price`, `prod_img`, `prod_description`, `prod_ram`, `prod_disktype`, `prod_disksize`, `prod_specification`, `prod_status`, `prod_processor`, `prod_screensize`, `prod_tenure`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   var sqlBrandIns =
-    "INSERT INTO `products`(`prod_id`,`prod_brand_id`,`prod_cat_id`,`prod_status`) values (?, ?, ?, ?)";
+    "INSERT INTO `products`(`prod_id`,`prod_brand_id`,`prod_cat_id`,`prod_status`, `prod_available_cities`, `prod_code`) values (?, ?, ?, ?, ?, ?)";
   sql.query(
     sqlInsert,
     [
@@ -304,7 +314,7 @@ router.post("/", upload.array("product_image", 12), function (req, res, next) {
       if (!err) {
         sql.query(
           sqlBrandIns,
-          [unqProdId, req.body.brand, req.body.category, req.body.status],
+          [unqProdId, req.body.brand, req.body.category, req.body.status, req.body.cities, prodCode],
           (err1) => {
             if (!err1) {
               res.send({ res: "Inserted succesfully" });
