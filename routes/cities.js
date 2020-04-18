@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
 
+var sql = require("../db.js");
+
 /* GET all cities */
 router.get('/', function(req, res) {
     sql.query(
