@@ -135,7 +135,7 @@ router.get("/", verifyToken, (req, res) => {
   );
 });
 
-// Get product by product id
+// Get product by categories id
 router.get("/:id", (req, res) => {
   let queryDta = `SELECT * FROM category WHERE cat_id = '${req.params.id}'`;
 
@@ -148,7 +148,7 @@ router.get("/:id", (req, res) => {
   });
 });
 
-// Delete a products by id
+// Delete a categories by id
 router.delete('/:id', verifyToken, (req, res) => {
   mysqlConnection.query('delete from category where cat_id = ?', [req.params.id], (err) => {
     if (!err) {
@@ -161,7 +161,7 @@ router.delete('/:id', verifyToken, (req, res) => {
   })
 });
 
-// Update a product information
+// Update a category information
 router.put(":id", (req, res) => {
   var emp = req.body;
   var id = req.params.id;
@@ -192,38 +192,42 @@ router.put(":id", (req, res) => {
   );
 });
 
-router.post("/", upload.array("prod_img", 12), function (req, res, next) {
-  var imgName = productImgArr.join("[--split--]");
+router.post("/", function (req, res) {
   productImgArr = [];
+  var dte = new Date();
+  var rand = Math.floor(Math.random() * 9999 + 1);
+  var unqProdId =
+    "fci-cat" +
+    rand +
+    "-" +
+    dte.getDate() +
+    ":" +
+    (dte.getMonth() + 1) +
+    ":" +
+    dte.getFullYear() +
+    "-" +
+    dte.getHours() +
+    "-" +
+    dte.getMinutes() +
+    "-" +
+    dte.getSeconds() +
+    "-" +
+    dte.getMilliseconds();
   var sqlInsert =
-    "INSERT INTO `prod_details`(`prod_id`, `prod_name`,`prod_price`, `prod_img`, `prod_description`) VALUES (?, ?, ?, ?, ?)";
-  var sqlBrandIns =
-    "INSERT INTO `products`(`prod_id`,`prod_brand_id`,`prod_cat_id`,`prod_status`) values (?, ?, ?, ?)";
+    "INSERT INTO `category`(`cat_id`, `cat_name`, `cat_desc`, `cat_image`) VALUES (?, ?, ?, ?)";
   sql.query(
     sqlInsert,
     [
-      req.body.prod_id,
-      req.body.prod_name,
-      req.body.prod_price,
-      imgName,
-      req.body.prod_description
+      unqProdId,
+      req.body.cat_name,
+      'N/A',
+      'N/A'
     ],
     (err) => {
       if (!err) {
-        sql.query(
-          sqlBrandIns,
-          [req.body.prod_id, req.body.brand_name, "cat1234", "1"],
-          (err1) => {
-            if (!err1) {
-              res.send({ res: "Inserted succesfully" });
-            }
-          }
-        );
+        res.send({message: 'Inserted Successfully'});
       } else {
-        res.render("error", {
-          message: "Oops something went wrong",
-          error: { status: 400, stack: "" },
-        });
+        res.send({message: err});
       }
     }
   );

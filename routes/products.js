@@ -131,6 +131,36 @@ router.get("/", (req, res) => {
   );
 });
 
+
+// Get all products by city
+router.get("/productsByCity/:city", (req, res) => {
+  let arr = [];
+  sql.query(
+    `SELECT * FROM products a, prod_details b, brand c, category d 
+    WHERE a.prod_id = b.prod_id and a.prod_brand_id = c.brand_id and a.prod_cat_id = d.cat_id 
+    and a.prod_status = '1' and (LOCATE('${req.params.city}', a.prod_available_cities) > 0)`,
+    (err, rows, fields) => {
+      if (!err) {
+        rows.forEach((row, i) => {
+          var splitPath = row.prod_img.split("[--split--]");
+          row.prod_img = splitPath;
+        });
+        rows.forEach((row) => {
+          tenureSplit = row.prod_tenure.split("[--split--]");
+          tenureSplit.forEach((a) => {
+            arr.push(a.split(":"));
+          });
+          row.prod_tenure = arr;
+          arr = [];
+        });
+        res.send(rows);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 // Get product by product id
 router.get("/:id", (req, res) => {
   let queryDta = `SELECT * FROM products a, prod_details b, brand c WHERE a.prod_id = "${req.params.id}" && a.prod_id = b.prod_id && c.brand_id = a.prod_brand_id`;
