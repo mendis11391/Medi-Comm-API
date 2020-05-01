@@ -300,7 +300,7 @@ router.get("/failure", (req, res) => {
 
 
 router.post('/userdetails', (req, res) => {
-  let getDetails = "select uid, uname, logintype from users where token = ?";
+  let getDetails = "select uid, uname, logintype, cart from users where token = ?";
   sql.query(getDetails, [req.body.token], (err, rows) => {
     if (!err) {
       if (rows.length > 0) {
