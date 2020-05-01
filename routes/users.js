@@ -1,11 +1,14 @@
 var express = require('express');
 var router = express.Router();
 
-/* GET users listing. */
-router.get('/', function(req, res, next) {
+var sql = require("../db.js");
+
+/* GET cart details */
+router.get('/cart/:id', function(req, res, next) {
   sql.query(
-    `SELECT uid, uname, email, cart FROM USERS`,
-    (err, rows, fields) => {
+    `SELECT uid, uname, email, cart FROM USERS where token = ?`,
+    [req.params.id],
+    (err, rows) => {
       if (!err) {
         res.send(rows);
       } else {
@@ -16,14 +19,13 @@ router.get('/', function(req, res, next) {
 });
 
 // Update cart
-router.put("cart/:id", (req, res) => {
-  var sqlUpdate = "UPDATE `USERS` SET `cart`= ? WHERE `uid` = ? and `email` = ?";
+router.put("/cart/:id", (req, res) => {
+  var sqlUpdate = "UPDATE `USERS` SET `cart`= ? WHERE `uid` = ?";
   sql.query(
     sqlUpdate,
     [
       req.body.cart,
-      req.params.id,
-      req.body.email
+      req.params.id
     ],
     (err, rows) => {
       if (!err) {

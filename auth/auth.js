@@ -108,14 +108,15 @@ router.get(
         if (!err) {
           if (rows.length <= 0) {
             sql.query(
-              "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `token`) VALUES (?, ?, ?, ?, ?, ?, ?)",
+              "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `cart`, `token`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
               [
-                gpId,
+                req.user.id,
                 req.user._json.name,
                 "",
                 req.user._json.email,
                 "Google",
                 "N/A",
+                "[]",
                 token,
               ],
               (err, rows) => {
@@ -254,7 +255,7 @@ router.post("/register", (req, res) => {
   const logintokgen = new TokenGenerator(256, TokenGenerator.BASE71);
   const logintoken = logintokgen.generate();
   let insQuery =
-    "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `token`) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `cart`,`token`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
   let checkUser = "select uname from users where email = ? and logintype = 'web'";
   sql.query(checkUser, [req.body.email], (err, rows) => {
     if (!err) {
@@ -268,6 +269,7 @@ router.post("/register", (req, res) => {
             req.body.email,
             "web",
             req.body.phone,
+            "[]",
             logintoken,
           ],
           (err, rows) => {
