@@ -17,6 +17,24 @@ router.get('/', function(req, res) {
       );
 });
 
+// Update deliveryDate
+router.put('/', (req, res) => {
+  var sqlUpdate = "UPDATE `cities` SET `tentitiveDeleivery`= ? WHERE `cityname` = 'Bangalore'";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.days
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'days updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 // Add new city
 router.post('/', function(req, res) {
     var dte = new Date();
