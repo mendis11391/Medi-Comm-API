@@ -107,9 +107,13 @@ router.get("/", (req, res) => {
     `SELECT * FROM products a, prod_details b, brand c, category d WHERE a.prod_id = b.prod_id and a.prod_brand_id = c.brand_id and a.prod_cat_id = d.cat_id and a.prod_status = '1'`,
     (err, rows, fields) => {
       if (!err) {
+        var tags = [];
         rows.forEach((row, i) => {
+          tags.push(row.cat_name.toLowerCase(), row.prod_name.toLowerCase(), row.brand_name.toLowerCase(), row.prod_disksize.toLowerCase(), row.cat_name.toLowerCase());
           var splitPath = row.prod_img.split("[--split--]");
           row.prod_img = splitPath;
+          row['prod_tags'] = tags;
+          tags = [];
         });
         rows.forEach((row) => {
           tenureSplit = row.prod_tenure.split("[--split--]");
@@ -141,9 +145,13 @@ router.get("/productsByCity/:city", (req, res) => {
     and a.prod_status = '1' and (LOCATE('${req.params.city}', a.prod_available_cities) > 0)`,
     (err, rows, fields) => {
       if (!err) {
+        var tags = [];
         rows.forEach((row, i) => {
+          tags.push(row.cat_name.toLowerCase(), row.prod_name.toLowerCase(), row.brand_name.toLowerCase(), row.prod_disksize.toLowerCase(), row.cat_name.toLowerCase());
           var splitPath = row.prod_img.split("[--split--]");
           row.prod_img = splitPath;
+          row['tags'] = tags;
+          tags = [];
         });
         rows.forEach((row) => {
           tenureSplit = row.prod_tenure.split("[--split--]");
