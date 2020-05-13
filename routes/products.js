@@ -109,7 +109,7 @@ router.get("/", (req, res) => {
       if (!err) {
         var tags = [];
         rows.forEach((row, i) => {
-          tags.push(row.cat_name.toLowerCase(), row.prod_name.toLowerCase(), row.brand_name.toLowerCase(), row.prod_disksize.toLowerCase(), row.cat_name.toLowerCase());
+          tags.push(row.prod_name.toLowerCase(), row.brand_name.toLowerCase(), row.prod_disksize.toLowerCase(), row.cat_name.toLowerCase());
           var splitPath = row.prod_img.split("[--split--]");
           row.prod_img = splitPath;
           row['prod_tags'] = tags;
@@ -150,7 +150,7 @@ router.get("/productsByCity/:city", (req, res) => {
           tags.push(row.cat_name.toLowerCase(), row.prod_name.toLowerCase(), row.brand_name.toLowerCase(), row.prod_disksize.toLowerCase(), row.cat_name.toLowerCase());
           var splitPath = row.prod_img.split("[--split--]");
           row.prod_img = splitPath;
-          row['tags'] = tags;
+          row['prod_tags'] = tags;
           tags = [];
         });
         rows.forEach((row) => {
