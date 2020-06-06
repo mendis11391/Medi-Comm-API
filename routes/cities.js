@@ -19,20 +19,30 @@ router.get('/', function(req, res) {
 
 // Update deliveryDate
 router.put('/', (req, res) => {
-  var sqlUpdate = "UPDATE `cities` SET `tentitiveDeleivery`= ? WHERE `cityname` = 'Bangalore'";
-  sql.query(
-    sqlUpdate,
-    [
-      req.body.days
-    ],
-    (err, rows) => {
-      if (!err) {
-        res.send({'message': 'days updated'});
-      } else {
-        res.send({ error: err });
+  var ctyValArr = Object.entries(req.body);
+  var cty;
+  var delvDte;
+  ctyValArr.forEach((i) => {
+    cty = i[0];
+    delvDte = i[1];
+    addCty(cty, delvDte);
+  });
+
+  function addCty(cty, delvDte) {
+    var sqlUpdate = `UPDATE 'cities' SET 'tentitiveDeleivery'= ${delvDte} WHERE 'cityid' = ${cty}`;
+    sql.query(
+      sqlUpdate,
+      (err, rows) => {
+        if (!err) {
+          res.send({'message': 'days updated'});
+        } else {
+          res.send({ error: err });
+        }
       }
-    }
-  );
+    );
+  }
+
+  
 });
 
 // Add new city
