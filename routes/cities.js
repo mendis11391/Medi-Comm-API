@@ -19,30 +19,46 @@ router.get('/', function(req, res) {
 
 // Update deliveryDate
 router.put('/', (req, res) => {
-  var ctyValArr = Object.entries(req.body);
-  var cty;
-  var delvDte;
-  ctyValArr.forEach((i) => {
-    cty = i[0];
-    delvDte = i[1];
-    addCty(cty, delvDte);
-  });
-
-  function addCty(cty, delvDte) {
-    var sqlUpdate = `UPDATE 'cities' SET 'tentitiveDeleivery'= ${delvDte} WHERE 'cityid' = ${cty}`;
-    sql.query(
-      sqlUpdate,
-      (err, rows) => {
-        if (!err) {
-          res.send({'message': 'days updated'});
-        } else {
-          res.send({ error: err });
-        }
+  // var sqlUpdate = "UPDATE `cities` SET `tentitiveDeleivery`= ? WHERE `cityname` = 'Bangalore'";
+  var sqlUpdate = "UPDATE `cities` SET `tentitiveDeleivery` = (case when `cityid` = 'bangalore' then ? when `cityid` = 'hyderabad' then ? when `cityid` = 'mumbai' then ? when `cityid` = 'pune' then ? end) WHERE `cityid` in ('bangalore', 'hyderabad', 'mumbai', 'pune')";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.bangalore,
+      req.body.hyderabad,
+      req.body.mumbai,
+      req.body.pune
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'days updated'});
+      } else {
+        res.send({ error: err });
       }
-    );
-  }
+    }
+  );
+});
 
-  
+// Update Taxes
+router.put('/taxes', (req, res) => {
+  // var sqlUpdate = "UPDATE `cities` SET `tentitiveDeleivery`= ? WHERE `cityname` = 'Bangalore'";
+  var sqlUpdate = "UPDATE `cities` SET `taxes` = (case when `cityid` = 'bangalore' then ? when `cityid` = 'hyderabad' then ? when `cityid` = 'mumbai' then ? when `cityid` = 'pune' then ? end) WHERE `cityid` in ('bangalore', 'hyderabad', 'mumbai', 'pune')";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.bangalore,
+      req.body.hyderabad,
+      req.body.mumbai,
+      req.body.pune,
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'taxes updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
 });
 
 // Add new city
