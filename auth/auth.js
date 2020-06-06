@@ -122,7 +122,7 @@ router.get(
               (err, rows) => {
                 if (!err) {
                   return res.redirect(
-                    `http://localhost:4200/default?uid=${req.user.id}&token=${token}&logintype=google&existinguser=false`
+                    `http://localhost:4200/?uid=${req.user.id}&token=${token}&logintype=google&existinguser=false`
                   );
                 } else {
                   res.send({
@@ -141,7 +141,7 @@ router.get(
               (err, rows) => {
                 if (!err) {
                   return res.redirect(
-                    `http://localhost:4200/default?uid=${req.user.id}&token=${token}&logintype=google&existinguser=true`
+                    `http://localhost:4200/?uid=${req.user.id}&token=${token}&logintype=google&existinguser=true`
                   );
                 }
               }
