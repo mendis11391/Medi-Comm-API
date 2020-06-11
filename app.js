@@ -20,6 +20,7 @@ var categoryRouter = require('./routes/categories');
 var brandRouter = require('./routes/brand');
 var citiesRouter = require('./routes/cities');
 var usersRouter = require('./routes/users');
+var couponsRouter = require('./routes/coupons');
 
 var app = express();
 
@@ -104,7 +105,7 @@ app.use('/category', categoryRouter);
 app.use('/brand', brandRouter);
 app.use('/cities', citiesRouter);
 app.use('/users', usersRouter);
-
+app.use('/coupons', couponsRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
