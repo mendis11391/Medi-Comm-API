@@ -21,6 +21,7 @@ var brandRouter = require('./routes/brand');
 var citiesRouter = require('./routes/cities');
 var usersRouter = require('./routes/users');
 var couponsRouter = require('./routes/coupons');
+var paymentsRouter = require('./routes/payment');
 
 var app = express();
 
@@ -32,8 +33,10 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+// app.set('views', path.join(__dirname, 'views'));
+// app.set('view engine', 'jade');
+
+
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -41,8 +44,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+
 app.use(cors());
 
+app.set('views', path.join(__dirname, 'views'));
+app.engine('html', require('ejs').renderFile);
+app.set('view engine', 'html');
 
 // CORS Setup
 app.use(function(req, res, next) {
@@ -54,6 +61,7 @@ app.use(function(req, res, next) {
       return res.status(200).json({});
   }
 });
+
 
 
 // Passport
@@ -106,6 +114,7 @@ app.use('/brand', brandRouter);
 app.use('/cities', citiesRouter);
 app.use('/users', usersRouter);
 app.use('/coupons', couponsRouter);
+app.use('/payments', paymentsRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
