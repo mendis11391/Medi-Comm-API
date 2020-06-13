@@ -11,6 +11,7 @@ var passport = require('passport');
 var FacebookStrategy = require('passport-facebook').Strategy;
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
 const constants = require('./constant/constUrl');
+
 const port = process.env.PORT || 3000;
 
 var indexRouter = require('./routes/index');
@@ -22,6 +23,7 @@ var citiesRouter = require('./routes/cities');
 var usersRouter = require('./routes/users');
 var couponsRouter = require('./routes/coupons');
 var paymentsRouter = require('./routes/payment');
+var responseRouter = require('./routes/response');
 
 var app = express();
 
@@ -115,6 +117,7 @@ app.use('/cities', citiesRouter);
 app.use('/users', usersRouter);
 app.use('/coupons', couponsRouter);
 app.use('/payments', paymentsRouter);
+app.use('/response', responseRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

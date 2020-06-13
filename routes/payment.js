@@ -1,6 +1,7 @@
 var express = require('express');
 var crypto = require("crypto");
 var router = express.Router();
+const url = require('url');  
 
 var sql = require("../db.js");
 
@@ -17,6 +18,11 @@ router.get('/', function(req, res) {
     ord = 'ORD'+ ord.substr(0,i);	
     res.render('checkout.html', {orderid:ord});
 });
+
+// router.get('/response', function(req, res) {
+//     res.render('response.html', {key: 'test',salt: 'test',txnid: 'test',amount: 'test', productinfo: 'test', 
+// 		firstname: 'test', email: 'test', mihpayid : 'test', status: 'test',resphash: 'test',msg:'test'});
+// });
 
 
 // router.get('/', function(req,res) {	
@@ -40,7 +46,7 @@ router.post('/', function(req, res){
     res.end(JSON.stringify(hash));
 });
 
-router.post('/response.html', function(req, res){
+router.post('/response', function(req, res){
 	var key = req.body.key;
 	var salt = req.body.salt;
 	var txnid = req.body.txnid;
@@ -66,7 +72,14 @@ router.post('/response.html', function(req, res){
 	if(calchash == resphash)
 		msg = 'Transaction Successful and Hash Verified...';
 	
-	res.render(__dirname + '/response.html', {key: key,salt: salt,txnid: txnid,amount: amount, productinfo: productinfo, 
-	firstname: firstname, email: email, mihpayid : mihpayid, status: status,resphash: resphash,msg:msg});
+	// res.render('response.html', {key: key,salt: salt,txnid: txnid,amount: amount, productinfo: productinfo, 
+	// firstname: firstname, email: email, mihpayid : mihpayid, status: status,resphash: resphash,msg:msg});
+	
+	res.redirect(url.format({
+		pathname:"http://localhost:4200/Bangalore/order-success",
+		query: {
+		   "transID": txnid,
+		 }
+		}));
 });
 module.exports = router
