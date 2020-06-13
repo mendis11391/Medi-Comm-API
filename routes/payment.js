@@ -1,7 +1,6 @@
 var express = require('express');
 var crypto = require("crypto");
-var bodyParser = require('body-parser');
-var router = express();
+var router = express.Router();
 
 var sql = require("../db.js");
 
@@ -9,9 +8,7 @@ router.use(function(req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 	next();
-});
-
-router.use(bodyParser.urlencoded({ extended: true }));
+  });
 
 
 router.get('/', function(req, res) {
@@ -33,25 +30,14 @@ router.get('/', function(req, res) {
 
 router.post('/', function(req, res){
 	var strdat = '';
-	req.on('data', function (chunk) {
-		strdat += chunk;
-    });
-	
-	req.on('end', function()
-	{
-		var data = JSON.parse(strdat);
-		console.log('key: ' + data.key);
-		var cryp = crypto.createHash('sha512');
-		var text = data.key+'|'+data.txnid+'|'+data.amount+'|'+data.pinfo+'|'+data.fname+'|'+data.email+'|||||'+data.udf5+'||||||'+data.salt;
-		
-		cryp.update(text);
-		var hash = cryp.digest('hex');		
-		res.setHeader("Content-Type", "text/json");
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        res.end(JSON.stringify(hash));		
-	});
-	
-	
+	var data = req.body;
+	var cryp = crypto.createHash('sha512');
+	var text = data.key+'|'+data.txnid+'|'+data.amount+'|'+data.pinfo+'|'+data.fname+'|'+data.email+'|||||'+data.udf5+'||||||'+data.salt;
+	cryp.update(text);
+	var hash = cryp.digest('hex');		
+	res.setHeader("Content-Type", "text/json");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.end(JSON.stringify(hash));
 });
 
 router.post('/response.html', function(req, res){
