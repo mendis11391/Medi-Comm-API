@@ -47,6 +47,7 @@ router.post('/', function(req, res){
 });
 
 router.post('/response', function(req, res){
+	var urlRedirect = 'http://localhost:4200/Bangalore/failure';
 	var key = req.body.key;
 	var salt = req.body.salt;
 	var txnid = req.body.txnid;
@@ -69,14 +70,16 @@ router.post('/response', function(req, res){
 	var calchash = cryp.digest('hex');
 	
 	var msg = 'Payment failed for Hash not verified...';
-	if(calchash == resphash)
+	if(calchash == resphash){
 		msg = 'Transaction Successful and Hash Verified...';
+		urlRedirect = "http://localhost:4200/Bangalore/order-success";
+	}
 	
 	// res.render('response.html', {key: key,salt: salt,txnid: txnid,amount: amount, productinfo: productinfo, 
 	// firstname: firstname, email: email, mihpayid : mihpayid, status: status,resphash: resphash,msg:msg});
 	
 	res.redirect(url.format({
-		pathname:"http://localhost:4200/Bangalore/order-success",
+		pathname: urlRedirect,
 		query: {
 		   "transID": txnid,
 		 }
