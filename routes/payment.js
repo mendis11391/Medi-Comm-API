@@ -85,4 +85,53 @@ router.post('/response', function(req, res){
 		 }
 		}));
 });
+
+router.post('/saveorder', function(req, res) {
+	var sqlInsert = "INSERT INTO `orders`(`userId`, `txnid`, `amount`, `securitydeposit`, `pinfo`, `fname`, `lname`, `mobile`, `email`, `address`, `city`, `state`, `pincode`, `selfpickup`, `coupon`, `status`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	sql.query(sqlInsert,
+    [
+      req.body.uid,
+      req.body.txnid,
+      req.body.amount,
+	  req.body.securityDeposit,
+	  req.body.pinfo,
+	  req.body.fname,
+	  req.body.lname,
+	  req.body.mobile,
+	  req.body.email,
+	  req.body.address,
+	  req.body.town,
+	  req.body.state,
+	  req.body.pincode,
+	  req.body.selfPickup,
+	  'N/A',
+	  'Initiated'
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: 'Inserted Successfully', txnid: req.body.txnid});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
+router.post('/updateorder', function(req, res) {
+	var updateOrder = `UPDATE orders SET status = ? where txnid= ?`;
+	sql.query(updateOrder,
+    [
+		req.body.status,
+      	req.body.txnid,
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: 'Updated Successfully', txnid: req.body.txnid});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
 module.exports = router
