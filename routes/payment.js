@@ -87,13 +87,22 @@ router.post('/response', function(req, res){
 });
 
 router.post('/saveorder', function(req, res) {
-	var sqlInsert = "INSERT INTO `orders`(`userId`, `txnid`, `amount`, `securitydeposit`, `pinfo`, `fname`, `lname`, `mobile`, `email`, `address`, `city`, `state`, `pincode`, `selfpickup`, `coupon`, `status`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	datetime = new Date();
+	orderDate = this.datetime.getDate()+'/'+(this.datetime.getMonth()+1)+'/'+this.datetime.getFullYear();
+	orderTime = this.datetime.getHours()+':'+this.datetime.getMinutes()+':'+this.datetime.getSeconds();
+
+	orderDateTime=[this.orderDate, this.orderTime];
+	orderdatetime=JSON.stringify(orderDateTime);
+
+	var sqlInsert = "INSERT INTO `orders`(`userId`, `txnid`,`orderdate`, `amount`, `securitydeposit`, `checkoutItemData`, `pinfo`, `fname`, `lname`, `mobile`, `email`, `address`, `city`, `state`, `pincode`, `selfpickup`, `coupon`, `status`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
       req.body.uid,
-      req.body.txnid,
+	  req.body.txnid,
+	  orderdatetime,
       req.body.amount,
 	  req.body.securityDeposit,
+	  req.body.checkoutProductsInfo,
 	  req.body.pinfo,
 	  req.body.fname,
 	  req.body.lname,
