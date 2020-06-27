@@ -336,4 +336,45 @@ router.post("/", upload.array("product_image", 12), function (req, res, next) {
   );
 });
 
+
+// Get order by txn id
+router.get("/ordDetails/:txnid", (req, res) => {
+  let queryDta = `SELECT * FROM orders WHERE txnid = "${req.params.txnid}"`;
+
+  let prodDetails = [];
+  let prodid = [];
+  sql.query(queryDta, (err, rows) => {
+    if (!err) {
+      rows.forEach((row) => {
+        var orderDate = JSON.parse(row.orderdate);
+        var prodInf = JSON.parse(row.checkoutItemData);
+        var pinf = JSON.parse(row.pinfo);
+        row.orderdate = orderDate;
+        row.checkoutItemData = prodInf;
+        row.pinfo = pinf;
+        row.selfpickup = row.selfpickup === '0' ? 'False' : 'True';
+
+        row.prodIds = row.pinfo.join('","');
+
+        let prodDta = `SELECT prod_img, prod_price FROM prod_details Where prod_id IN ("${row.prodIds}")`;
+
+        sql.query(prodDta, (err, rows1) => {
+          if(!err ){
+            rows1.forEach((row1) => {
+              prodDetails.push(row1);
+              row1.prod_img = row1.prod_img.split("[--split--]");
+            });
+          }
+          row.prdts = prodDetails;
+          res.send(rows);
+        });
+
+      });
+      
+    } else {
+      res.send({ error: err });
+    }
+  });
+});
+
 module.exports = router;
