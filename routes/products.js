@@ -356,7 +356,7 @@ router.get("/ordDetails/:txnid", (req, res) => {
 
         row.prodIds = row.pinfo.join('","');
 
-        let prodDta = `SELECT prod_img, prod_price FROM prod_details Where prod_id IN ("${row.prodIds}")`;
+        let prodDta = `SELECT prod_img, prod_price, prod_name FROM prod_details Where prod_id IN ("${row.prodIds}")`;
 
         sql.query(prodDta, (err, rows1) => {
           if(!err ){
