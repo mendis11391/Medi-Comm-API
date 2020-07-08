@@ -71,30 +71,19 @@ router.post('/response', function(req, res){
 	
 	var msg = 'Payment failed for Hash not verified...';
 	if(calchash == resphash){
-		var updateOrder = `UPDATE users SET cart='[]' WHERE uid = ${req.body.uid}`;
-		sql.query(updateOrder,
-			(err) => {
-			  if (!err) {
-				msg = 'Transaction Successful and Hash Verified...';
-				urlRedirect = `http://localhost:4200/${req.body.city}/order-success`;
-
-				res.redirect(url.format({
-					pathname: urlRedirect,
-					query: {
-					   "transID": txnid,
-					 }
-					}));
-			  } else {
-				res.send({message: err});
-			  }
-			}
-		  );
-		
+		msg = 'Transaction Successful and Hash Verified...';
+		urlRedirect = "http://localhost:4200/Bangalore/order-success";
 	}
 	
 	// res.render('response.html', {key: key,salt: salt,txnid: txnid,amount: amount, productinfo: productinfo, 
 	// firstname: firstname, email: email, mihpayid : mihpayid, status: status,resphash: resphash,msg:msg});
 	
+	res.redirect(url.format({
+		pathname: urlRedirect,
+		query: {
+		   "transID": txnid,
+		 }
+		}));
 });
 
 router.post('/saveorder', function(req, res) {
@@ -142,22 +131,6 @@ router.post('/updateorder', function(req, res) {
 	sql.query(updateOrder,
     [
 		req.body.status,
-      	req.body.txnid,
-    ],
-    (err) => {
-      if (!err) {
-        res.send({message: 'Updated Successfully', txnid: req.body.txnid});
-      } else {
-        res.send({message: err});
-      }
-    }
-  );
-});
-
-router.post('/deleteorder', function(req, res) {
-	var deleteOrder = `DELETE FROM orders WHERE txnid = ?`;
-	sql.query(deleteOrder,
-    [
       	req.body.txnid,
     ],
     (err) => {
