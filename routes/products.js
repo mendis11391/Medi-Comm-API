@@ -365,7 +365,12 @@ router.get("/ordDetails/:txnid", (req, res) => {
               row1.prod_img = row1.prod_img.split("[--split--]");
             });
           }
-          row.prdts = prodDetails;
+          // row.prdts = prodDetails;
+          prodDetails.forEach((res, i) => {
+            row.checkoutItemData[i]['imgArr'] = res.prod_img;
+            row.checkoutItemData[i]['prodPrice'] = res.prod_price;
+            row.checkoutItemData[i]['prodName'] = res.prod_name;
+          });
           res.send(rows);
         });
 
