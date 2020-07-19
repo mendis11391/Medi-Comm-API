@@ -38,7 +38,7 @@ router.get('/checkemail/:emailEx', function(req, res) {
 /* GET cart details */
 router.get('/cart/:id', function(req, res, next) {
   sql.query(
-    `SELECT uid, uname, email, cart FROM USERS where token = ?`,
+    `SELECT uid, uname, email, cart FROM users where token = ?`,
     [req.params.id],
     (err, rows) => {
       if (!err) {
@@ -71,7 +71,7 @@ router.put("/update", (req, res) => {
 
 // Update cart
 router.put("/cart/:id", (req, res) => {
-  var sqlUpdate = "UPDATE `USERS` SET `cart`= ? WHERE `uid` = ?";
+  var sqlUpdate = "UPDATE `users` SET `cart`= ? WHERE `uid` = ?";
   sql.query(
     sqlUpdate,
     [
