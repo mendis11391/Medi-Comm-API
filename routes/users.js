@@ -17,6 +17,21 @@ router.get('/', function(req, res) {
     );
 });
 
+/* GET cart details */
+router.get('/:id', function(req, res, next) {
+  sql.query(
+    `SELECT uid, uname, email, cart FROM users where uid = ?`,
+    [req.params.id],
+    (err, rows) => {
+      if (!err) {
+        res.send(rows);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 router.get('/checkemail/:emailEx', function(req, res) {
   sql.query(
       `SELECT count(*) AS emailidCount FROM users where email= ? and logintype = 'web'`,
