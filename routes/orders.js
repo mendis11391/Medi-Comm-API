@@ -30,6 +30,7 @@ router.get('/:id', function(req, res, next) {
         rows.forEach((row, i) => {
           row['orderdate'] = JSON.parse(row.orderdate);
           row['pinfo'] = JSON.parse(row.pinfo);
+          row['checkoutItemData'] = JSON.parse(row.checkoutItemData);
           row['prodlists'] = [];
 
           var idsDta = row.pinfo.join('","');
@@ -49,13 +50,20 @@ router.get('/:id', function(req, res, next) {
               len++;
               rows1.forEach((row1, i) => {
                 row1['prod_img'] = row1.prod_img.split("[--split--]");
-                //mainArr[i]['prodlists'].push(row1);
+                row1['prod_img'] = row1.prod_img[0];
               });
-              //rows1[0]['prod_img'] = rows1[0].prod_img.split("[--split--]");
               mainArr[len-1]['prodlists'].push(rows1);
+
               if(len === ids.length) {
                 mainArr.forEach((res) => {
                   res.prodlists = res.prodlists[0];
+                  res['checkoutItemData'].forEach((dta, j) => {
+                    res.prodlists[j]['id'] = dta["id"] ? dta["id"] : '';
+                    res.prodlists[j]['delvdate'] = dta["delvdate"] ? dta["delvdate"] : '';
+                    res.prodlists[j]['qty'] = dta["qty"] ? dta["qty"] : '';
+                    res.prodlists[j]['price'] = dta["price"] ? dta["price"] : '';
+                    res.prodlists[j]['tenure'] = dta["tenure"] ? dta["tenure"] : '';
+                  });
                 });
                 res.send(mainArr);
               }

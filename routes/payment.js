@@ -88,7 +88,7 @@ router.post('/response', function(req, res){
 
 router.post('/saveorder', function(req, res) {
 	datetime = new Date();
-	orderDate = this.datetime.getDate()+'/'+(this.datetime.getMonth()+1)+'/'+this.datetime.getFullYear();
+	orderDate = (this.datetime.getMonth()+1)+'/'+this.datetime.getDate()+'/'+this.datetime.getFullYear();
 	orderTime = this.datetime.getHours()+':'+this.datetime.getMinutes()+':'+this.datetime.getSeconds();
 
 	orderDateTime=[this.orderDate, this.orderTime];
