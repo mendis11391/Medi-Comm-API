@@ -15,20 +15,36 @@ router.post('/send', cors(), (req, res) => {
     city = req.body.city;
     const query = `SELECT uid AS userId FROM users where email= '${emailId}' and logintype = 'web'`;
 
+    const timeRef = new Date();
+    const year = timeRef.getFullYear();
+    let month = timeRef.getMonth();
+    month = ("0" + (month + 1)).slice(-2);
+    let curdate = timeRef.getDate();
+    curdate = ("0" + (curdate)).slice(-2);
+    let curhours = timeRef.getHours();
+    curhours = ("0" + (curhours)).slice(-2);
+    let curmin = timeRef.getMinutes();
+    curmin = ("0" + (curmin)).slice(-2);
+    let cursec = timeRef.getSeconds();
+    cursec = ("0" + (cursec)).slice(-2);
+    // const curmilsec = timeRef.getMilliseconds();
+
+    const finalCurTime = `${year}${month}${curdate}${curhours}${curmin}${cursec}`;
+
     sql.query(query,
         (err, rows) => {
             if (!err) {
                 if (rows[0].userId) {
                     const outputData = `<p>Please click the below link to reset your password</p>
-                <a href="http://localhost:4200/${city}/resetpassword/${rows[0].userId}">Click here</a>
+                <a href="http://localhost:4200/${city}/resetpassword/${rows[0].userId}/${finalCurTime}">Click here</a>
             `;
 
                     let transporter = nodemailer.createTransport({
-                        host: 'mail.localhost:4200',
+                        host: 'mail.irentout.com',
                         port: 587, //Note: change to port:465 when website runs in https://localhost:4200
                         secure: false, //Note: may be true
                         auth: {
-                            user: 'passwordreset@localhost:4200',
+                            user: 'passwordreset@irentout.com',
                             pass: 'iro@fci123'
                         },
                         tls: {
@@ -39,7 +55,7 @@ router.post('/send', cors(), (req, res) => {
                     });
 
                     let HelperOptions = {
-                        from: '"Manjesh" <passwordreset@localhost:4200>',
+                        from: '"Manjesh" <passwordreset@irentout.com>',
                         to: emailId,
                         subject: 'Irentout - Reset Password link',
                         text: 'Hello',
