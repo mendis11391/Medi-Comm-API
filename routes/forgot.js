@@ -55,7 +55,7 @@ router.post('/send', cors(), (req, res) => {
                     });
 
                     let HelperOptions = {
-                        from: '"Manjesh" <passwordreset@irentout.com>',
+                        from: '"Irentout" <passwordreset@irentout.com>',
                         to: emailId,
                         subject: 'Irentout - Reset Password link',
                         text: 'Hello',
