@@ -114,7 +114,7 @@ router.get("/check/:enctime", function(req, res) {
   
     const hoursDycp = Math.floor(minutesVal / 60);  
     const minutesDycp = minutesVal % 60;
-    const finalTime = hoursDycp + " Hour " + minutesDycp + " Minutes";
+    const finalTime = (hoursDycp > 0) ? `${hoursDycp} Hour ${minutesDycp} Minutes` : `${minutesDycp} Minutes`;
   
     tokenDetail['valid'] = (isTimeValid(dbTime, currentTime) >= 10) ? false : true;
     tokenDetail['time'] = finalTime;
