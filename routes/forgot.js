@@ -3,11 +3,9 @@ const router = express.Router();
 // const request = require('request');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
+var crypto = require("crypto");
 
 var sql = require("../db.js");
-
-emailId: String;
-token: String;
 
 router.options('/send', cors());
 router.post('/send', cors(), (req, res) => {
@@ -31,12 +29,18 @@ router.post('/send', cors(), (req, res) => {
 
     const finalCurTime = `${year}${month}${curdate}${curhours}${curmin}${cursec}`;
 
+    const encryptedTime = crypto.createCipher('aes-128-cbc', 'irent@key*');
+    let finalEncrpt = encryptedTime.update(finalCurTime, 'utf8', 'hex')
+    finalEncrpt += encryptedTime.final('hex');
+
+    
+
     sql.query(query,
         (err, rows) => {
             if (!err) {
                 if (rows[0].userId) {
                     const outputData = `<p>Please click the below link to reset your password</p>
-                <a href="http://localhost:4200/${city}/resetpassword/${rows[0].userId}/${finalCurTime}">Click here</a>
+                <a href="http://localhost:4200/${city}/resetpassword/${rows[0].userId}/${finalEncrpt}">Click here</a>
             `;
 
                     let transporter = nodemailer.createTransport({
@@ -80,7 +84,49 @@ router.post('/send', cors(), (req, res) => {
             }
         }
     );
-
-
 });
+
+router.get("/check/:enctime", function(req, res) {
+    const tokenValue = req.params.enctime;
+    const mykey = crypto.createDecipher('aes-128-cbc', 'irent@key*');
+    var finalDecrptKey = mykey.update(tokenValue, 'hex', 'utf8');
+    finalDecrptKey += mykey.final('utf8');
+  
+    const currentTime = new Date();
+    const year = finalDecrptKey.slice(0, 4);
+    let month = finalDecrptKey.slice(4, 6);
+    month = parseInt(month);
+    let date = finalDecrptKey.slice(6, 8);
+    date = parseInt(date);
+    const hours = parseInt(finalDecrptKey.slice(8, 10));
+    const minutes = parseInt(finalDecrptKey.slice(10, 12));
+    const sec = parseInt(finalDecrptKey.slice(12, 14));
+    const tokenDate = `${year}-${month}-${date} ${hours}:${minutes}:${sec}`;
+  
+    const dbTime = new Date(tokenDate);
+  
+    const tokenDetail = {
+        valid : false,
+        time: ''
+    };
+
+    const minutesVal = isTimeValid(dbTime, currentTime);
+  
+    const hoursDycp = Math.floor(minutesVal / 60);  
+    const minutesDycp = minutesVal % 60;
+    const finalTime = hoursDycp + " Hour " + minutesDycp + " Minutes";
+  
+    tokenDetail['valid'] = (isTimeValid(dbTime, currentTime) >= 10) ? false : true;
+    tokenDetail['time'] = finalTime;
+  
+    res.send(tokenDetail);
+  });
+  
+  function isTimeValid(tokenTime, currentTime) {
+    let diff = (tokenTime.getTime() - currentTime.getTime()) / 1000;
+    diff /= 60;
+    return Math.abs(Math.round(diff));
+  }
+
+
 module.exports = router;
