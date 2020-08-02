@@ -213,9 +213,14 @@ router.post("/login", (req, res) => {
 @logintype
 */
 router.post("/userlogin", (req, res) => {
+  // Encrypt Password before comparing
+  const encryptedTime = crypto.createCipher('aes-128-cbc', 'irent@key*');
+  let cryptPassword = encryptedTime.update(req.body.password, 'utf8', 'hex')
+  cryptPassword += encryptedTime.final('hex');
+
   sql.query(
     `SELECT uname from users WHERE email = ? and upass = ? and logintype = ?`,
-    [req.body.email, req.body.password, req.body.logintype],
+    [req.body.email, cryptPassword, req.body.logintype],
     (err, rows) => {
       if (!err) {
         if (rows.length > 0) {
@@ -224,7 +229,7 @@ router.post("/userlogin", (req, res) => {
           const updateTokenQuery = `UPDATE users SET token = ? where email= ? and upass = ? and logintype = ?`;
           sql.query(
             updateTokenQuery,
-            [token, req.body.email, req.body.password, req.body.logintype],
+            [token, req.body.email, cryptPassword, req.body.logintype],
             (err, rows) => {
               if (!err) {
                 res.send({ token: token, authenticated: true });
@@ -254,6 +259,12 @@ router.post("/register", (req, res) => {
   const userToken = `irentout-${uidtokgen.generate()}`;
   const logintokgen = new TokenGenerator(256, TokenGenerator.BASE71);
   const logintoken = logintokgen.generate();
+
+  // Encrypt Password
+  const encryptedTime = crypto.createCipher('aes-128-cbc', 'irent@key*');
+  let cryptPassword = encryptedTime.update(req.body.password, 'utf8', 'hex')
+  cryptPassword += encryptedTime.final('hex');
+
   let insQuery =
     "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `cart`,`token`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
   let checkUser = "select uname from users where email = ? and logintype = 'web'";
@@ -265,7 +276,7 @@ router.post("/register", (req, res) => {
           [
             userToken,
             req.body.username,
-            req.body.password,
+            cryptPassword,
             req.body.email,
             "web",
             req.body.phone,
