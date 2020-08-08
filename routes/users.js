@@ -17,6 +17,21 @@ router.get('/', function(req, res) {
     );
 });
 
+/* GET user details by id*/
+router.get('/getUserInfo/:getid', function(req, res, next) {
+  sql.query(
+    `SELECT uid, uname, email, cart, address FROM users where uid = ?`,
+    [req.params.getid],
+    (err, rows) => {
+      if (!err) {
+        res.send(rows);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 /* GET cart details */
 router.get('/:id', function(req, res, next) {
   sql.query(
@@ -67,11 +82,16 @@ router.get('/cart/:id', function(req, res, next) {
 
 // Update users password
 router.put("/update", (req, res) => {
+  // Encrypt Password
+  const encryptedTime = crypto.createCipher('aes-128-cbc', 'irent@key*');
+  let cryptPassword = encryptedTime.update(req.body.upass, 'utf8', 'hex')
+  cryptPassword += encryptedTime.final('hex');
+
   var sqlUpdate = "UPDATE `users` SET `upass`= ? WHERE `uid` = ?";
   sql.query(
     sqlUpdate,
     [
-      req.body.upass,
+      cryptPassword,
       req.body.id
     ],
     (err, rows) => {
@@ -103,14 +123,29 @@ router.put("/cart/:id", (req, res) => {
   );
 });
 
+/* GET address details */
+router.get('/address/:usrid', function(req, res, next) {
+  sql.query(
+    `SELECT address FROM users where token = ?`,
+    [req.params.usrid],
+    (err, rows) => {
+      if (!err) {
+        res.send(rows);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 // Update address
-router.put("/address/:id", (req, res) => {
+router.put("/updateaddress/:auid", (req, res) => {
   var sqlUpdate = "UPDATE `users` SET `address`= ? WHERE `uid` = ?";
   sql.query(
     sqlUpdate,
     [
       req.body.address,
-      req.params.id
+      req.params.auid
     ],
     (err, rows) => {
       if (!err) {
