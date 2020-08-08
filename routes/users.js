@@ -6,7 +6,7 @@ var sql = require("../db.js");
 /* GET all users */
 router.get('/', function(req, res) {
   sql.query(
-      `SELECT uid, uname, email, logintype, cart FROM users`,
+      `SELECT uid, uname, email, logintype, cart, address FROM users`,
       (err, rows) => {
         if (!err) {
           res.send(rows);
@@ -65,7 +65,7 @@ router.get('/cart/:id', function(req, res, next) {
   );
 });
 
-// Update users
+// Update users password
 router.put("/update", (req, res) => {
   var sqlUpdate = "UPDATE `users` SET `upass`= ? WHERE `uid` = ?";
   sql.query(
@@ -96,6 +96,25 @@ router.put("/cart/:id", (req, res) => {
     (err, rows) => {
       if (!err) {
         res.send({'message': 'cart updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update address
+router.put("/address/:id", (req, res) => {
+  var sqlUpdate = "UPDATE `users` SET `address`= ? WHERE `uid` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.address,
+      req.params.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'Address updated'});
       } else {
         res.send({ error: err });
       }
