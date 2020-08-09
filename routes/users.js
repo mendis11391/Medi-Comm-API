@@ -126,7 +126,7 @@ router.put("/cart/:id", (req, res) => {
 /* GET address details */
 router.get('/address/:usrid', function(req, res, next) {
   sql.query(
-    `SELECT address FROM users where token = ?`,
+    `SELECT address FROM users where uid = ?`,
     [req.params.usrid],
     (err, rows) => {
       if (!err) {

@@ -59,6 +59,7 @@ router.post('/response', function(req, res){
 	var mihpayid = req.body.mihpayid;
 	var status = req.body.status;
 	var resphash = req.body.hash;
+	var uid = req.body.uid;
 	
 	var keyString 		=  	key+'|'+txnid+'|'+amount+'|'+productinfo+'|'+firstname+'|'+email+'|||||'+udf5+'|||||';
 	var keyArray 		= 	keyString.split('|');
@@ -74,16 +75,34 @@ router.post('/response', function(req, res){
 		msg = 'Transaction Successful and Hash Verified...';
 		urlRedirect = "http://localhost:4200/Bangalore/order-success";
 	}
-	
-	// res.render('response.html', {key: key,salt: salt,txnid: txnid,amount: amount, productinfo: productinfo, 
-	// firstname: firstname, email: email, mihpayid : mihpayid, status: status,resphash: resphash,msg:msg});
-	
-	res.redirect(url.format({
-		pathname: urlRedirect,
-		query: {
-		   "transID": txnid,
-		 }
+
+	var sqlUpdate = "UPDATE `users` SET `cart`= ? WHERE `uid` = ?";
+  	sql.query(
+    sqlUpdate,
+    [
+      '[]',
+      uid
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.redirect(url.format({
+			pathname: urlRedirect,
+			query: {
+			   "transID": txnid,
+			 }
 		}));
+      } else {
+        res.redirect(url.format({
+			pathname: urlRedirect,
+			query: {
+			   "transID": txnid,
+			 }
+		}));
+      }
+    }
+  );
+	
+	
 });
 
 router.post('/saveorder', function(req, res) {
@@ -94,7 +113,7 @@ router.post('/saveorder', function(req, res) {
 	orderDateTime=[this.orderDate, this.orderTime];
 	orderdatetime=JSON.stringify(orderDateTime);
 
-	var sqlInsert = "INSERT INTO `orders`(`userId`, `txnid`,`orderdate`, `amount`, `securitydeposit`, `checkoutItemData`, `pinfo`, `fname`, `lname`, `mobile`, `email`, `address`, `city`, `state`, `pincode`, `selfpickup`, `coupon`, `status`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	var sqlInsert = "INSERT INTO `orders`(`userId`, `txnid`,`orderdate`, `amount`, `securitydeposit`, `checkoutItemData`, `pinfo`, `fname`, `mobile`, `email`, `address`, `city`, `state`, `pincode`, `selfpickup`, `coupon`, `status`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
       req.body.uid,
@@ -105,7 +124,6 @@ router.post('/saveorder', function(req, res) {
 	  req.body.checkoutProductsInfo,
 	  req.body.pinfo,
 	  req.body.fname,
-	  req.body.lname,
 	  req.body.mobile,
 	  req.body.email,
 	  req.body.address,
@@ -132,6 +150,25 @@ router.post('/updateorder', function(req, res) {
     [
 		req.body.status,
       	req.body.txnid,
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: 'Updated Successfully', txnid: req.body.txnid});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
+/**
+ * Deleting the transaction on failure or cancelling of payment
+ */
+router.post('/deleteorder', function(req, res) {
+    var deleteOrder = `DELETE FROM orders WHERE txnid = ?`;
+    sql.query(deleteOrder,
+    [
+          req.body.txnid,
     ],
     (err) => {
       if (!err) {
