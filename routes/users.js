@@ -6,7 +6,7 @@ var sql = require("../db.js");
 /* GET all users */
 router.get('/', function(req, res) {
   sql.query(
-      `SELECT uid, uname, email, logintype, cart, address FROM users`,
+      `SELECT uid, uname, email, logintype, cart, address,billingaddress FROM users`,
       (err, rows) => {
         if (!err) {
           res.send(rows);
@@ -20,7 +20,7 @@ router.get('/', function(req, res) {
 /* GET user details by id*/
 router.get('/getUserInfo/:getid', function(req, res, next) {
   sql.query(
-    `SELECT uid, uname, email, cart, address FROM users where uid = ?`,
+    `SELECT uid, uname, email, cart, address,billingaddress FROM users where uid = ?`,
     [req.params.getid],
     (err, rows) => {
       if (!err) {
@@ -138,6 +138,21 @@ router.get('/address/:usrid', function(req, res, next) {
   );
 });
 
+/* GET billing address details */
+router.get('/billingaddress/:usrid', function(req, res, next) {
+  sql.query(
+    `SELECT billingaddress FROM users where uid = ?`,
+    [req.params.usrid],
+    (err, rows) => {
+      if (!err) {
+        res.send(rows);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 // Update address
 router.put("/updateaddress/:auid", (req, res) => {
   var sqlUpdate = "UPDATE `users` SET `address`= ? WHERE `uid` = ?";
@@ -156,5 +171,38 @@ router.put("/updateaddress/:auid", (req, res) => {
     }
   );
 });
+
+// Update billing address
+router.put("/updatebilladdress/:bauid", (req, res) => {
+  var sqlUpdate = "UPDATE `users` SET `billingaddress`= ? WHERE `uid` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.address,
+      req.params.bauid
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'Billing address updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Delete a address by id
+router.delete('/updateaddress/:id', (req, res) => {
+  mysqlConnection.query('delete from users where uid = ?', [req.params.id], (err) => {
+    if (!err) {
+        res.send('Deleted succesfully');
+    }
+     else{
+      res.send({ error: 'Error' });
+    }
+      
+  })
+});
+
 
 module.exports = router;

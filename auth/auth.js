@@ -266,7 +266,7 @@ router.post("/register", (req, res) => {
   cryptPassword += encryptedTime.final('hex');
 
   let insQuery =
-    "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `cart`,`token`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `cart`,`token`, `address`, `billingaddress`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   let checkUser = "select uname from users where email = ? and logintype = 'web'";
   sql.query(checkUser, [req.body.email], (err, rows) => {
     if (!err) {
@@ -282,6 +282,8 @@ router.post("/register", (req, res) => {
             req.body.phone,
             "[]",
             logintoken,
+            "[]",
+            "[]"
           ],
           (err, rows) => {
             if (!err) {
