@@ -81,7 +81,7 @@ new FacebookStrategy(
   {
     clientID: '356629928555679',
     clientSecret: '324f33ea1a83490d4b6a3bce532b0180',
-    callbackURL: 'http://localhost:3000/auth/facebook/callback',
+    callbackURL: `${constants.apiUrl}auth/facebook/callback`,
     profileFields: ["email", "name"]
   },
   function(accessToken, refreshToken, profile, done) {
@@ -100,7 +100,7 @@ new FacebookStrategy(
 passport.use(new GoogleStrategy({
   clientID: '499813159230-9cmbhghe7bvhauibvkohie1p09uu1ft4.apps.googleusercontent.com',
   clientSecret: 'VvyZw4p9_C14yiEExxlOWW1j',
-  callbackURL: "http://localhost:3000/auth/google/callback"
+  callbackURL: `${constants.apiUrl}auth/google/callback`
 },
 function(accessToken, refreshToken, profile, done) {
 console.log(profile);

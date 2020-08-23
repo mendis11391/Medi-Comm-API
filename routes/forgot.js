@@ -44,11 +44,11 @@ router.post('/send', cors(), (req, res) => {
             `;
 
                     let transporter = nodemailer.createTransport({
-                        host: 'mail.irentout.com',
+                        host: 'mail.localhost:4200',
                         port: 587, //Note: change to port:465 when website runs in https://localhost:4200
                         secure: false, //Note: may be true
                         auth: {
-                            user: 'passwordreset@irentout.com',
+                            user: 'passwordreset@localhost:4200',
                             pass: 'iro@fci123'
                         },
                         tls: {
@@ -59,7 +59,7 @@ router.post('/send', cors(), (req, res) => {
                     });
 
                     let HelperOptions = {
-                        from: '"Irentout" <passwordreset@irentout.com>',
+                        from: '"Irentout" <passwordreset@localhost:4200>',
                         to: emailId,
                         subject: 'Irentout - Reset Password link',
                         text: 'Hello',

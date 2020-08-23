@@ -68,7 +68,7 @@ router.get('/checkemail/:emailEx', function(req, res) {
 /* GET cart details */
 router.get('/cart/:id', function(req, res, next) {
   sql.query(
-    `SELECT uid, uname, email, cart FROM users where token = ?`,
+    `SELECT uid, uname, email, cart FROM users where uid = ?`,
     [req.params.id],
     (err, rows) => {
       if (!err) {
@@ -192,7 +192,7 @@ router.put("/updatebilladdress/:bauid", (req, res) => {
 });
 
 // Delete a address by id
-router.delete('/updateaddress/:id', (req, res) => {
+router.delete('/deleteaddress/:id', (req, res) => {
   mysqlConnection.query('delete from users where uid = ?', [req.params.id], (err) => {
     if (!err) {
         res.send('Deleted succesfully');

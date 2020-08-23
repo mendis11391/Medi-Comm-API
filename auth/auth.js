@@ -45,7 +45,7 @@ router.get(
               (err, rows) => {
                 if (!err) {
                   return res.redirect(
-                    `http://localhost:4200?id=${req.user.id}&token=${token}&login=google&existing=false`
+                    `${constants.frontendUrl}/?id=${req.user.id}&token=${token}&login=google&existing=false`
                   );
                 } else {
                   res.send({
@@ -64,7 +64,7 @@ router.get(
               (err, rows) => {
                 if (!err) {
                   return res.redirect(
-                    `http://localhost:4200?id=${req.user.id}&token=${token}&login=google&existing=true`
+                    `${constants.frontendUrl}/?id=${req.user.id}&token=${token}&login=google&existing=true`
                   );
                 }
               }
@@ -122,7 +122,7 @@ router.get(
               (err, rows) => {
                 if (!err) {
                   return res.redirect(
-                    `http://localhost:4200/?uid=${req.user.id}&token=${token}&logintype=google&existinguser=false`
+                    `http://localhost:4200?uid=${req.user.id}&token=${token}&logintype=google&existinguser=false`
                   );
                 } else {
                   res.send({

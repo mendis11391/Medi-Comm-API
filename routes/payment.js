@@ -4,6 +4,7 @@ var router = express.Router();
 const url = require('url');  
 
 var sql = require("../db.js");
+const constants = require("../constant/constUrl");
 
 router.use(function(req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
@@ -47,7 +48,7 @@ router.post('/', function(req, res){
 });
 
 router.post('/response', function(req, res){
-	var urlRedirect = `http://localhost:4200/${req.body.city}/failure`;
+	var urlRedirect = `${constants.frontendUrl}/${req.body.city}/failure`;
 	var key = req.body.key;
 	var salt = 'm5sx41HICr';
 	var txnid = req.body.txnid;
@@ -73,7 +74,7 @@ router.post('/response', function(req, res){
 	var msg = 'Payment failed for Hash not verified...';
 	if(calchash == resphash){
 		msg = 'Transaction Successful and Hash Verified...';
-		urlRedirect = "http://localhost:4200/Bangalore/order-success";
+		urlRedirect = `${constants.frontendUrl}/Bangalore/order-success`;
 	}
 
 	var sqlUpdate = "UPDATE `users` SET `cart`= ? WHERE `uid` = ?";

@@ -1,11 +1,15 @@
 const url = 'http://localhost:3000/';
-const appurl = 'http://localhost:4200/';
+const appurl = 'http://localhost:4200';
+
+// const url = 'http://irentout.com/api/';
+// const appurl = 'http://irentout.com';
 
 module.exports = Object.freeze({
+    frontendUrl: `${appurl}`,
+    apiUrl: `${url}`,
     appFrontDashboard: `${appurl}dashboard`,
     appFrontLogin: `${appurl}auth/login`,
     facebookCallback: `/auth/facebook/callback`,
     facebookCallbackfullurl: `${url}auth/facebook/callback`,
-    facebookOpenUrl: `/auth/facebook`,
-    ANOTHER_CONSTANT: 'another value'
+    facebookOpenUrl: `/auth/facebook`
 });
