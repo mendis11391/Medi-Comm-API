@@ -298,7 +298,7 @@ router.post("/", upload.array("product_image", 12), function (req, res, next) {
   const prodCode = `IRO${categoryCode}${prodModel}${rand}`;
 
   var sqlInsert =
-    "INSERT INTO `prod_details`(`prod_id`, `prod_name`, `prod_price`, `prod_img`, `prod_description`, `prod_ram`, `prod_disktype`, `prod_disksize`, `prod_specification`, `prod_status`, `prod_processor`, `prod_screensize`, `prod_tenure`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO `prod_details`(`prod_id`, `prod_name`, `prod_qty`, `prod_price`, `prod_img`, `prod_description`, `prod_ram`, `prod_disktype`, `prod_disksize`, `prod_specification`, `prod_status`, `prod_processor`, `prod_screensize`, `prod_tenure`, `prod_featured`, `prod_bestseller`, `prod_newproducts`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   var sqlBrandIns =
     "INSERT INTO `products`(`prod_id`,`prod_brand_id`,`prod_cat_id`,`prod_status`, `prod_available_cities`, `prod_code`) values (?, ?, ?, ?, ?, ?)";
   sql.query(
@@ -306,6 +306,7 @@ router.post("/", upload.array("product_image", 12), function (req, res, next) {
     [
       unqProdId,
       req.body.name,
+      req.body.qty,
       req.body.price,
       imgName,
       req.body.description,
@@ -317,6 +318,9 @@ router.post("/", upload.array("product_image", 12), function (req, res, next) {
       req.body.processor,
       req.body.screen_size,
       req.body.tenure,
+      req.body.featured,
+      req.body.bestSeller,
+      req.body.newProducts
     ],
     (err) => {
       if (!err) {

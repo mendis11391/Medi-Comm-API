@@ -1,12 +1,13 @@
 var express = require('express');
 var router = express.Router();
+var crypto = require("crypto");
 
 var sql = require("../db.js");
 
 /* GET all users */
 router.get('/', function(req, res) {
   sql.query(
-      `SELECT uid, uname, email, logintype, cart, address,billingaddress FROM users`,
+      `SELECT uid, uname, email, phone, logintype, cart, address,billingaddress FROM users`,
       (err, rows) => {
         if (!err) {
           res.send(rows);
@@ -20,7 +21,7 @@ router.get('/', function(req, res) {
 /* GET user details by id*/
 router.get('/getUserInfo/:getid', function(req, res, next) {
   sql.query(
-    `SELECT uid, uname, email, cart, address,billingaddress FROM users where uid = ?`,
+    `SELECT uid, uname, email, phone, cart, address,billingaddress FROM users where uid = ?`,
     [req.params.getid],
     (err, rows) => {
       if (!err) {
@@ -32,10 +33,10 @@ router.get('/getUserInfo/:getid', function(req, res, next) {
   );
 });
 
-/* GET cart details */
+/* GET users by id details */
 router.get('/:id', function(req, res, next) {
   sql.query(
-    `SELECT uid, uname, email, cart FROM users where uid = ?`,
+    `SELECT uid, uname, email, phone, cart, address, billingaddress FROM users where uid = ?`,
     [req.params.id],
     (err, rows) => {
       if (!err) {
@@ -73,6 +74,90 @@ router.get('/cart/:id', function(req, res, next) {
     (err, rows) => {
       if (!err) {
         res.send(rows);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update users name
+router.put("/updateuser", (req, res) => {
+
+  var sqlUpdate = "UPDATE `users` SET `uname`= ? WHERE `uid` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      uname=req.body.firstName+" "+req.body.lastName,
+      req.body.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'users name updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update users email
+router.put("/updateemail", (req, res) => {
+
+  var sqlUpdate = "UPDATE `users` SET `email`= ? WHERE `uid` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      email=req.body.email,
+      req.body.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'users email updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update users mobile no
+router.put("/updatemobile", (req, res) => {
+
+  var sqlUpdate = "UPDATE `users` SET `phone`= ? WHERE `uid` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      email=req.body.mobile,
+      req.body.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'users mobile updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update users password
+router.put("/updatepassword", (req, res) => {
+
+  const encryptedTime = crypto.createCipher('aes-128-cbc', 'irent@key*');
+  let cryptPassword = encryptedTime.update(req.body.upass, 'utf8', 'hex')
+  cryptPassword += encryptedTime.final('hex');
+
+  var sqlUpdate = "UPDATE `users` SET `upass`= ? WHERE `uid` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      upass=cryptPassword,
+      req.body.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'users updated'});
       } else {
         res.send({ error: err });
       }
@@ -190,19 +275,5 @@ router.put("/updatebilladdress/:bauid", (req, res) => {
     }
   );
 });
-
-// Delete a address by id
-router.delete('/deleteaddress/:id', (req, res) => {
-  mysqlConnection.query('delete from users where uid = ?', [req.params.id], (err) => {
-    if (!err) {
-        res.send('Deleted succesfully');
-    }
-     else{
-      res.send({ error: 'Error' });
-    }
-      
-  })
-});
-
 
 module.exports = router;
