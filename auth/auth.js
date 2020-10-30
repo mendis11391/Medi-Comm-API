@@ -122,7 +122,7 @@ router.get(
               (err, rows) => {
                 if (!err) {
                   return res.redirect(
-                    `http://localhost:4200?uid=${req.user.id}&token=${token}&logintype=google&existinguser=false`
+                    `${constants.frontendUrl}?uid=${req.user.id}&token=${token}&logintype=google&existinguser=false`
                   );
                 } else {
                   res.send({
@@ -141,7 +141,7 @@ router.get(
               (err, rows) => {
                 if (!err) {
                   return res.redirect(
-                    `http://localhost:4200/?uid=${req.user.id}&token=${token}&logintype=google&existinguser=true`
+                    `${constants.frontendUrl}/?uid=${req.user.id}&token=${token}&logintype=google&existinguser=true`
                   );
                 }
               }
@@ -310,7 +310,7 @@ router.post("/register", (req, res) => {
 });
 
 router.get("/failure", (req, res) => {
-  return res.redirect("http://localhost:4200/login");
+  return res.redirect(`${constants.frontendUrl}/login`);
 });
 
 

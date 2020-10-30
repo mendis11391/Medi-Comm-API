@@ -7,7 +7,7 @@ var sql = require("../db.js");
 /* GET all users */
 router.get('/', function(req, res) {
   sql.query(
-      `SELECT uid, uname, email, phone, logintype, cart, address,billingaddress FROM users`,
+      `SELECT uid, uname, email, phone, logintype, wishlist, cart, address,billingaddress FROM users`,
       (err, rows) => {
         if (!err) {
           res.send(rows);
@@ -21,7 +21,7 @@ router.get('/', function(req, res) {
 /* GET user details by id*/
 router.get('/getUserInfo/:getid', function(req, res, next) {
   sql.query(
-    `SELECT uid, uname, email, phone, cart, address,billingaddress FROM users where uid = ?`,
+    `SELECT uid, uname, email, phone, wishlist, cart, address,billingaddress FROM users where uid = ?`,
     [req.params.getid],
     (err, rows) => {
       if (!err) {
@@ -36,7 +36,7 @@ router.get('/getUserInfo/:getid', function(req, res, next) {
 /* GET users by id details */
 router.get('/:id', function(req, res, next) {
   sql.query(
-    `SELECT uid, uname, email, phone, cart, address, billingaddress FROM users where uid = ?`,
+    `SELECT uid, uname, email, phone, wishlist, cart, address, billingaddress FROM users where uid = ?`,
     [req.params.id],
     (err, rows) => {
       if (!err) {
@@ -70,6 +70,22 @@ router.get('/checkemail/:emailEx', function(req, res) {
 router.get('/cart/:id', function(req, res, next) {
   sql.query(
     `SELECT uid, uname, email, cart FROM users where uid = ?`,
+    [req.params.id],
+    (err, rows) => {
+      if (!err) {
+        res.send(rows);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+/* GET cart details */
+router.get('/wishlist/:id', function(req, res, next) {
+
+  sql.query(
+    `SELECT uid, uname, email, wishlist FROM users where uid = ?`,
     [req.params.id],
     (err, rows) => {
       if (!err) {
@@ -182,6 +198,25 @@ router.put("/update", (req, res) => {
     (err, rows) => {
       if (!err) {
         res.send({'message': 'users updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update wishlist
+router.put("/wishlist/:id", (req, res) => {
+  var sqlUpdate = "UPDATE `users` SET `wishlist`= ? WHERE `uid` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.wishlist,
+      req.params.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'wishlist updated'});
       } else {
         res.send({ error: err });
       }

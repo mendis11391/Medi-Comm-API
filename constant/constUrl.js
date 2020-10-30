@@ -1,7 +1,7 @@
 const url = 'http://localhost:3000/';
 const appurl = 'http://localhost:4200';
 
-// const url = 'http://irentout.com/api/';
+// const url = 'http://iroapi.irentout.com/';
 // const appurl = 'http://irentout.com';
 
 module.exports = Object.freeze({
