@@ -32,7 +32,7 @@ router.get(
         if (!err) {
           if (rows.length <= 0) {
             sql.query(
-              "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `token`) VALUES (?, ?, ?, ?, ?, ?, ?)",
+              "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `wishlist`, `cart`, `token`,`address`, `billingaddress`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
               [
                 fbId,
                 `${req.user._json.first_name} ${req.user._json.last_name}`,
@@ -40,7 +40,11 @@ router.get(
                 req.user._json.email,
                 "Facebook",
                 "N/A",
+                "[]",
+                "[]",
                 token,
+                "[]",
+                "[]"
               ],
               (err, rows) => {
                 if (!err) {
@@ -108,7 +112,7 @@ router.get(
         if (!err) {
           if (rows.length <= 0) {
             sql.query(
-              "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `cart`, `token`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+              "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `wishlist`, `cart`, `token`,`address`, `billingaddress`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
               [
                 req.user.id,
                 req.user._json.name,
@@ -117,7 +121,10 @@ router.get(
                 "Google",
                 "N/A",
                 "[]",
+                "[]",
                 token,
+                "[]",
+                "[]"
               ],
               (err, rows) => {
                 if (!err) {
@@ -129,6 +136,7 @@ router.get(
                     token: null,
                     authenticated: false,
                     newUser: true,
+                    err: err
                   });
                 }
               }
@@ -266,7 +274,7 @@ router.post("/register", (req, res) => {
   cryptPassword += encryptedTime.final('hex');
 
   let insQuery =
-    "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `cart`,`token`, `address`, `billingaddress`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `wishlist`, `cart`,`token`, `address`, `billingaddress`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   let checkUser = "select uname from users where email = ? and logintype = 'web'";
   sql.query(checkUser, [req.body.email], (err, rows) => {
     if (!err) {
@@ -280,6 +288,7 @@ router.post("/register", (req, res) => {
             req.body.email,
             "web",
             req.body.phone,
+            "[]",
             "[]",
             logintoken,
             "[]",
