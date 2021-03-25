@@ -3,7 +3,7 @@ var router = express.Router();
 
 var sql = require("../db.js");
 
-/* GET all users */
+/* GET all orders */
 router.get('/', function(req, res) {
   sql.query(
       `SELECT * FROM orders`,
@@ -17,7 +17,7 @@ router.get('/', function(req, res) {
     );
 });
 
-/* GET cart details */
+/* GET orders By user id */
 router.get('/:id', function(req, res, next) {
   var mainArr = [];
   var ids = [];
@@ -39,7 +39,9 @@ router.get('/:id', function(req, res, next) {
 
           mainArr.push(row);
         });
+        
       } else {
+        console.log(err);
         res.send({ error: err });
       }
 
@@ -78,18 +80,37 @@ router.get('/:id', function(req, res, next) {
   
 });
 
-// Update users
-router.put("/update", (req, res) => {
-  var sqlUpdate = "UPDATE `users` SET `upass`= ? WHERE `uid` = ?";
+// Update orders
+router.put("/update/:id", (req, res) => {
+  var id = req.params.id;
+  var sqlUpdate = 'UPDATE orders SET delivery_status= ?, refund_status= ? WHERE txnid= ?';
   sql.query(
     sqlUpdate,
     [
-      req.body.upass,
-      req.body.id
+      req.body.deliveryStatus,
+      req.body.refundStatus,
+      id
     ],
     (err, rows) => {
       if (!err) {
-        res.send({'message': 'users updated'});
+        res.send({'message': 'order status updated'});
+        console.log('updated')
+      } else {
+        res.send({ error: err });
+        console.log(err);
+      }
+    }
+  );
+});
+
+
+router.get('/txn/:id', function(req, res, next) {
+  sql.query(
+    `SELECT * FROM orders where txnid = ?`,
+    [req.params.id],
+    (err, rows) => {
+      if (!err) {
+        res.send(rows);
       } else {
         res.send({ error: err });
       }

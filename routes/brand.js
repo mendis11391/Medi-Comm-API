@@ -98,7 +98,7 @@ function isTimeValid(dt2, dt1) {
 }
 
 // Get all brands
-router.get("/", verifyToken, (req, res) => {
+router.get("/", (req, res) => {
   sql.query(
     `SELECT * FROM brand`,
     (err, rows, fields) => {

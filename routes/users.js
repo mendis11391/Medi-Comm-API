@@ -21,7 +21,7 @@ router.get('/', function(req, res) {
 /* GET user details by id*/
 router.get('/getUserInfo/:getid', function(req, res, next) {
   sql.query(
-    `SELECT uid, uname, email, phone, wishlist, cart, address,billingaddress FROM users where uid = ?`,
+    `SELECT uid, uname, email, phone, wishlist, logintype, cart, address,billingaddress FROM users where uid = ?`,
     [req.params.getid],
     (err, rows) => {
       if (!err) {

@@ -109,7 +109,7 @@ router.get("/", (req, res) => {
       if (!err) {
         var tags = [];
         rows.forEach((row, i) => {
-          tags.push(row.prod_name.toLowerCase(), row.brand_name.toLowerCase(), row.prod_disksize.toLowerCase(), row.cat_name.toLowerCase());
+          tags.push(row.brand_name, row.prod_ram, row.prod_disksize, row.prod_processor, row.prod_disktype, row.prod_name, row.cat_name);
           var splitPath = row.prod_img.split("[--split--]");
           row.prod_img = splitPath;
           row['prod_tags'] = tags;
@@ -122,6 +122,24 @@ router.get("/", (req, res) => {
           });
           row.prod_tenure = arr;
           arr = [];
+        });
+        var collection = [];
+        rows.forEach((row, i) => {
+          if(row.prod_featured==1 && row.prod_bestseller==1 && row.prod_newproducts==1){
+            collection.push('Featured','Best Seller', 'New Arrival');
+          } else if(row.prod_featured==0 && row.prod_bestseller==1 && row.prod_newproducts==1){
+            collection.push('Best Seller', 'New Arrival');
+          } else if(row.prod_featured==0 && row.prod_bestseller==0 && row.prod_newproducts==1){
+            collection.push('New Arrival');
+          } else if(row.prod_featured==1 && row.prod_bestseller==1 && row.prod_newproducts==0){
+            collection.push('Featured','Best Seller');
+          } else if(row.prod_featured==1 && row.prod_bestseller==0 && row.prod_newproducts==0){
+            collection.push('Featured');
+          } else if(row.prod_featured==0 && row.prod_bestseller==1 && row.prod_newproducts==0){
+            collection.push('Best Seller');
+          }
+          row['collection'] = collection;
+          collection = [];
         });
         res.send(rows);
       } else {
@@ -147,7 +165,7 @@ router.get("/productsByCity/:city", (req, res) => {
       if (!err) {
         var tags = [];
         rows.forEach((row, i) => {
-          tags.push(row.cat_name.toLowerCase(), row.prod_name.toLowerCase(), row.brand_name.toLowerCase(), row.prod_disksize.toLowerCase(), row.cat_name.toLowerCase());
+          tags.push(row.brand_name, row.prod_ram, row.prod_disksize, row.prod_processor, row.prod_disktype, row.prod_name, row.cat_name);
           var splitPath = row.prod_img.split("[--split--]");
           row.prod_img = splitPath;
           row['prod_tags'] = tags;
@@ -160,6 +178,24 @@ router.get("/productsByCity/:city", (req, res) => {
           });
           row.prod_tenure = arr;
           arr = [];
+        });
+        var collection = [];
+        rows.forEach((row, i) => {
+          if(row.prod_featured==1 && row.prod_bestseller==1 && row.prod_newproducts==1){
+            collection.push('Featured','Best Seller', 'New Arrival');
+          } else if(row.prod_featured==0 && row.prod_bestseller==1 && row.prod_newproducts==1){
+            collection.push('Best Seller', 'New Arrival');
+          } else if(row.prod_featured==0 && row.prod_bestseller==0 && row.prod_newproducts==1){
+            collection.push('New Arrival');
+          } else if(row.prod_featured==1 && row.prod_bestseller==1 && row.prod_newproducts==0){
+            collection.push('Featured','Best Seller');
+          } else if(row.prod_featured==1 && row.prod_bestseller==0 && row.prod_newproducts==0){
+            collection.push('Featured');
+          } else if(row.prod_featured==0 && row.prod_bestseller==1 && row.prod_newproducts==0){
+            collection.push('Best Seller');
+          }
+          row['collection'] = collection;
+          collection = [];
         });
         res.send(rows);
       } else {
@@ -219,18 +255,28 @@ router.delete("/:id", verifyToken, (req, res) => {
 });
 
 // Update a product information
-router.put("/:id", (req, res) => {
+router.put("/:id",upload.array("product_image",12), (req, res) => {
+  var imgName = productImgArr.join("[--split--]");
+  const editImages=[];
+  editImages.push(req.body.product_image);
+  if(imgName.length==0){
+    imgName=editImages[0].join("[--split--]");
+  }
+  productImgArr = [];
   var id = req.params.id;
 
   var prodUpdate =
     "UPDATE `products` SET `prod_brand_id`=?,`prod_cat_id`=?,`prod_status`=? WHERE `prod_id` = ?";
-  var sqlUpdate = `UPDATE prod_details SET prod_name= '${req.body.title}',prod_price= '${req.body.price}',prod_description= '${req.body.description}',prod_ram= '${req.body.ram}',prod_disktype= '${req.body.disk_type}',prod_disksize= '${req.body.disk_size}',prod_specification= '${req.body.specifications}',prod_status= '${req.body.status}',prod_processor= '${req.body.processor}',prod_screensize= '${req.body.screen_size}',prod_tenure= '${req.body.tenureFinal}' WHERE prod_id = '${id}'`;
+  var sqlUpdate = `UPDATE prod_details SET prod_name= ?,prod_price= ?,prod_qty= ?,prod_deliveryDate= ?,prod_img=?,prod_description= ?,prod_ram= ?,prod_disktype= ?,prod_disksize= ?,prod_specification= ?,prod_status= ?,prod_processor= ?,prod_screensize= ?,specs= ?,prod_tenure= ? WHERE prod_id = ?`;
   var sqlGet = "select * from prod_details where prod_id = ?";
   sql.query(
     sqlUpdate,
     [
       req.body.title,
       req.body.price,
+      req.body.qty,
+      req.body.deliveryDate,
+      imgName,
       req.body.description,
       req.body.ram,
       req.body.disk_type,
@@ -239,21 +285,13 @@ router.put("/:id", (req, res) => {
       req.body.status,
       req.body.processor,
       req.body.screen_size,
-      req.body.tenureFinal,
+      req.body.specs,
+      req.body.tenure,
+      req.params.id
     ],
     (err) => {
       if (!err) {
-        sql.query(
-          prodUpdate,
-          [req.body.brand, req.body.category, req.body.status, id],
-          (err) => {
-            if (!err) {
-              res.send({ message: "Update Successfully" });
-            } else {
-              res.send({ message: "Query failure" });
-            }
-          }
-        );
+        res.send({ message: "Update Successfully" });
       } else {
         res.send({"Error": err});
       }
@@ -298,7 +336,7 @@ router.post("/", upload.array("product_image", 12), function (req, res, next) {
   const prodCode = `IRO${categoryCode}${prodModel}${rand}`;
 
   var sqlInsert =
-    "INSERT INTO `prod_details`(`prod_id`, `prod_name`, `prod_qty`, `prod_price`,`prod_deliveryDate`, `prod_img`, `prod_description`, `prod_ram`, `prod_disktype`, `prod_disksize`, `prod_specification`, `prod_status`, `prod_processor`, `prod_screensize`, `prod_tenure`, `prod_featured`, `prod_bestseller`, `prod_newproducts`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO `prod_details`(`prod_id`, `prod_name`, `prod_qty`, `prod_price`,`prod_deliveryDate`, `prod_img`, `prod_offers`, `prod_description`, `prod_ram`, `prod_disktype`, `prod_disksize`, `prod_specification`, `prod_status`, `prod_processor`, `prod_screensize`, `specs`, `prod_tenure`, `prod_featured`, `prod_bestseller`, `prod_newproducts`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   var sqlBrandIns =
     "INSERT INTO `products`(`prod_id`,`prod_brand_id`,`prod_cat_id`,`prod_status`, `prod_available_cities`, `prod_code`) values (?, ?, ?, ?, ?, ?)";
   sql.query(
@@ -310,6 +348,7 @@ router.post("/", upload.array("product_image", 12), function (req, res, next) {
       req.body.price,
       req.body.deliveryDate,
       imgName,
+      req.body.offers,
       req.body.description,
       req.body.ram,
       req.body.disk_type,
@@ -318,6 +357,7 @@ router.post("/", upload.array("product_image", 12), function (req, res, next) {
       req.body.status,
       req.body.processor,
       req.body.screen_size,
+      req.body.specs,
       req.body.tenure,
       req.body.featured,
       req.body.bestSeller,

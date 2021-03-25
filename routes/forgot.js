@@ -46,7 +46,7 @@ router.post('/send', cors(), (req, res) => {
                     let transporter = nodemailer.createTransport({
                         host: 'mail.irentout.com',
                         port: 587, //Note: change to port:465 when website runs in https://irentout.com
-                        secure: false, //Note: may be true
+                        secure: true, //Note: may be true
                         auth: {
                             user: 'passwordreset@irentout.com',
                             pass: 'iro@fci123'

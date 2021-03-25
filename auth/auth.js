@@ -192,7 +192,7 @@ router.post("/login", (req, res) => {
           const finalCurTime = `${year},${month},${curdate},${curhours},${curmin},${cursec},${curmilsec}`;
 
 
-          token += ' ' + finalCurTime;
+          // token += ' ' + finalCurTime;
           
           const updateTokenQuery = `UPDATE admin SET token=? where uname= ? and passcode = ?`;
           sql.query(
@@ -325,6 +325,19 @@ router.get("/failure", (req, res) => {
 
 router.post('/userdetails', (req, res) => {
   let getDetails = "select uid, uname, logintype, cart from users where token = ?";
+  sql.query(getDetails, [req.body.token], (err, rows) => {
+    if (!err) {
+      if (rows.length > 0) {
+       res.send({'data': rows, authenticated: true});
+      } else {
+        res.send({'data': {}, authenticated: false});
+      }
+    }
+  });
+});
+
+router.post('/admindetails', (req, res) => {
+  let getDetails = `SELECT user_id, uname, usertype, email, products, orders FROM admin WHERE token = ?`;
   sql.query(getDetails, [req.body.token], (err, rows) => {
     if (!err) {
       if (rows.length > 0) {

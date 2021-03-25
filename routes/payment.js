@@ -72,10 +72,21 @@ router.post('/response', function(req, res){
 	var calchash = cryp.digest('hex');
 	
 	var msg = 'Payment failed for Hash not verified...';
-	if(calchash == resphash){
+	// if(calchash == resphash){
+	// 	msg = 'Transaction Successful and Hash Verified...';
+	// 	urlRedirect = `${constants.frontendUrl}/Bangalore/order-success`;
+	// }
+	if(status=='success'){
 		msg = 'Transaction Successful and Hash Verified...';
 		urlRedirect = `${constants.frontendUrl}/Bangalore/order-success`;
 	}
+
+	var updateOrder = `UPDATE orders SET payuid = ? where txnid= ?`;
+	sql.query(updateOrder,
+    [
+		req.body.mihpayid,
+      	req.body.txnid,
+    ]);
 
 	var sqlUpdate = "UPDATE `users` SET `cart`= ? WHERE `uid` = ?";
   	sql.query(
@@ -114,11 +125,12 @@ router.post('/saveorder', function(req, res) {
 	orderDateTime=[this.orderDate, this.orderTime];
 	orderdatetime=JSON.stringify(orderDateTime);
 
-	var sqlInsert = "INSERT INTO `orders`(`userId`, `txnid`,`orderdate`, `amount`, `securitydeposit`, `checkoutItemData`, `pinfo`, `fname`, `mobile`, `email`, `address`, `city`, `state`, `pincode`, `selfpickup`, `coupon`, `status`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	var sqlInsert = "INSERT INTO `orders`(`userId`, `txnid`,`payuid`,`orderdate`, `amount`, `securitydeposit`, `checkoutItemData`, `pinfo`, `fname`, `mobile`, `email`, `address`, `city`, `state`, `pincode`, `selfpickup`, `coupon`, `status`,`delivery_status`,`refund_status`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
       req.body.uid,
 	  req.body.txnid,
+	  'N/A',
 	  orderdatetime,
       req.body.amount,
 	  req.body.securityDeposit,
@@ -133,7 +145,9 @@ router.post('/saveorder', function(req, res) {
 	  req.body.pincode,
 	  req.body.selfPickup,
 	  'N/A',
-	  'Initiated'
+	  'Initiated',
+	  'Delivery awaited',
+	  'Paid'
     ],
     (err) => {
       if (!err) {

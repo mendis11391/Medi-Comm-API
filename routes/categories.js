@@ -122,7 +122,7 @@ function isTimeValid(dt2, dt1) {
 }
 
 // Get all products
-router.get("/", verifyToken, (req, res) => {
+router.get("/", (req, res) => { //verifyToken
   sql.query(
     `SELECT * FROM category`,
     (err, rows, fields) => {
