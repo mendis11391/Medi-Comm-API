@@ -4,6 +4,20 @@ var crypto = require("crypto");
 
 var sql = require("../db.js");
 
+
+router.get('/address/:id', function(req, res) {
+  sql.query(
+      `CALL get_addressByCustomerID(${req.params.id}) `,
+      (err, rows) => {
+        if (!err) {
+          res.send(rows[0]);
+        } else {
+          res.send({ error: 'Error' });
+        }
+      }
+    );
+});
+
 /* GET all users */
 router.get('/', function(req, res) {
   sql.query(
@@ -21,7 +35,7 @@ router.get('/', function(req, res) {
 /* GET user details by id*/
 router.get('/getUserInfo/:getid', function(req, res, next) {
   sql.query(
-    `SELECT uid, uname, email, phone, wishlist, logintype, cart, address,billingaddress FROM users where uid = ?`,
+    `SELECT customer_id, firstName, lastName, mobile, email, password, registeredAt, lastLogin, login_type, token FROM customer WHERE customer_id=?`,
     [req.params.getid],
     (err, rows) => {
       if (!err) {

@@ -17,6 +17,32 @@ router.get('/', function(req, res) {
       );
 });
 
+router.get('/:id', function(req, res) {
+  sql.query(
+      `CALL get_cityById(${req.params.id}) `,
+      (err, rows) => {
+        if (!err) {
+          res.send(rows[0]);
+        } else {
+          res.send({ error: 'Error' });
+        }
+      }
+    );
+});
+
+router.get('/taxes/:id', function(req, res) {
+  sql.query(
+      `CALL get_taxesByCity(${req.params.id}) `,
+      (err, rows) => {
+        if (!err) {
+          res.send(rows[0]);
+        } else {
+          res.send({ error: 'Error' });
+        }
+      }
+    );
+});
+
 // Update deliveryDate
 router.put('/', (req, res) => {
   // var sqlUpdate = "UPDATE `cities` SET `tentitiveDeleivery`= ? WHERE `cityname` = 'Bangalore'";

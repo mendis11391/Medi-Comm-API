@@ -175,7 +175,7 @@ router.post("/login", (req, res) => {
       if (!err) {
         if (rows.length > 0) {
 
-          const tokgen = new TokenGenerator(256, TokenGenerator.BASE71);
+          const tokgen = new TokenGenerator(256, TokenGenerator.BASE58);
           let token = tokgen.generate();
 
           const NoDtToken = token;
@@ -227,14 +227,14 @@ router.post("/userlogin", (req, res) => {
   cryptPassword += encryptedTime.final('hex');
 
   sql.query(
-    `SELECT uname from users WHERE email = ? and upass = ? and logintype = ?`,
+    `SELECT firstName from customer WHERE email = ? and password = ? and login_type = ?`,
     [req.body.email, cryptPassword, req.body.logintype],
     (err, rows) => {
       if (!err) {
         if (rows.length > 0) {
           const tokgen = new TokenGenerator(256, TokenGenerator.BASE71);
           const token = tokgen.generate();
-          const updateTokenQuery = `UPDATE users SET token = ? where email= ? and upass = ? and logintype = ?`;
+          const updateTokenQuery = `UPDATE customer SET token = ? where email= ? and password = ? and login_type = ?`;
           sql.query(
             updateTokenQuery,
             [token, req.body.email, cryptPassword, req.body.logintype],
@@ -324,7 +324,7 @@ router.get("/failure", (req, res) => {
 
 
 router.post('/userdetails', (req, res) => {
-  let getDetails = "select uid, uname, logintype, cart from users where token = ?";
+  let getDetails = "select customer_id, firstName, login_type from customer where token = ?";
   sql.query(getDetails, [req.body.token], (err, rows) => {
     if (!err) {
       if (rows.length > 0) {
@@ -337,7 +337,7 @@ router.post('/userdetails', (req, res) => {
 });
 
 router.post('/admindetails', (req, res) => {
-  let getDetails = `SELECT user_id, uname, usertype, email, products, orders FROM admin WHERE token = ?`;
+  let getDetails = `SELECT user_id, uname, usertype, email FROM admin WHERE token = ?`;
   sql.query(getDetails, [req.body.token], (err, rows) => {
     if (!err) {
       if (rows.length > 0) {
@@ -345,6 +345,8 @@ router.post('/admindetails', (req, res) => {
       } else {
         res.send({'data': {}, authenticated: false});
       }
+    } else{
+      res.send(err);
     }
   });
 });

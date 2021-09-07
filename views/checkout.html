@@ -51,7 +51,7 @@ color="e34524" bolt-logo="http://boltiswatching.com/wp-content/uploads/2015/09/B
     
     <div class="dv">
     <span class="text"><label>Transaction/Order ID:</label></span>
-    <span><input type="text" id="txnid" name="txnid" placeholder="Transaction ID" value="<%= orderid %>" /></span>
+    <span><input type="text" id="ordid" name="ordid" placeholder="Transaction ID" value="<%= orderid %>" /></span>
     </div>
     
     <div class="dv">
@@ -96,7 +96,7 @@ $('#payment_form').bind('keyup blur', function(){
           data: JSON.stringify({ 
             key: $('#key').val(),
 			salt: $('#salt').val(),
-			txnid: $('#txnid').val(),
+			ordid: $('#ordid').val(),
 			amount: $('#amount').val(),
 		    pinfo: $('#pinfo').val(),
             fname: $('#fname').val(),
@@ -118,7 +118,7 @@ function launchBOLT()
 {
 	bolt.launch({
 	key: $('#key').val(),
-	txnid: $('#txnid').val(), 
+	ordid: $('#ordid').val(), 
 	hash: $('#hash').val(),
 	amount: $('#amount').val(),
 	firstname: $('#fname').val(),
@@ -136,7 +136,7 @@ function launchBOLT()
 		var fr = '<form action=\"'+$('#surl').val()+'\" method=\"post\">' +
 		'<input type=\"hidden\" name=\"key\" value=\"'+BOLT.response.key+'\" />' +
 		'<input type=\"hidden\" name=\"salt\" value=\"'+$('#salt').val()+'\" />' +
-		'<input type=\"hidden\" name=\"txnid\" value=\"'+BOLT.response.txnid+'\" />' +
+		'<input type=\"hidden\" name=\"ordid\" value=\"'+BOLT.response.ordid+'\" />' +
 		'<input type=\"hidden\" name=\"amount\" value=\"'+BOLT.response.amount+'\" />' +
 		'<input type=\"hidden\" name=\"productinfo\" value=\"'+BOLT.response.productinfo+'\" />' +
 		'<input type=\"hidden\" name=\"firstname\" value=\"'+BOLT.response.firstname+'\" />' +

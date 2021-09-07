@@ -121,13 +121,13 @@ function isTimeValid(dt2, dt1) {
   return Math.abs(Math.round(diff));
 }
 
-// Get all products
-router.get("/", (req, res) => { //verifyToken
+// Get all categoris
+router.get("/", (req, res) => { 
   sql.query(
-    `SELECT * FROM category`,
+    `CALL get_categories()`,
     (err, rows, fields) => {
       if (!err) {
-        res.send(rows);
+        res.json(rows);
       } else {
         res.send({ error: 'Error' });
       }

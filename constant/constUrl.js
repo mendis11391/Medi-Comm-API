@@ -1,8 +1,8 @@
 const url = 'http://localhost:3000/';
 const appurl = 'http://localhost:4200';
 
-// const url = 'http://iroapi.irentout.com/';
-// const appurl = 'http://irentout.com';
+// const url = 'https://iroapi.irentout.com/';
+// const appurl = 'https://irentout.com';
 
 module.exports = Object.freeze({
     frontendUrl: `${appurl}`,

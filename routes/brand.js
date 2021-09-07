@@ -100,12 +100,12 @@ function isTimeValid(dt2, dt1) {
 // Get all brands
 router.get("/", (req, res) => {
   sql.query(
-    `SELECT * FROM brand`,
+    `CALL get_brands()`,
     (err, rows, fields) => {
       if (!err) {
-        res.send(rows);
+        res.json(rows);
       } else {
-        res.send({ error: 'Error' });
+        res.send({ error: err });
       }
     }
   );
@@ -119,7 +119,7 @@ router.get("/:id", (req, res) => {
     if (!err) {
       res.send(rows);
     } else {
-        res.send({ error: 'Error' });
+        res.send({ error: err });
     }
   });
 });

@@ -16,6 +16,7 @@ const port = process.env.PORT || 3000;
 
 var indexRouter = require('./routes/index');
 var adminRouter = require('./routes/admin');
+var assetsRouter = require('./routes/assets');
 var productsRouter = require('./routes/products');
 var authRouter = require('./auth/auth');
 var categoryRouter = require('./routes/categories');
@@ -28,6 +29,8 @@ var paymentsRouter = require('./routes/payment');
 var forgotRouter = require('./routes/forgot');
 var offersRouter = require('./routes/offers');
 var reviewsRouter = require('./routes/review');
+var userActivityRouter = require('./routes/userActivity');
+var adminActivityRouter = require('./routes/adminActivity');
 
 var app = express();
 
@@ -115,6 +118,7 @@ app.listen(port, () => console.log(`App is running in ${port}`));
 
 app.use('/', authRouter);
 app.use('/admin', adminRouter);
+app.use('/assets', assetsRouter);
 app.use('/products', productsRouter);
 app.use('/category', categoryRouter);
 app.use('/brand', brandRouter);
@@ -126,6 +130,8 @@ app.use('/payments', paymentsRouter);
 app.use('/forgotpassword', forgotRouter);
 app.use('/offers', offersRouter);
 app.use('/reviews', reviewsRouter);
+app.use('/activity',userActivityRouter);
+app.use('/backendActivity',adminActivityRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

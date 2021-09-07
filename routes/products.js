@@ -101,109 +101,177 @@ function isTimeValid(dt2, dt1) {
 }
 
 // Get all products
-router.get("/", (req, res) => {
-  let arr = [];
+router.get("/", (req, res) => { 
   sql.query(
-    `SELECT * FROM products a, prod_details b, brand c, category d WHERE a.prod_id = b.prod_id and a.prod_brand_id = c.brand_id and a.prod_cat_id = d.cat_id and a.prod_status = '1'`,
+    `CALL get_products()`,
     (err, rows, fields) => {
       if (!err) {
-        var tags = [];
-        rows.forEach((row, i) => {
-          tags.push(row.brand_name, row.prod_ram, row.prod_disksize, row.prod_processor, row.prod_disktype, row.prod_name, row.cat_name);
-          var splitPath = row.prod_img.split("[--split--]");
-          row.prod_img = splitPath;
-          row['prod_tags'] = tags;
-          tags = [];
-        });
-        rows.forEach((row) => {
-          tenureSplit = row.prod_tenure.split("[--split--]");
-          tenureSplit.forEach((a) => {
-            arr.push(a.split(":"));
-          });
-          row.prod_tenure = arr;
-          arr = [];
-        });
-        var collection = [];
-        rows.forEach((row, i) => {
-          if(row.prod_featured==1 && row.prod_bestseller==1 && row.prod_newproducts==1){
-            collection.push('Featured','Best Seller', 'New Arrival');
-          } else if(row.prod_featured==0 && row.prod_bestseller==1 && row.prod_newproducts==1){
-            collection.push('Best Seller', 'New Arrival');
-          } else if(row.prod_featured==0 && row.prod_bestseller==0 && row.prod_newproducts==1){
-            collection.push('New Arrival');
-          } else if(row.prod_featured==1 && row.prod_bestseller==1 && row.prod_newproducts==0){
-            collection.push('Featured','Best Seller');
-          } else if(row.prod_featured==1 && row.prod_bestseller==0 && row.prod_newproducts==0){
-            collection.push('Featured');
-          } else if(row.prod_featured==0 && row.prod_bestseller==1 && row.prod_newproducts==0){
-            collection.push('Best Seller');
-          }
-          row['collection'] = collection;
-          collection = [];
-        });
-        res.send(rows);
+          res.send(rows[0]);
       } else {
-        // res.render("error", {
-        //   message: "Oops something went wrong",
-        //   error: { status: 400, stack: "" },
-        // });
         res.send({ error: err });
       }
+    }
+  );
+});
+
+// Get all products tenures
+router.get("/tenures/:id", (req, res) => { 
+  sql.query(
+    `CALL get_tenure_by_priority(${req.params.id})`,
+    (err, rows, fields) => {
+      if (!err) {
+        res.json(rows);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Get all products specs
+router.get("/specs", (req, res) => { 
+  sql.query(
+    `CALL get_product_specs()`,
+    (err, rows, fields) => {
+      if (!err) {
+        res.json(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Get all products specs by id
+router.get("/specs/:id", (req, res) => { 
+  sql.query(
+    `CALL get_ProductSpecById(${req.params.id})`,
+    (err, rows, fields) => {
+      if (!err) {
+        res.json(rows);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Get all products
+router.get("/:id", (req, res) => { 
+  sql.query(
+    `CALL get_tenureById(${req.params.id})`,
+    (err, rows, fields) => {
+      if (!err) {
+        res.json(rows);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+router.get("/productsByCity/:id", (req, res) => { 
+  let products=[];
+  var pro2=[];
+  var len=0;
+  var len2=0;
+  sql.query(
+    `CALL get_products_by_city(${req.params.id})`,
+    (err, rows, fields) => {
+      if (!err) {
+        rows[0].forEach((res)=>{
+          products.push(res);
+          
+        });
+        
+      } else {
+        res.send({ error: err });
+      }
+      products.forEach((products,i,ele) => {
+        sql.query(
+          `CALL get_ProductSpecById(${products.product_id})`,
+          (err1, rows1, fields) => {
+            if (!err1) {  
+              len++;
+              // rows1[0].forEach((specs,i,el)=>{
+              //   let specifics=[];
+              //   len2++;
+              //   specifics.push(specs.spec_value);
+              //   if(len2===el.length){
+              //     products.specs=specifics;
+              //   }                
+              // });
+              let specObj={};
+              for(let i=0;i<rows1[0].length;i++){
+                products[rows1[0][i].spec_name ] = rows1[0][i].spec_value;
+                // products.specs = specObj;
+              }
+              // products.specs = rows1[0];  
+              pro2.push(products); 
+              if(len===ele.length){
+                res.send(pro2);
+              }
+            }
+          }
+        ); 
+        
+      });
+      
+        
+      
     }
   );
 });
 
 
 // Get all products by city
-router.get("/productsByCity/:city", (req, res) => {
-  let arr = [];
-  sql.query(
-    `SELECT * FROM products a, prod_details b, brand c, category d 
-    WHERE a.prod_id = b.prod_id and a.prod_brand_id = c.brand_id and a.prod_cat_id = d.cat_id 
-    and a.prod_status = '1' and (LOCATE('${req.params.city}', a.prod_available_cities) > 0)`,
-    (err, rows, fields) => {
-      if (!err) {
-        var tags = [];
-        rows.forEach((row, i) => {
-          tags.push(row.brand_name, row.prod_ram, row.prod_disksize, row.prod_processor, row.prod_disktype, row.prod_name, row.cat_name);
-          var splitPath = row.prod_img.split("[--split--]");
-          row.prod_img = splitPath;
-          row['prod_tags'] = tags;
-          tags = [];
-        });
-        rows.forEach((row) => {
-          tenureSplit = row.prod_tenure.split("[--split--]");
-          tenureSplit.forEach((a) => {
-            arr.push(a.split(":"));
-          });
-          row.prod_tenure = arr;
-          arr = [];
-        });
-        var collection = [];
-        rows.forEach((row, i) => {
-          if(row.prod_featured==1 && row.prod_bestseller==1 && row.prod_newproducts==1){
-            collection.push('Featured','Best Seller', 'New Arrival');
-          } else if(row.prod_featured==0 && row.prod_bestseller==1 && row.prod_newproducts==1){
-            collection.push('Best Seller', 'New Arrival');
-          } else if(row.prod_featured==0 && row.prod_bestseller==0 && row.prod_newproducts==1){
-            collection.push('New Arrival');
-          } else if(row.prod_featured==1 && row.prod_bestseller==1 && row.prod_newproducts==0){
-            collection.push('Featured','Best Seller');
-          } else if(row.prod_featured==1 && row.prod_bestseller==0 && row.prod_newproducts==0){
-            collection.push('Featured');
-          } else if(row.prod_featured==0 && row.prod_bestseller==1 && row.prod_newproducts==0){
-            collection.push('Best Seller');
-          }
-          row['collection'] = collection;
-          collection = [];
-        });
-        res.send(rows);
-      } else {
-        res.send({ error: err });
-      }
-    }
-  );
-});
+// router.get("/productsByCity/:city", (req, res) => {
+//   let arr = [];
+//   sql.query(
+//     `get_products_by_city(${req.params.city})`,
+//     (err, rows, fields) => {
+//       if (!err) {
+//         var tags = [];
+//         rows.forEach((row, i) => {
+//           tags.push(row.brand_name, row.prod_ram, row.prod_disksize, row.prod_processor, row.prod_disktype, row.prod_name, row.cat_name);
+//           var splitPath = row.prod_img.split("[--split--]");
+//           row.prod_img = splitPath;
+//           row['prod_tags'] = tags;
+//           tags = [];
+//         });
+//         rows.forEach((row) => {
+//           tenureSplit = row.prod_tenure.split("[--split--]");
+//           tenureSplit.forEach((a) => {
+//             arr.push(a.split(":"));
+//           });
+//           row.prod_tenure = arr;
+//           arr = [];
+//         });
+//         var collection = [];
+//         rows.forEach((row, i) => {
+//           if(row.prod_featured==1 && row.prod_bestseller==1 && row.prod_newproducts==1){
+//             collection.push('Featured','Best Seller', 'New Arrival');
+//           } else if(row.prod_featured==0 && row.prod_bestseller==1 && row.prod_newproducts==1){
+//             collection.push('Best Seller', 'New Arrival');
+//           } else if(row.prod_featured==0 && row.prod_bestseller==0 && row.prod_newproducts==1){
+//             collection.push('New Arrival');
+//           } else if(row.prod_featured==1 && row.prod_bestseller==1 && row.prod_newproducts==0){
+//             collection.push('Featured','Best Seller');
+//           } else if(row.prod_featured==1 && row.prod_bestseller==0 && row.prod_newproducts==0){
+//             collection.push('Featured');
+//           } else if(row.prod_featured==0 && row.prod_bestseller==1 && row.prod_newproducts==0){
+//             collection.push('Best Seller');
+//           }
+//           row['collection'] = collection;
+//           collection = [];
+//         });
+//         res.send(rows);
+//       } else {
+//         res.send({ error: err });
+//       }
+//     }
+//   );
+// });
 
 // Get product by product id
 router.get("/:id", (req, res) => {
@@ -392,6 +460,7 @@ router.get("/ordDetails/:txnid", (req, res) => {
     if (!err) {
       rows.forEach((row) => {
         var orderDate = JSON.parse(row.orderdate);
+        row['orderedProducts'] = JSON.parse(row.orderedProducts);
         var prodInf = JSON.parse(row.checkoutItemData);
         var pinf = JSON.parse(row.pinfo);
         row.orderdate = orderDate;

@@ -40,7 +40,7 @@ router.post('/send', cors(), (req, res) => {
             if (!err) {
                 if (rows[0].userId) {
                     const outputData = `<p>Please click the below link to reset your password</p>
-                <a href="http://irentout.com/${city}/resetpassword/${rows[0].userId}/${finalEncrpt}">Click here</a>
+                <a href="${constants.frontendUrl}/${city}/resetpassword/${rows[0].userId}/${finalEncrpt}">Click here</a>
             `;
 
                     let transporter = nodemailer.createTransport({
