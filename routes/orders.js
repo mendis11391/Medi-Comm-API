@@ -107,16 +107,310 @@ router.get("/", (req, res) => {
   );
 });
 
-
-router.get('/orderItems/:id', function(req, res) {
+router.get('/orderItemsByorderId/:id', function(req, res) {
   sql.query(
-      `CALL get_orderItemsByCustomerId(${req.params.id}) `,
+      `CALL get_orderItemById(${req.params.id}) `,
       (err, rows) => {
         if (!err) {
+          rows[0][0]['renewals_timline']=JSON.parse(rows[0][0].renewals_timline);
           res.send(rows[0]);
         } else {
           res.send({ error: 'Error' });
         }
+
+        
+      }
+    );
+});
+
+
+router.get('/orderItems/:id', function(req, res) {
+  let orderItem=[];
+  let len=0;
+  sql.query(
+      `CALL get_orderItemsByCustomerId(${req.params.id}) `,
+      (err, rows) => {
+        if (!err) {
+          rows[0].forEach((res)=>{
+            orderItem.push(res);
+            
+          });
+        } else {
+          res.send({ error: 'Error' });
+        }
+
+          orderItem.forEach((ot, i, ele)=>{
+            len++;
+            let forOT = ot;
+            for(let i=0;i<forOT.length;i++){
+              forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
+            }
+            if(len===ele.length){          
+              res.send(orderItem);
+            }
+          });
+          
+      }
+    );
+});
+
+// Update assetID in order item
+router.put("/updateOrderItemAsset/:id", (req, res) => {
+  var id = req.params.id;
+  var sqlUpdate = 'UPDATE order_item SET asset_id= ?, renewals_timline=? WHERE order_item_id= ?';
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.assetId,
+      req.body.renewalTimeline,
+      id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'asset updated for order item'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update delivery status in order item
+router.put("/updateRenewTimline/:id", (req, res) => {
+  var id = req.params.id;
+  var sqlUpdate = 'UPDATE order_item SET delivery_status=? WHERE order_item_id= ?';
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.deliveryStatus,
+      // req.body.renewalTimeline,
+      id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'delivery status updated for order item'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+router.put("/updateOrderItemDeliveryDate/:id", (req, res) => {
+  var id = req.params.id;
+  var sqlUpdate = 'UPDATE order_item SET startDate= ?, renewals_timline=? WHERE order_item_id= ?';
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.deliveryDate,
+      req.body.renewalTimeline,
+      id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'delivery date updated for order item'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+router.get('/renewals/:id', function(req, res) {
+  let orderItem=[];
+  let len=0;
+  sql.query(
+      `CALL get_renewalsByCustomerId(${req.params.id}) `,
+      (err, rows) => {
+        if (!err) {
+          rows[0].forEach((res)=>{
+            orderItem.push(res);
+            
+          });
+        } else {
+          res.send({ error: err });
+        }
+
+          orderItem.forEach((ot, i, ele)=>{
+            len++;
+            let forOT = ot;
+            let currDate=new Date();
+            forOT['renewals_timline'] = JSON.parse(forOT.renewals_timline);
+            forOT['renewals_timline'] .forEach((resp)=>{              
+              resp['indexs']=Math.floor((Math.random() * 9999) + 1);
+              resp.order_item_id = forOT.order_item_id
+            });
+            let cid = forOT.renewals_timline;
+            for(let i=0;i<cid.length;i++){
+              // cid[i].indexs=Math.floor((Math.random() * 9999) + 1);
+              
+              let ucid={ 
+                indexs:Math.floor((Math.random() * 9999) + 1),
+                id: cid[i].id,
+                order_item_id: forOT.order_item_id,
+                prod_name:cid[i].prod_name,
+                prod_price:cid[i].prod_price,
+                // prod_img:cid[i].prod_img,
+                delvdate: cid[i].delvdate,
+                actualStartDate:cid[i].actualStartDate,
+                qty: cid[i].qty, 
+                price: cid[i].price, 
+                tenure: cid[i].tenure,
+                primaryOrderNo:cid[i].primaryOrderNo, 
+                currentOrderNo: cid[i].currentOrderNo,
+                renewed:cid[i].renewed,
+                startDate:cid[i].startDate,
+                expiryDate:cid[i].startDate,
+                nextStartDate:cid[i].expiryDate,
+                overdew:cid[i].overdew,
+                assetId:cid[i].assetId,
+                deliveryStatus:cid[i].deliveryStatus,
+                deliveryDateAssigned:cid[i].deliveryDateAssigned,
+                deliveryAssigned:cid[i].deliveryAssigned,
+                dp:cid[i].dp,
+                replacement:cid[i].replacement,
+                returnDate:cid[i].returnDate,
+                billPeriod:cid[i].billPeriod,
+                billAmount:cid[i].billAmount,
+                damageCharges:cid[i].damageCharges
+              }
+              
+              
+              let ed = cid[i].nextStartDate;
+              let dateParts = ed.split("/");
+  
+              // month is 0-based, that's why we need dataParts[1] - 1
+              let dateObject = new Date(+dateParts[2], dateParts[1]-1, +dateParts[0]);	
+              let dd= dateObject.getDate();
+              let mm=dateObject.getMonth();
+              let yy=dateObject.getFullYear();
+  
+              let db = mm+1+'/'+dd+'/'+yy;
+              let expiryDate= new Date(db);
+              let Days=new Date(yy, mm+2, 0).getDate();
+  
+              if(Days<dd){
+                newED = new Date(yy, mm+1, Days);              
+                ned  = new Date(yy, mm+1, Days);
+              }else{					
+                newED = new Date(yy, mm+1, dd-1);
+                ned = new Date(yy, mm+1, dd-1);              
+              }
+              ned.setDate(ned.getDate() + 1);
+                
+              let sd = cid[i].startDate;
+              let sdateParts = sd.split("/");
+  
+              // month is 0-based, that's why we need dataParts[1] - 1
+              let sDateObject = new Date(+sdateParts[2], sdateParts[1]-1, +sdateParts[0]);	
+              let sdd= sDateObject.getDate();
+              let smm=sDateObject.getMonth();
+              let syy=sDateObject.getFullYear();
+  
+              let sdb = smm+1+'/'+sdd+'/'+syy;
+              let startDate= new Date(sdb);
+  
+              let daysInDiff=dateDiffInDays(startDate, currDate);                    
+              
+              if(daysInDiff>=0 && (cid[i].renewed!=4 && cid[i].overdew!=1)){
+                if(cid[i].ordered==1){
+                  cid[i].renewed=1
+                }
+                cid[i].overdew=1;
+                // row['overdue']=1;
+                ucid.renewed=0;
+                ucid.startDate=cid[i].nextStartDate;
+                ucid.expiryDate=ISTDate(newED);
+                ucid.nextStartDate=ISTDate(ned);
+                ucid.billPeriod = ucid.startDate+'-'+ucid.expiryDate
+                ucid.overdew=0;
+                ucid.ordered=0;
+                forOT['renewals_timline'].push(ucid);
+                var sqlUpdate = 'UPDATE order_item SET renewals_timline= ? WHERE order_item_id= ?';
+                sql.query(
+                  sqlUpdate,
+                  [
+                    JSON.stringify(forOT['renewals_timline']),
+                    forOT['order_item_id']
+                  ]
+                );
+              }
+  
+              // if((cid[i].renewed==1 || cid[i].renewed==4) && cid[i].ordered!=1){
+                
+              //   var sqlUpdate = 'UPDATE assets SET startDate=?, EndDate=?, nextStartDate=? WHERE asset_no= ?';
+              //   sql.query(
+              //     sqlUpdate,
+              //     [
+              //       cid[i].startDate,
+              //       cid[i].expiryDate,
+              //       cid[i].nextStartDate,
+              //       ucid.assetId
+              //     ]
+              //   );
+              // }
+              
+            }
+
+            if(len===ele.length){          
+              res.send(orderItem);
+            }
+          });
+          
+      }
+    );
+});
+
+
+router.get('/orderId/:id', function(req, res) {
+  
+  let orders=[];
+  let orderItem = [];
+  let len=0;
+  sql.query(
+      `CALL get_orderById(${req.params.id}) `,
+      (err, rows) => {
+        if (!err) {
+          rows[0].forEach((res)=>{
+            orders.push(res);
+            
+          });
+        } else {
+          res.send({ error: err });
+        }
+        orders.forEach((orders,i,ele) => {
+          sql.query(
+            `CALL get_addressById(${orders.billingAddress})`,
+            (err1, rows1, fields) => {
+              if (!err1) { 
+                sql.query(
+                  `CALL get_orderItemByorder(${orders.id})`,
+                  (err1, rows2, fields) => {
+                    if (!err1) { 
+                      len++;
+                      orders.orderItem = rows2[0];  
+                      orders.address = rows1[0]; 
+                      orderItem.push(orders); 
+                      if(len===ele.length){
+                        orderItem.forEach((ot, i)=>{
+                          let forOT = ot.orderItem;
+                          for(let i=0;i<forOT.length;i++){
+                            forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
+                          }
+                        });
+                        if(len===ele.length){
+                        
+                          res.send(orderItem);
+                        }
+                      }
+                    }
+                  }
+                );
+              }
+            }
+          );         
+          
+        });
       }
     );
 });

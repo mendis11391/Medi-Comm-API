@@ -12,7 +12,15 @@ function dateDiffInDays(a, b) {
 	const utc2 = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
   
 	return Math.floor((utc2 - utc1) / _MS_PER_DAY);
-  }
+}
+
+function getDates(date){
+	let dateParts = date.split("/");
+  
+	// month is 0-based, that's why we need dataParts[1] - 1
+	let dateObject = new Date(+dateParts[2], dateParts[1]-1, +dateParts[0]);  
+	return dateObject;
+}
 
 router.use(function(req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
@@ -38,7 +46,7 @@ router.post('/saveNewOrder', function(req, res) {
 	orderdatetime=JSON.stringify(orderDateTime);
 
 	checkoutPInfo=JSON.parse(req.body.products);
-	let dPI = JSON.parse(req.body.damageProtection);
+	let dPI = req.body.damageProtection;
 	checkoutPInfo.forEach((resp) => { //this loop is for expDate and nextStartDate calculation
 		if(dPI>0){
 			resp.dp=resp.price*(8/100);
@@ -117,20 +125,23 @@ router.post('/saveNewOrder', function(req, res) {
 		products.forEach((resProduct)=>{
 		  let renewalProduct = [];
 		  renewalProduct.push(resProduct);
-		  var sqlInsert = "INSERT INTO `order_item`(`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`, `tenure_price`, `renewals_timline`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		  let startDate = getDates(resProduct.startDate);
+		  let expiryDate = getDates(resProduct.expiryDate);
+		  var sqlInsert = "INSERT INTO `order_item`(`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`, `tenure_price`, `renewals_timline`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		  sql.query(sqlInsert,
 			  [
 			  results.insertId,
 			  resProduct.id,
-			  1,
+			  'To be assigned',
 			  0,
 			  resProduct.prod_price,
 			  resProduct.price,
 			  resProduct.tenure,
 			  resProduct.price,	  
 			  JSON.stringify(renewalProduct),
-			  new Date(),
-			  ned,
+			  'Delivery awiated',
+			  startDate,
+			  expiryDate,
 			  1,
 			  new Date(),
 			  new Date()
@@ -147,6 +158,168 @@ router.post('/saveNewOrder', function(req, res) {
   
 
 
+});
+
+router.post('/newRenew', function(req, res) {
+	datetime = new Date();
+	orderDate = (this.datetime.getMonth()+1)+'/'+this.datetime.getDate()+'/'+this.datetime.getFullYear();
+	orderTime = this.datetime.getHours()+':'+this.datetime.getMinutes()+':'+this.datetime.getSeconds();
+
+	orderDateTime=[this.orderDate, this.orderTime];
+	orderdatetime=JSON.stringify(orderDateTime);
+
+	checkoutPInfo=JSON.parse(req.body.products);
+	let dPI = req.body.damageProtection;
+	checkoutPInfo.forEach((resp) => { //this loop is for expDate and nextStartDate calculation
+		if(dPI>0){
+			resp.dp=resp.price*(8/100);
+		  } else{
+			resp.dp=0;
+		}
+		
+		let dateString = resp.delvdate;
+
+		let dateParts = dateString.split("/");
+
+		// month is 0-based, that's why we need dataParts[1] - 1
+		let dateObject = new Date(+dateParts[2], dateParts[1]-1, +dateParts[0]);	
+		let dd= dateObject.getDate();
+		let mm=dateObject.getMonth();
+		let yy=dateObject.getFullYear();
+
+		// let db = mm+'/'+dd+'/'+yy;
+
+		// let deliveredDate = new Date(db);
+		// let sd=deliveredDate.getDate();
+		// let nd = sd-0;
+		// let ed = new Date(`${deliveredDate.getFullYear()}-${deliveredDate.getMonth()+3}-${nd}`);
+			let Days=new Date(yy, mm+2, 0).getDate();
+
+            if(Days<dd){
+				newED = new Date(yy, mm+1, Days);              
+				ned  = new Date(yy, mm+1, Days);
+			  }else{					
+				newED = new Date(yy, mm+1, dd-1);
+				ned = new Date(yy, mm+1, dd-1);				
+			  }
+			ned.setDate(ned.getDate() + 1);
+			let expDate = newED.getDate()+'/'+(newED.getMonth()+1)+'/'+newED.getFullYear();
+			let nextStartDate = ned.getDate()+'/'+(ned.getMonth()+1)+'/'+ned.getFullYear();
+		// resp.expiryDate=ned.toLocaleDateString();
+		resp.startDate=resp.delvdate;
+		resp.expiryDate=expDate;
+		resp.nextStartDate=nextStartDate;
+		resp.deliveryAssigned=0;
+		resp.billPeriod = 'To be assigned';
+	});
+
+	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	sql.query(sqlInsert,
+    [
+      req.body.primaryID,
+	  req.body.orderID,
+	  req.body.uid,
+	  req.body.subTotal,
+      req.body.damageProtection,
+	  req.body.total,
+	  req.body.securityDeposit,
+	  req.body.discount,	  
+	  req.body.grandTotal,
+	  '',
+	  req.body.firstName,
+	  req.body.lastName,
+	  req.body.mobile,
+	  req.body.email,
+	  req.body.billingAddress,
+	  req.body.shippingAddress,
+	  req.body.orderType,
+	  req.body.orderStatus,
+	  req.body.deliveryStatus,
+	  req.body.refundStatus,
+	  req.body.createdBy,
+	  req.body.modifiedBy,
+	  req.body.createdAt,
+	  req.body.modifiedAt
+    ],
+    (err, results) => {
+      if (!err) {
+		var products = checkoutPInfo;
+
+		products.forEach((resProduct)=>{
+		  let renewalProduct = [];
+		  renewalProduct.push(resProduct);
+		  let startDate = getDates(resProduct.startDate);
+		  let expiryDate = getDates(resProduct.expiryDate);
+		  var sqlInsert = "INSERT INTO `order_item`(`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`, `tenure_price`, `renewals_timline`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		  sql.query(sqlInsert,
+			  [
+			  results.insertId,
+			  resProduct.id,
+			  resProduct.assetId,
+			  0,
+			  resProduct.prod_price,
+			  resProduct.price,
+			  resProduct.tenure,
+			  resProduct.price,	  
+			  JSON.stringify(renewalProduct),
+			  'Delivery awiated',
+			  startDate,
+			  expiryDate,
+			  1,
+			  new Date(),
+			  new Date()
+			  ]
+		  );
+		});
+        res.send({message: 'Inserted Successfully', txnid: req.body.txnid});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+
+  
+
+
+});
+
+router.post('/updateNewRenewOrder', function(req, res) {
+	var updateOrder = `UPDATE order_item SET renewals_timline = ? where order_item_id = ?`;
+	sql.query(updateOrder,
+    [
+		req.body.checkoutProductsInfo,
+      	req.body.txnid,
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: 'Updated Successfully'});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
+router.post('/updateorderItem', function(req, res) {
+	var sqlInsert = "INSERT INTO `customer_requests`( `order_item_id`, `order_id`, `request_id`, `requested_date`, `approval_status`, `approval_date`, `request_status`) VALUES (?,?,?,?,?,?,?)";  
+	sql.query(sqlInsert,
+    [
+      req.body.order_item_id,
+	  req.body.order_id,
+      req.body.request_id,
+	  req.body.requested_date,
+	  req.body.approval_status,
+	  req.body.approval_date,
+	  req.body.request_status,
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: 'Inserted Successfully'});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
 });
 
 /************renewals part*******************/

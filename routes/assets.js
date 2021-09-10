@@ -6,10 +6,10 @@ var sql = require("../db.js");
 /* GET all assets */
 router.get('/', function(req, res) {
     sql.query(
-        `SELECT * FROM assets`,
+        `CALL get_allAssets()`,
         (err, rows) => {
           if (!err) {
-            res.send(rows);
+            res.send(rows[0]);
           } else {
             res.send({ error: 'Error' });
           }
@@ -54,7 +54,7 @@ router.post("/createAsset", function (req, res) {
   // Update orders
 router.put("/update/:id", (req, res) => {
     var id = req.params.id;
-    var sqlUpdate = 'UPDATE assets SET availability= ?, startDate=?, expiryDate=?, nextStartDate=? WHERE assetId= ?';
+    var sqlUpdate = 'UPDATE assets SET availability= ?, startDate=?, EndDate=?, nextStartDate=? WHERE asset_no= ?';
     sql.query(
       sqlUpdate,
       [

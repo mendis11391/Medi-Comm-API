@@ -4,6 +4,19 @@ var crypto = require("crypto");
 
 var sql = require("../db.js");
 
+router.get('/getCustomerRequests', function(req, res) {
+  sql.query(
+      `CALL get_customerRequests() `,
+      (err, rows) => {
+        if (!err) {
+          res.send(rows[0]);
+        } else {
+          res.send({ error: 'Error' });
+        }
+      }
+    );
+});
+
 
 router.get('/address/:id', function(req, res) {
   sql.query(
