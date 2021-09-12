@@ -17,6 +17,28 @@ router.get('/getCustomerRequests', function(req, res) {
     );
 });
 
+// Update status and damage charges in order item
+router.put("/updatecustomerRequests/:id", (req, res) => {
+  var id = req.params.id;
+  var sqlUpdate = 'UPDATE customer_requests SET approval_status= ?, approval_date=?, request_status=? WHERE order_item_id= ?';
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.approvalStatus,
+      new Date(),
+      req.body.requestStatus,
+      id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'status updated for order item'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 
 router.get('/address/:id', function(req, res) {
   sql.query(

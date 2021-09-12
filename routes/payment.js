@@ -127,18 +127,21 @@ router.post('/saveNewOrder', function(req, res) {
 		  renewalProduct.push(resProduct);
 		  let startDate = getDates(resProduct.startDate);
 		  let expiryDate = getDates(resProduct.expiryDate);
-		  var sqlInsert = "INSERT INTO `order_item`(`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`, `tenure_price`, `renewals_timline`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		  var sqlInsert = "INSERT INTO `order_item`(`primary_order_item_id`,`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`, `tenure_period`, `tenure_price`, `renewals_timline`,`overdue`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		  sql.query(sqlInsert,
 			  [
+			  0,
 			  results.insertId,
 			  resProduct.id,
 			  'To be assigned',
 			  0,
 			  resProduct.prod_price,
-			  resProduct.price,
+			  resProduct.tenureBasePrice,
+			  resProduct.tenure_id,
 			  resProduct.tenure,
 			  resProduct.price,	  
 			  JSON.stringify(renewalProduct),
+			  0,
 			  'Delivery awiated',
 			  startDate,
 			  expiryDate,
@@ -250,18 +253,21 @@ router.post('/newRenew', function(req, res) {
 		  renewalProduct.push(resProduct);
 		  let startDate = getDates(resProduct.startDate);
 		  let expiryDate = getDates(resProduct.expiryDate);
-		  var sqlInsert = "INSERT INTO `order_item`(`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`, `tenure_price`, `renewals_timline`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		  var sqlInsert = "INSERT INTO `order_item`(`primary_order_item_id`,`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`, tenure_period,`tenure_price`, `renewals_timline`,`overdue`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		  sql.query(sqlInsert,
 			  [
+			  req.body.orderID,
 			  results.insertId,
 			  resProduct.id,
 			  resProduct.assetId,
 			  0,
 			  resProduct.prod_price,
-			  resProduct.price,
+			  resProduct.tenureBasePrice,
+			  resProduct.tenure_id,
 			  resProduct.tenure,
 			  resProduct.price,	  
 			  JSON.stringify(renewalProduct),
+			  0,
 			  'Delivery awiated',
 			  startDate,
 			  expiryDate,
@@ -281,6 +287,166 @@ router.post('/newRenew', function(req, res) {
   
 
 
+});
+
+router.post('/newReturn', function(req, res) {
+	datetime = new Date();
+	orderDate = (this.datetime.getMonth()+1)+'/'+this.datetime.getDate()+'/'+this.datetime.getFullYear();
+	orderTime = this.datetime.getHours()+':'+this.datetime.getMinutes()+':'+this.datetime.getSeconds();
+
+	orderDateTime=[this.orderDate, this.orderTime];
+	orderdatetime=JSON.stringify(orderDateTime);
+
+	checkoutPInfo=JSON.parse(req.body.products);
+
+	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	sql.query(sqlInsert,
+    [
+      req.body.primaryID,
+	  req.body.orderID,
+	  req.body.uid,
+	  req.body.subTotal,
+      req.body.damageProtection,
+	  req.body.total,
+	  req.body.securityDeposit,
+	  req.body.discount,	  
+	  req.body.grandTotal,
+	  '',
+	  req.body.firstName,
+	  req.body.lastName,
+	  req.body.mobile,
+	  req.body.email,
+	  req.body.billingAddress,
+	  req.body.shippingAddress,
+	  req.body.orderType,
+	  req.body.orderStatus,
+	  req.body.deliveryStatus,
+	  req.body.refundStatus,
+	  req.body.createdBy,
+	  req.body.modifiedBy,
+	  req.body.createdAt,
+	  req.body.modifiedAt
+    ],
+    (err, results) => {
+      if (!err) {
+		var products = checkoutPInfo;
+
+		products.forEach((resProduct)=>{
+		  let renewalProduct = [];
+		  renewalProduct.push(resProduct);
+		  let startDate = getDates(resProduct.startDate);
+		  let expiryDate = getDates(resProduct.expiryDate);
+		  var sqlInsert = "INSERT INTO `order_item`(`primary_order_item_id`,`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`,`tenure_period`, `tenure_price`, `damage_charges`, `renewals_timline`,`overdue`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		  sql.query(sqlInsert,
+			  [
+			  resProduct.order_item_id,
+			  results.insertId,
+			  resProduct.id,
+			  'To be assigned',
+			  0,
+			  resProduct.prod_price,
+			  resProduct.tenureBasePrice,
+			  resProduct.tenure_id,
+			  resProduct.tenure,
+			  resProduct.price,	  
+			  resProduct.damageCharges,
+			  JSON.stringify(renewalProduct),
+			  0,
+			  'Delivery awiated',
+			  startDate,
+			  expiryDate,
+			  0,
+			  new Date(),
+			  new Date()
+			  ]
+		  );
+		});
+        res.send({message: 'Inserted Successfully', txnid: req.body.txnid});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
+router.post('/newReplace', function(req, res) {
+	datetime = new Date();
+	orderDate = (this.datetime.getMonth()+1)+'/'+this.datetime.getDate()+'/'+this.datetime.getFullYear();
+	orderTime = this.datetime.getHours()+':'+this.datetime.getMinutes()+':'+this.datetime.getSeconds();
+
+	orderDateTime=[this.orderDate, this.orderTime];
+	orderdatetime=JSON.stringify(orderDateTime);
+
+	checkoutPInfo=JSON.parse(req.body.products);
+
+	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	sql.query(sqlInsert,
+    [
+      req.body.primaryID,
+	  req.body.orderID,
+	  req.body.uid,
+	  req.body.subTotal,
+      req.body.damageProtection,
+	  req.body.total,
+	  req.body.securityDeposit,
+	  req.body.discount,	  
+	  req.body.grandTotal,
+	  '',
+	  req.body.firstName,
+	  req.body.lastName,
+	  req.body.mobile,
+	  req.body.email,
+	  req.body.billingAddress,
+	  req.body.shippingAddress,
+	  req.body.orderType,
+	  req.body.orderStatus,
+	  req.body.deliveryStatus,
+	  req.body.refundStatus,
+	  req.body.createdBy,
+	  req.body.modifiedBy,
+	  req.body.createdAt,
+	  req.body.modifiedAt
+    ],
+    (err, results) => {
+      if (!err) {
+		var products = checkoutPInfo;
+
+		products.forEach((resProduct)=>{
+		  let renewalProduct = [];
+		  renewalProduct.push(resProduct);
+		  let startDate = getDates(resProduct.startDate);
+		  let expiryDate = getDates(resProduct.expiryDate);
+		  var sqlInsert = "INSERT INTO `order_item`(`primary_order_item_id`,`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`,`tenure_period`, `tenure_price`, `damage_charges`, `renewals_timline`,`overdue`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		  sql.query(sqlInsert,
+			  [
+			  resProduct.order_item_id,
+			  results.insertId,
+			  resProduct.id,
+			  'To be assigned',
+			  0,
+			  resProduct.prod_price,
+			  resProduct.tenureBasePrice,
+			  resProduct.tenure_id,
+			  resProduct.tenure,
+			  resProduct.price,	  
+			  resProduct.damageCharges,
+			  JSON.stringify(renewalProduct),
+			  0,
+			  'Delivery awiated',
+			  startDate,
+			  expiryDate,
+			  0,
+			  new Date(),
+			  new Date()
+			  ]
+		  );
+		});
+        res.send({message: 'Inserted Successfully', txnid: req.body.txnid});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
 });
 
 router.post('/updateNewRenewOrder', function(req, res) {

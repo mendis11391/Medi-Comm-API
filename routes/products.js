@@ -128,6 +128,21 @@ router.get("/tenures/:id", (req, res) => {
   );
 });
 
+// Get all products tenures
+router.get("/tenure/:id", (req, res) => { 
+  let id = req.params.id;
+  sql.query(
+    `SELECT tenure_id, tenure, tenure_period, tenure_desc, tenure_status FROM tenure WHERE tenure=${id};`,
+    (err, rows, fields) => {
+      if (!err) {
+        res.json(rows);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 // Get all products specs
 router.get("/specs", (req, res) => { 
   sql.query(

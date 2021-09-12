@@ -19,7 +19,7 @@ router.get('/', function(req, res) {
 
 router.get('/:id', function(req, res) {
   sql.query(
-      `SELECT * FROM assets where assetId = ?`,
+      `SELECT * FROM assets where asset_no = ?`,
       [req.params.id],
       (err, rows) => {
         if (!err) {

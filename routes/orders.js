@@ -216,6 +216,27 @@ router.put("/updateOrderItemDeliveryDate/:id", (req, res) => {
   );
 });
 
+// Update status and damage charges in order item
+router.put("/updateOrderItemStatus/:id", (req, res) => {
+  var id = req.params.id;
+  var sqlUpdate = 'UPDATE order_item SET status= ?, damage_charges=? WHERE order_item_id= ?';
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.status,
+      req.body.damageCharges,
+      id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'status updated for order item'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 router.get('/renewals/:id', function(req, res) {
   let orderItem=[];
   let len=0;
@@ -272,7 +293,9 @@ router.get('/renewals/:id', function(req, res) {
                 returnDate:cid[i].returnDate,
                 billPeriod:cid[i].billPeriod,
                 billAmount:cid[i].billAmount,
-                damageCharges:cid[i].damageCharges
+                damageCharges:cid[i].damageCharges,
+                tenure_id:cid[i].tenure_id,
+                tenureBasePrice:cid[i].tenureBasePrice
               }
               
               
