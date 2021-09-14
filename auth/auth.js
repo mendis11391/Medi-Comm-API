@@ -106,25 +106,23 @@ router.get(
     gpId += secretkey.final("hex");
 
     sql.query(
-      `select * from users where email = ? and logintype = 'Google'`,
+      `select * from customer where email = ? and login_type = 'Google'`,
       [req.user._json.email],
       (err, rows) => {
         if (!err) {
           if (rows.length <= 0) {
             sql.query(
-              "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `wishlist`, `cart`, `token`,`address`, `billingaddress`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              "INSERT INTO `customer`(firstName, lastName, mobile, email, password, registeredAt, lastLogin, login_type, token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
               [
-                req.user.id,
-                req.user._json.name,
+                req.user._json.given_name,
+                req.user._json.family_name,
                 "",
                 req.user._json.email,
-                "Google",
                 "N/A",
-                "[]",
-                "[]",
-                token,
-                "[]",
-                "[]"
+                new Date(),
+                new Date(),
+                "Google",
+                token
               ],
               (err, rows) => {
                 if (!err) {
@@ -142,10 +140,10 @@ router.get(
               }
             );
           } else {
-            const updateTokenQuery = `UPDATE users SET token=? where uid= ? and email = ?`;
+            const updateTokenQuery = `UPDATE customer SET token=? where customer_id= ? and email = ?`;
             sql.query(
               updateTokenQuery,
-              [token, req.user.id, req.user._json.email],
+              [token, rows[0].customer_id, req.user._json.email],
               (err, rows) => {
                 if (!err) {
                   return res.redirect(
@@ -274,25 +272,23 @@ router.post("/register", (req, res) => {
   cryptPassword += encryptedTime.final('hex');
 
   let insQuery =
-    "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `wishlist`, `cart`,`token`, `address`, `billingaddress`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-  let checkUser = "select uname from users where email = ? and logintype = 'web'";
+    "INSERT INTO `customer`( `firstName`, `lastName`, `mobile`, `email`, `password`, `registeredAt`, `lastLogin`,`login_type`, `token`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  let checkUser = "select firstName from customer where email = ? and login_type = 'web'";
   sql.query(checkUser, [req.body.email], (err, rows) => {
     if (!err) {
       if (rows.length === 0) {
         sql.query(
           insQuery,
           [
-            userToken,
-            req.body.username,
-            cryptPassword,
-            req.body.email,
-            "web",
+            req.body.firstName,
+            req.body.lastName,
             req.body.phone,
-            "[]",
-            "[]",
-            logintoken,
-            "[]",
-            "[]"
+            req.body.email,
+            cryptPassword,
+            new Date(),
+            new Date(),
+            "web",
+            logintoken
           ],
           (err, rows) => {
             if (!err) {
@@ -308,7 +304,7 @@ router.post("/register", (req, res) => {
         );
       } else {
         res.send({
-          status: "User with this emil is already registered",
+          status: "User with this emailId is already registered",
           authenticated: false,
         });
       }

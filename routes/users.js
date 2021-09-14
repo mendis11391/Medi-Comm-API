@@ -17,6 +17,20 @@ router.get('/getCustomerRequests', function(req, res) {
     );
 });
 
+router.get('/getCustomerById/:id', function(req, res) {
+  let id =req.params.id
+  sql.query(
+      `CALL get_customersById(${id}) `,
+      (err, rows) => {
+        if (!err) {
+          res.send(rows[0]);
+        } else {
+          res.send({ error: err });
+        }
+      }
+    );
+});
+
 // Update status and damage charges in order item
 router.put("/updatecustomerRequests/:id", (req, res) => {
   var id = req.params.id;
@@ -53,6 +67,26 @@ router.get('/address/:id', function(req, res) {
     );
 });
 
+
+// Update address
+router.put("/updateDefaultAddress/:auid", (req, res) => {
+  var sqlUpdate = "UPDATE `address` SET `default_address`= ? WHERE `address_id` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.default_address,
+      req.params.auid
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'Address updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 /* GET all users */
 router.get('/', function(req, res) {
   sql.query(
@@ -65,6 +99,20 @@ router.get('/', function(req, res) {
         }
       }
     );
+});
+
+/* GET user details by id*/
+router.get('/getUserAddressInfo/:getid', function(req, res, next) {
+  sql.query(
+    `CALL 	get_addressByCustomerID(${req.params.getid})`,
+    (err, rows) => {
+      if (!err) {
+        res.send(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
 });
 
 /* GET user details by id*/

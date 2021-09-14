@@ -50,6 +50,9 @@ router.get("/", (req, res) => {
   let orderAddress=[];
   let orderItem = [];
   let len=0;
+  let delivered=[];
+  let shipped=[];
+  let others=[];
   sql.query(
     `CALL 	get_all_orders()`,
     (err, rows, fields) => {
@@ -80,6 +83,7 @@ router.get("/", (req, res) => {
                         let forOT = ot.orderItem;
                         for(let i=0;i<forOT.length;i++){
                           forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
+                          
                         }
                       });
                       if(len===ele.length){
@@ -196,6 +200,27 @@ router.put("/updateRenewTimline/:id", (req, res) => {
   );
 });
 
+router.put("/updateRenewalTimeline/:id", (req, res) => {
+  var id = parseInt(req.params.id);
+  var sqlUpdate = 'UPDATE order_item SET asset_id=?, renewals_timline=?, status=? WHERE order_item_id= ?';
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.assetId,
+      req.body.renewalTimeline,
+      req.body.status,
+      id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'delivery date updated for order item'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 router.put("/updateOrderItemDeliveryDate/:id", (req, res) => {
   var id = req.params.id;
   var sqlUpdate = 'UPDATE order_item SET startDate= ?, renewals_timline=? WHERE order_item_id= ?';
@@ -255,13 +280,20 @@ router.get('/renewals/:id', function(req, res) {
           orderItem.forEach((ot, i, ele)=>{
             len++;
             let forOT = ot;
+            let delivered=[];
+            let shipped=[];
+            let others=[];
             let currDate=new Date();
+              
             forOT['renewals_timline'] = JSON.parse(forOT.renewals_timline);
             forOT['renewals_timline'] .forEach((resp)=>{              
               resp['indexs']=Math.floor((Math.random() * 9999) + 1);
-              resp.order_item_id = forOT.order_item_id
-            });
+              resp.order_item_id = forOT.order_item_id                     
+              
+            });            
+            
             let cid = forOT.renewals_timline;
+            
             for(let i=0;i<cid.length;i++){
               // cid[i].indexs=Math.floor((Math.random() * 9999) + 1);
               
@@ -465,6 +497,9 @@ router.get('/:id', function(req, res) {
   let orderItem = [];
   let len=0;
   let len2=0;
+  let delivered=[];
+  let shipped=[];
+  let others=[];
   sql.query(
       `CALL get_ordersByCustomer(${req.params.id}) `,
       (err, rows) => {
@@ -494,7 +529,47 @@ router.get('/:id', function(req, res) {
                           let forOT = ot.orderItem;
                           for(let i=0;i<forOT.length;i++){
                             forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
+
+                            if(forOT[i].delivery_status.includes(4) ){
+                              delivered.push(1);              
+                            } else {
+                              delivered.push(0);
+                            }
+                            if(forOT[i].delivery_status.includes(3) ){
+                              shipped.push(1);              
+                            } else {
+                              shipped.push(0);
+                            }
+                            if(forOT[i].delivery_status.includes(1) || forOT[i].delivery_status.includes(2) ){
+                              others.push(1);              
+                            } else {
+                              others.push(0);
+                            }
                           }
+
+                          if(shipped.includes(1) && (others.includes(1) && !delivered.includes(1))){
+                            ot['deliveryStatus'] = 5;
+                          } else if(shipped.includes(1) && !others.includes(1) && !delivered.includes(1)){
+                            ot['deliveryStatus'] = 3;
+                          } else if(!shipped.includes(1) && delivered.includes(1) && !others.includes(1) ){
+                            ot['deliveryStatus'] = 4;
+                          } else if(!shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
+                            ot['deliveryStatus'] = 5;
+                          } else if(shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
+                            ot['deliveryStatus'] = 5;
+                          }  else if(shipped.includes(1) && delivered.includes(1) && others.includes(0) ){
+                            ot['deliveryStatus'] = 5;
+                          } else if(shipped.includes(0) && delivered.includes(1) && others.includes(0)){
+                            ot['deliveryStatus'] = 4;
+                          }
+                          var sqlUpdate = 'UPDATE orders SET deliveryStatus= ? WHERE id= ?';
+                          sql.query(
+                            sqlUpdate,
+                            [
+                              ot['deliveryStatus'],
+                              ot['id']
+                            ]
+                          );
                         });
                         if(len===ele.length){
                         
