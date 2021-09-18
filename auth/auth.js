@@ -124,10 +124,10 @@ router.get(
                 "Google",
                 token
               ],
-              (err, rows) => {
+              (err) => {
                 if (!err) {
                   return res.redirect(
-                    `${constants.frontendUrl}?uid=${req.user.id}&token=${token}&logintype=google&existinguser=false`
+                    `${constants.frontendUrl}?uid=${rows[0].customer_id}&token=${token}&logintype=google&existinguser=false`
                   );
                 } else {
                   res.send({
@@ -144,10 +144,10 @@ router.get(
             sql.query(
               updateTokenQuery,
               [token, rows[0].customer_id, req.user._json.email],
-              (err, rows) => {
+              (err) => {
                 if (!err) {
                   return res.redirect(
-                    `${constants.frontendUrl}/?uid=${req.user.id}&token=${token}&logintype=google&existinguser=true`
+                    `${constants.frontendUrl}/?uid=${rows[0].customer_id}&token=${token}&logintype=google&existinguser=true`
                   );
                 }
               }

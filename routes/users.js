@@ -4,6 +4,87 @@ var crypto = require("crypto");
 
 var sql = require("../db.js");
 
+router.get('/getCustomerAddressById/:id', function(req, res) {
+  sql.query(
+      `CALL get_addressById(${req.params.id}) `,
+      (err, rows) => {
+        if (!err) {
+          res.send(rows[0]);
+        } else {
+          res.send({ error: 'Error' });
+        }
+      }
+    );
+});
+
+//post address
+router.post("/addresses", function (req, res) {
+    
+  var sqlInsert =
+    "INSERT INTO `address`(`customer_id`, `nickName`, `address_line1`, `address_line2`,`landmark`, `city`, `state`, `pincode`, `address_type`, `default_address`) VALUES (?, ?, ?, ?, ?, ?,?,?,?,?)";
+  sql.query(
+    sqlInsert,
+    [
+      req.body.uid,
+      req.body.nickName,
+      req.body.address1,
+      req.body.address2,
+      req.body.landmark,
+      req.body.city,
+      req.body.state,
+      req.body.pincode,
+      req.body.address_type,
+      req.body.default_address
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: 'address Inserted Successfully'});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
+// Update address
+router.put("/updateAddress/:id", (req, res) => {
+  var sqlUpdate = "UPDATE `address` SET `nickName`= ?, `address_line1`=?, `address_line2`=?,`landmark`=?, `pincode`=?, `address_type`=? WHERE `address_id` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.nickName,
+      req.body.address1,
+      req.body.address2,
+      req.body.landmark,
+      req.body.pincode,
+      req.body.address_type,
+      req.params.id
+    ],
+    (err) => {
+      if (!err) {
+        res.send({'message': 'Address updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Delete address
+router.delete("/deleteAddressById/:id",  (req, res) => {
+  sql.query(
+    "DELETE FROM address WHERE address_id = ?",
+    [req.params.id],
+    (err) => {
+      if (!err) {
+        res.send({'message':'Deleted address'})
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 router.get('/getCustomerRequests', function(req, res) {
   sql.query(
       `CALL get_customerRequests() `,
@@ -166,7 +247,7 @@ router.get('/checkemail/:emailEx', function(req, res) {
 /* GET cart details */
 router.get('/cart/:id', function(req, res, next) {
   sql.query(
-    `SELECT uid, uname, email, cart FROM users where uid = ?`,
+    `SELECT customer_id, products FROM cart where customer_id = ?`,
     [req.params.id],
     (err, rows) => {
       if (!err) {
@@ -182,7 +263,7 @@ router.get('/cart/:id', function(req, res, next) {
 router.get('/wishlist/:id', function(req, res, next) {
 
   sql.query(
-    `SELECT uid, uname, email, wishlist FROM users where uid = ?`,
+    `SELECT customer_id, products FROM wishlist where customer_id = ?`,
     [req.params.id],
     (err, rows) => {
       if (!err) {
@@ -304,7 +385,7 @@ router.put("/update", (req, res) => {
 
 // Update wishlist
 router.put("/wishlist/:id", (req, res) => {
-  var sqlUpdate = "UPDATE `users` SET `wishlist`= ? WHERE `uid` = ?";
+  var sqlUpdate = "UPDATE `wishlist` SET `products`= ? WHERE `customer_id` = ?";
   sql.query(
     sqlUpdate,
     [
@@ -323,7 +404,7 @@ router.put("/wishlist/:id", (req, res) => {
 
 // Update cart
 router.put("/cart/:id", (req, res) => {
-  var sqlUpdate = "UPDATE `users` SET `cart`= ? WHERE `uid` = ?";
+  var sqlUpdate = "UPDATE `cart` SET `products`= ? WHERE `customer_id` = ?";
   sql.query(
     sqlUpdate,
     [
