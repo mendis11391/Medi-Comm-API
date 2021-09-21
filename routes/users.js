@@ -228,7 +228,7 @@ router.get('/:id', function(req, res, next) {
 
 router.get('/checkemail/:emailEx', function(req, res) {
   sql.query(
-      `SELECT count(*) AS emailidCount FROM users where email= ? and logintype = 'web'`,
+      `SELECT count(*) AS emailidCount FROM customer where email= ? and login_type = 'web'`,
       [req.params.emailEx],
       (err, rows) => {
         if (!err) {

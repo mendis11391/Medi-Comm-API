@@ -209,11 +209,10 @@ router.post('/newRenew', function(req, res) {
 			let expDate = newED.getDate()+'/'+(newED.getMonth()+1)+'/'+newED.getFullYear();
 			let nextStartDate = ned.getDate()+'/'+(ned.getMonth()+1)+'/'+ned.getFullYear();
 		// resp.expiryDate=ned.toLocaleDateString();
-		resp.startDate=resp.delvdate;
-		resp.expiryDate=expDate;
-		resp.nextStartDate=nextStartDate;
-		resp.deliveryAssigned=0;
-		resp.billPeriod = 'To be assigned';
+		// resp.startDate=resp.delvdate;
+		// resp.expiryDate=expDate;
+		// resp.nextStartDate=nextStartDate;
+		// resp.deliveryAssigned=0;
 	});
 
 	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
@@ -268,7 +267,7 @@ router.post('/newRenew', function(req, res) {
 			  resProduct.price,	  
 			  JSON.stringify(renewalProduct),
 			  0,
-			  'Delivery awaited',
+			  'Renewed',
 			  startDate,
 			  expiryDate,
 			  1,
@@ -316,8 +315,8 @@ router.post('/newReturn', function(req, res) {
 	  req.body.lastName,
 	  req.body.mobile,
 	  req.body.email,
-	  req.body.billingAddress,
-	  req.body.shippingAddress,
+	  57,
+	  57,
 	  req.body.orderType,
 	  req.body.orderStatus,
 	  req.body.deliveryStatus,
@@ -396,8 +395,8 @@ router.post('/newReplace', function(req, res) {
 	  req.body.lastName,
 	  req.body.mobile,
 	  req.body.email,
-	  req.body.billingAddress,
-	  req.body.shippingAddress,
+	  57,
+	  57,
 	  3,
 	  req.body.orderStatus,
 	  'To be paid',
