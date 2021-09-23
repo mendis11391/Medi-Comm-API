@@ -6,12 +6,13 @@ const cors = require('cors');
 var crypto = require("crypto");
 
 var sql = require("../db.js");
+const constants = require("../constant/constUrl");
 
 router.options('/send', cors());
 router.post('/send', cors(), (req, res) => {
     const emailId = req.body.email;
     city = req.body.city;
-    const query = `SELECT uid AS userId FROM users where email= '${emailId}' and logintype = 'web'`;
+    const query = `SELECT customer_id AS userId FROM customer where email= '${emailId}'`;
 
     const timeRef = new Date();
     const year = timeRef.getFullYear();
@@ -44,17 +45,14 @@ router.post('/send', cors(), (req, res) => {
             `;
 
                     let transporter = nodemailer.createTransport({
-                        host: 'mail.irentout.com',
+                        // host: 'mail.irentout.com',
+                        service: 'gmail',
+                        host:'smtp.gmail.com',
                         port: 587, //Note: change to port:465 when website runs in https://irentout.com
                         secure: true, //Note: may be true
                         auth: {
-                            user: 'passwordreset@irentout.com',
-                            pass: 'iro@fci123'
-                        },
-                        tls: {
-                            rejectUnauthorized: false,
-                            ignoreTLS: false,
-                            requireTLS: true
+                            user: 'reachfci.secure@gmail.com',
+                            pass: 'dgzsmufgdkmjdhlv'
                         }
                     });
 

@@ -231,11 +231,12 @@ router.put("/updateRenewalTimeline/:id", (req, res) => {
 
 router.put("/updateOrderItemDeliveryDate/:id", (req, res) => {
   var id = req.params.id;
-  var sqlUpdate = 'UPDATE order_item SET startDate= ?, renewals_timline=? WHERE order_item_id= ?';
+  var sqlUpdate = 'UPDATE order_item SET startDate= ?, endDate= ?, renewals_timline=? WHERE order_item_id= ?';
   sql.query(
     sqlUpdate,
     [
       req.body.deliveryDate,
+      req.body.expiryDate,
       req.body.renewalTimeline,
       id
     ],

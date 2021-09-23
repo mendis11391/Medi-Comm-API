@@ -238,6 +238,22 @@ router.get("/productsByCity/:id", (req, res) => {
   );
 });
 
+// Update users name
+router.put("/updateProductQuantity/:id", (req, res) => {
+
+  var sqlUpdate = `CALL updateProductQty(${req.body.quantity},${req.params.id})`;
+  sql.query(
+    sqlUpdate,
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'Product quantity updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 
 // Get all products by city
 // router.get("/productsByCity/:city", (req, res) => {

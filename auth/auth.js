@@ -106,7 +106,7 @@ router.get(
     gpId += secretkey.final("hex");
 
     sql.query(
-      `select * from customer where email = ? and login_type = 'Google'`,
+      `select * from customer where email = ? `,
       [req.user._json.email],
       (err, rows) => {
         if (!err) {

@@ -21,7 +21,7 @@ router.get('/getCustomerAddressById/:id', function(req, res) {
 router.post("/addresses", function (req, res) {
     
   var sqlInsert =
-    "INSERT INTO `address`(`customer_id`, `nickName`, `address_line1`, `address_line2`,`landmark`, `city`, `state`, `pincode`, `address_type`, `default_address`) VALUES (?, ?, ?, ?, ?, ?,?,?,?,?)";
+    "INSERT INTO `address`(`customer_id`, `nickName`, `address_line1`, `address_line2`,`landmark`, `city`, `state`, `pincode`, `address_type`, `default_address`,`status`) VALUES (?,?, ?, ?, ?, ?, ?,?,?,?,?)";
   sql.query(
     sqlInsert,
     [
@@ -34,7 +34,8 @@ router.post("/addresses", function (req, res) {
       req.body.state,
       req.body.pincode,
       req.body.address_type,
-      req.body.default_address
+      req.body.default_address,
+      req.body.status
     ],
     (err) => {
       if (!err) {
@@ -71,13 +72,13 @@ router.put("/updateAddress/:id", (req, res) => {
 });
 
 // Delete address
-router.delete("/deleteAddressById/:id",  (req, res) => {
+router.put("/deleteAddressById/:id",  (req, res) => {
   sql.query(
-    "DELETE FROM address WHERE address_id = ?",
-    [req.params.id],
+    "UPDATE `address` SET `status`= ?, `default_address`= ? WHERE address_id = ?",
+    [req.body.status,0,req.params.id],
     (err) => {
       if (!err) {
-        res.send({'message':'Deleted address'})
+        res.send({'message':'Address disabled'})
       } else {
         res.send({ error: err });
       }
@@ -228,7 +229,7 @@ router.get('/:id', function(req, res, next) {
 
 router.get('/checkemail/:emailEx', function(req, res) {
   sql.query(
-      `SELECT count(*) AS emailidCount FROM customer where email= ? and login_type = 'web'`,
+      `SELECT count(*) AS emailidCount FROM customer where email= ?`,
       [req.params.emailEx],
       (err, rows) => {
         if (!err) {
