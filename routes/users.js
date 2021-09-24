@@ -113,6 +113,29 @@ router.get('/getCustomerById/:id', function(req, res) {
     );
 });
 
+router.post('/updateorderItem', function(req, res) {
+	var sqlInsert = "INSERT INTO `customer_requests`( `order_item_id`, `order_id`,`renewals_timline`, `request_id`, `requested_date`, `approval_status`, `approval_date`, `request_status`) VALUES (?,?,?,?,?,?,?,?)";  
+	sql.query(sqlInsert,
+    [
+      req.body.order_item_id,
+      req.body.order_id,
+      req.body.renewals,
+      req.body.request_id,
+      req.body.requested_date,
+      req.body.approval_status,
+      req.body.approval_date,
+      req.body.request_status,
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: 'Inserted Successfully'});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
 // Update status and damage charges in order item
 router.put("/updatecustomerRequests/:id", (req, res) => {
   var id = req.params.id;
