@@ -127,7 +127,7 @@ router.post('/saveNewOrder', function(req, res) {
 		  renewalProduct.push(resProduct);
 		  let startDate = getDates(resProduct.startDate);
 		  let expiryDate = getDates(resProduct.expiryDate);
-		  var sqlInsert = "INSERT INTO `order_item`(`primary_order_item_id`,`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`, `tenure_period`, `tenure_price`, `renewals_timline`,`overdue`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		  var sqlInsert = "INSERT INTO `order_item`(`primary_order_item_id`,`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`, `tenure_period`, `tenure_price`,`damage_protection`,`damage_charges`,`earlyReturnCharges`, `renewals_timline`,`overdue`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		  sql.query(sqlInsert,
 			  [
 			  0,
@@ -140,6 +140,9 @@ router.post('/saveNewOrder', function(req, res) {
 			  resProduct.tenure_id,
 			  resProduct.tenure,
 			  resProduct.price,	  
+			  resProduct.dp,
+			  0,
+			  0,
 			  JSON.stringify(renewalProduct),
 			  0,
 			  2,
@@ -174,7 +177,7 @@ router.post('/newRenew', function(req, res) {
 	checkoutPInfo=JSON.parse(req.body.products);
 	let dPI = req.body.damageProtection;
 	checkoutPInfo.forEach((resp) => { //this loop is for expDate and nextStartDate calculation
-		if(dPI>0){
+		if(resp.dp>0){
 			resp.dp=resp.price*(8/100);
 		  } else{
 			resp.dp=0;
@@ -252,7 +255,7 @@ router.post('/newRenew', function(req, res) {
 		  renewalProduct.push(resProduct);
 		  let startDate = getDates(resProduct.startDate);
 		  let expiryDate = getDates(resProduct.expiryDate);
-		  var sqlInsert = "INSERT INTO `order_item`(`primary_order_item_id`,`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`, tenure_period,`tenure_price`, `renewals_timline`,`overdue`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		  var sqlInsert = "INSERT INTO `order_item`(`primary_order_item_id`,`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`, tenure_period,`tenure_price`, `damage_protection`,`damage_charges`,`earlyReturnCharges`,`renewals_timline`,`overdue`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		  sql.query(sqlInsert,
 			  [
 			  req.body.orderID,
@@ -265,6 +268,9 @@ router.post('/newRenew', function(req, res) {
 			  resProduct.tenure_id,
 			  resProduct.tenure,
 			  resProduct.price,	  
+			  resProduct.dp,
+			  0,
+			  0,
 			  JSON.stringify(renewalProduct),
 			  0,
 			  'Renewed',
@@ -335,7 +341,7 @@ router.post('/newReturn', function(req, res) {
 		  renewalProduct.push(resProduct);
 		  let startDate = getDates(resProduct.startDate);
 		  let expiryDate = getDates(resProduct.expiryDate);
-		  var sqlInsert = "INSERT INTO `order_item`(`primary_order_item_id`,`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`,`tenure_period`, `tenure_price`, `damage_charges`, `renewals_timline`,`overdue`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		  var sqlInsert = "INSERT INTO `order_item`(`primary_order_item_id`,`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`,`tenure_period`, `tenure_price`,`damage_protection`, `damage_charges`,`earlyReturnCharges`, `renewals_timline`,`overdue`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		  sql.query(sqlInsert,
 			  [
 			  resProduct.order_item_id,
@@ -347,8 +353,10 @@ router.post('/newReturn', function(req, res) {
 			  resProduct.tenureBasePrice,
 			  resProduct.tenure_id,
 			  resProduct.tenure,
-			  resProduct.price,	  
+			  resProduct.price,	 
+			  resProduct.dp, 
 			  resProduct.damageCharges,
+			  resProduct.earlyReturnCharges,
 			  JSON.stringify(renewalProduct),
 			  0,
 			  'Delivery awaited',
@@ -415,7 +423,7 @@ router.post('/newReplace', function(req, res) {
 		  renewalProduct.push(resProduct);
 		  let startDate = getDates(resProduct.startDate);
 		  let expiryDate = getDates(resProduct.expiryDate);
-		  var sqlInsert = "INSERT INTO `order_item`(`primary_order_item_id`,`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`,`tenure_period`, `tenure_price`, `damage_charges`, `renewals_timline`,`overdue`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		  var sqlInsert = "INSERT INTO `order_item`(`primary_order_item_id`,`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`,`tenure_period`, `tenure_price`, `damage_protection`,`damage_charges`,`earlyReturnCharges`, `renewals_timline`,`overdue`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		  sql.query(sqlInsert,
 			  [
 			  0,
@@ -428,7 +436,9 @@ router.post('/newReplace', function(req, res) {
 			  resProduct.tenure_id,
 			  resProduct.tenure,
 			  resProduct.price,	  
+			  resProduct.dp,
 			  resProduct.damageCharges,
+			  0,
 			  JSON.stringify(renewalProduct),
 			  0,
 			  'Delivery awaited',

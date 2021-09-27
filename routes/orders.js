@@ -374,12 +374,15 @@ router.get('/renewals/:id', function(req, res) {
               let sdb = smm+1+'/'+sdd+'/'+syy;
               let startDate= new Date(sdb);
   
-              let daysInDiff=dateDiffInDays(startDate, currDate);                    
-              
+              let daysInDiff=dateDiffInDays(startDate, currDate); 
               if(daysInDiff>=0 && (cid[i].renewed!=4 && cid[i].overdew!=1)){
                 if(cid[i].ordered==1){
                   cid[i].renewed=1
+                  cid[i].overdew=0
+                } else if(cid[i].renewed==1 || cid[i].renewed==4){
+                  cid[i].overdew=0
                 }
+
                 cid[i].overdew=1;
                 // row['overdue']=1;
                 ucid.renewed=0;
@@ -399,22 +402,69 @@ router.get('/renewals/:id', function(req, res) {
                   ]
                 );
               }
+
+              if(cid[i].ordered==1){
+                var sqlUpdate = 'UPDATE order_item SET overdue=? WHERE order_item_id= ?';
+                sql.query(
+                  sqlUpdate,
+                  [
+                    0,
+                    forOT['order_item_id']
+                  ]
+                );
+              } else if((cid[i].overdew==1)){
+                var sqlUpdate = 'UPDATE order_item SET overdue=? WHERE order_item_id= ?';
+                sql.query(
+                  sqlUpdate,
+                  [
+                    1,
+                    forOT['order_item_id']
+                  ]
+                );
+              }
+
+              
   
-              // if((cid[i].renewed==1 || cid[i].renewed==4) && cid[i].ordered!=1){
+              if((cid[i].renewed==1 || cid[i].renewed==4) && cid[i].ordered!=1){
                 
-              //   var sqlUpdate = 'UPDATE assets SET startDate=?, EndDate=?, nextStartDate=? WHERE asset_no= ?';
-              //   sql.query(
-              //     sqlUpdate,
-              //     [
-              //       cid[i].startDate,
-              //       cid[i].expiryDate,
-              //       cid[i].nextStartDate,
-              //       ucid.assetId
-              //     ]
-              //   );
-              // }
+                var sqlUpdate = 'UPDATE assets SET startDate=?, EndDate=?, nextStartDate=? WHERE asset_no= ?';
+                sql.query(
+                  sqlUpdate,
+                  [
+                    cid[i].startDate,
+                    cid[i].expiryDate,
+                    cid[i].nextStartDate,
+                    ucid.assetId
+                  ]
+                );
+
+                var sqlUpdate = 'UPDATE order_item SET overdue=? WHERE order_item_id= ?';
+                sql.query(
+                  sqlUpdate,
+                  [
+                    0,
+                    forOT['order_item_id']
+                  ]
+                );
+
+                
+              }
               
             }
+
+            cid.forEach((cidResults)=>{
+              if(cidResults.overdew==1 && cidResults.ordered!=1){
+                var sqlUpdate = 'UPDATE order_item SET overdue=? WHERE order_item_id= ?';
+                sql.query(
+                  sqlUpdate,
+                  [
+                    1,
+                    forOT['order_item_id']
+                  ]
+                );
+              }
+
+            })
 
             if(len===ele.length){          
               res.send(orderItem);

@@ -87,11 +87,19 @@ router.put("/deleteAddressById/:id",  (req, res) => {
 });
 
 router.get('/getCustomerRequests', function(req, res) {
+  let len=0;
   sql.query(
       `CALL get_customerRequests() `,
       (err, rows) => {
         if (!err) {
-          res.send(rows[0]);
+          let requests = rows[0];
+          for(let i=0;i<requests.length;i++){
+            len++;
+            requests[i].renewals_timline=JSON.parse(requests[i].renewals_timline); 
+            if(len==requests.length){
+              res.send(requests);   
+            }
+          }            
         } else {
           res.send({ error: 'Error' });
         }
