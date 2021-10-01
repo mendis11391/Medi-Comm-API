@@ -276,6 +276,44 @@ router.get('/checkemail/:emailEx', function(req, res) {
     );
 });
 
+
+router.get('/checkmobile/:mobile', function(req, res) {
+  sql.query(
+      `SELECT count(*) AS mobileCount, customer_id FROM customer where mobile= ? `,
+      [req.params.mobile],
+      (err, rows) => {
+        if (!err) {
+          if(rows[0].mobileCount > 0 ) {
+            res.send({message: '', status: true, customerId:rows[0].customer_id})
+          } else {
+            res.send({message: `Email Id doesn't exist`, status: false});
+          }
+        } else {
+          res.send({ error: 'Error' });
+        }
+      }
+    );
+});
+
+// Update users name
+router.put("/updateOtp/:cid", (req, res) => {
+
+  var sqlUpdate = "UPDATE `customer` SET `password`= ? WHERE `customer_id` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.otp,
+      req.params.cid
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'users name updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
 /* GET cart details */
 router.get('/cart/:id', function(req, res, next) {
   sql.query(

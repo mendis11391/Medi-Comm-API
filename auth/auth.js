@@ -252,6 +252,41 @@ router.post("/userlogin", (req, res) => {
   );
 });
 
+
+router.post("/otplogin", (req, res) => {
+  // Encrypt Password before comparing
+  const encryptedTime = crypto.createCipher('aes-128-cbc', 'irent@key*');
+  let cryptPassword = encryptedTime.update(req.body.otp, 'utf8', 'hex')
+  cryptPassword += encryptedTime.final('hex');
+
+  sql.query(
+    `SELECT firstName from customer WHERE mobile = ? and password = ?`,
+    [req.body.mobile, req.body.otp],
+    (err, rows) => {
+      if (!err) {
+        if (rows.length > 0) {
+          const tokgen = new TokenGenerator(256, TokenGenerator.BASE71);
+          const token = tokgen.generate();
+          const updateTokenQuery = `UPDATE customer SET token = ? where mobile= ? and password = ?`;
+          sql.query(
+            updateTokenQuery,
+            [token, req.body.mobile, req.body.otp],
+            (err, rows) => {
+              if (!err) {
+                res.send({ token: token, authenticated: true });
+              }
+            }
+          );
+        } else {
+          res.send({ token: "error", authenticated: false });
+        }
+      } else {
+        res.send({ token: "error", authenticated: false });
+      }
+    }
+  );
+});
+
 /*
 User Registration:
 @Parameters
@@ -292,6 +327,76 @@ router.post("/register", (req, res) => {
           ],
           (err, rows) => {
             if (!err) {
+              res.send({
+                status: "Successfully Registered",
+                token: logintoken,
+                authenticated: true,
+              });
+            } else {
+              res.send({ authenticated: false });
+            }
+          }
+        );
+      } else {
+        res.send({
+          status: "User with this emailId is already registered",
+          authenticated: false,
+        });
+      }
+    } else {
+      res.send({ error: "Query Error" });
+    }
+  });
+});
+
+router.post("/otpRegister", (req, res) => {
+  const uidtokgen = new TokenGenerator();
+  const userToken = `irentout-${uidtokgen.generate()}`;
+  const logintokgen = new TokenGenerator(256, TokenGenerator.BASE71);
+  const logintoken = logintokgen.generate();
+
+  // Encrypt Password
+  // const encryptedTime = crypto.createCipher('aes-128-cbc', 'irent@key*');
+  // let cryptPassword = encryptedTime.update(req.body.password, 'utf8', 'hex')
+  // cryptPassword += encryptedTime.final('hex');
+
+  let insQuery =
+    "INSERT INTO `customer`( `firstName`, `lastName`, `mobile`, `email`, `password`, `registeredAt`, `lastLogin`,`login_type`, `token`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  let checkUser = "select firstName from customer where email = ? and login_type = 'web'";
+  sql.query(checkUser, [req.body.email], (err, rows) => {
+    if (!err) {
+      if (rows.length === 0) {
+        sql.query(
+          insQuery,
+          [
+            req.body.firstName,
+            req.body.lastName,
+            req.body.phone,
+            req.body.email,
+            req.body.password,
+            new Date(),
+            new Date(),
+            "web",
+            logintoken
+          ],
+          (err, results) => {
+            if (!err) {
+              var sqlInsert = "INSERT INTO `cart`(`customer_id`,`products`,`modifiedAt`) VALUES (?,?,?)";
+              sql.query(sqlInsert,
+                [
+                results.insertId,
+                '[]',
+                new Date()
+                ]
+              );
+              var sqlInsert = "INSERT INTO `wishlist`(`customer_id`,`products`,`modifiedAt`) VALUES (?,?,?)";
+              sql.query(sqlInsert,
+                [
+                results.insertId,
+                '[]',
+                new Date()
+                ]
+              );
               res.send({
                 status: "Successfully Registered",
                 token: logintoken,

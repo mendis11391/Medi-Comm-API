@@ -475,6 +475,16 @@ router.get('/renewals/:id', function(req, res) {
     );
 });
 
+router.get('/customerRequests/:id', function(req, res) {
+  sql.query(
+    `CALL getCustomerRequestsByOTID(${req.params.id})`,
+    (err, rows, fields) => {
+      if(!err){
+        res.send(rows[0]);
+      }
+    });
+});
+
 
 router.get('/orderId/:id', function(req, res) {
   
@@ -593,6 +603,13 @@ router.get('/:id', function(req, res) {
                                 let forOT = ot.orderItem;
                                 for(let i=0;i<forOT.length;i++){
                                   forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
+                                  sql.query(
+                                    `CALL getCustomerRequestsByOTID(${forOT[i].order_item_id})`,
+                                    (err4, rows4, fields) => {
+                                      if(!err4){
+                                        forOT[i]['customerRequests'] = rows4[0];
+                                      }
+                                    })
 
                                   if(forOT[i].delivery_status.includes(4) ){
                                     delivered.push(1);              
