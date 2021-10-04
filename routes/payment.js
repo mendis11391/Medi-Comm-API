@@ -861,11 +861,39 @@ router.post('/result',(req, res, next)=>{
     try{
     switch(req.body.txStatus){
         case txnTypes.cancelled: {
+			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`, `status`, `type`, `createdAt`) VALUES (?,?,?,?,?)";  
+			sql.query(sqlInsert,
+				[
+				req.body.referenceId,
+				req.body.orderId,
+				req.body.txStatus,
+				req.body.paymentMode,
+				req.body.txTime
+				],
+				(err) => {
+				if (!err) {
+					var updateOrder = `UPDATE orders SET orderStatus = ? where order_id= ?`;
+					sql.query(updateOrder,
+					[
+						req.body.txStatus,
+						req.body.orderId,
+					]);
+				} else {
+					res.send({message: err});
+				}
+				}
+			);
             //buisness logic if payment was cancelled
-            return res.status(200).render('result',{data:{
-                status: "failed",
-                message: "transaction was cancelled by user",
-            }});
+            // return res.status(200).render('result',{data:{
+            //     status: "failed",
+            //     message: "transaction was cancelled by user",
+            // }});
+			res.redirect(url.format({
+				pathname: `${constants.frontendUrl}/Bangalore/failure`,
+				query: {
+				   "transID": req.body.orderId,
+				 }
+			}));
         }
         case txnTypes.failed: {
             //buisness logic if payment failed
@@ -874,16 +902,38 @@ router.post('/result',(req, res, next)=>{
             if(derivedSignature !== signature){
                 throw {name:"signature missmatch", message:"there was a missmatch in signatures genereated and received"}
             }
-			// res.redirect(url.format({
-			// 	pathname: `${constants.frontendUrl}/Bangalore/failure`,
-			// 	query: {
-			// 	   "transID": 123,
-			// 	 }
-			// }));
-            return res.status(200).render('result',{data:{
-                status: "failed",
-                message: "payment failure",
-            }});
+			// var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`, `status`, `type`, `createdAt`) VALUES (?,?,?,?,?)";  
+			// sql.query(sqlInsert,
+			// 	[
+			// 	req.body.referenceId,
+			// 	req.body.orderId,
+			// 	req.body.txStatus,
+			// 	req.body.paymentMode,
+			// 	req.body.txTime
+			// 	],
+			// 	(err) => {
+			// 	if (!err) {
+			// 		var updateOrder = `UPDATE orders SET orderStatus = ? where order_id= ?`;
+			// 		sql.query(updateOrder,
+			// 		[
+			// 			'FAILED',
+			// 			req.body.orderId,
+			// 		]);
+			// 	} else {
+			// 		res.send({message: err});
+			// 	}
+			// 	}
+			// );
+			res.redirect(url.format({
+				pathname: `${constants.frontendUrl}/Bangalore/failure`,
+				query: {
+				   "transID": req.body.orderId,
+				 }
+			}));
+            // return res.status(200).render('result',{data:{
+            //     status: "failed",
+            //     message: "payment failure",
+            // }});
         }
         case txnTypes.success: {
             //buisness logic if payments succeed
@@ -892,16 +942,39 @@ router.post('/result',(req, res, next)=>{
             if(derivedSignature !== signature){
                 throw {name:"signature missmatch", message:"there was a missmatch in signatures genereated and received"}
             }
-			// res.redirect(url.format({
-			// 	pathname: `${constants.frontendUrl}/Bangalore/order-success`,
-			// 	query: {
-			// 	   "transID": 123,
-			// 	 }
-			// }));
-            return res.status(200).render('result',{data:{
-                status: "success",
-                message: "payment success",
-            }});
+			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`, `status`, `type`, `createdAt`) VALUES (?,?,?,?,?)";  
+			sql.query(sqlInsert,
+				[
+				req.body.referenceId,
+				req.body.orderId,
+				req.body.txStatus,
+				req.body.paymentMode,
+				req.body.txTime
+				],
+				(err1) => {
+				if (!err1) {
+					var updateOrder = `UPDATE orders SET orderStatus = ? where order_id= ?`;
+					sql.query(updateOrder,
+					[
+						req.body.txStatus,
+						req.body.orderId,
+					]);
+				} else {
+					res.send({message: err});
+				}
+				}
+			);
+			
+			res.redirect(url.format({
+				pathname: `${constants.frontendUrl}/Bangalore/order-success`,
+				query: {
+				   "transID": req.body.orderId,
+				 }
+			}));
+            // return res.status(200).render('result',{data:{
+            //     status: "success",
+            //     message: "payment success",
+            // }});
         }
     }
     }
