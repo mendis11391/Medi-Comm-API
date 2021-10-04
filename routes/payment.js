@@ -3,6 +3,10 @@ var crypto = require("crypto");
 var router = express.Router();
 const url = require('url');  
 
+const config = require('../config.json');
+const helpers = require('../helpers/signatureCreation');
+const enums = require('../helpers/enums');
+
 var sql = require("../db.js");
 const constants = require("../constant/constUrl");
 
@@ -769,6 +773,165 @@ router.post('/return', function(req, res) {
 // 	//res.render(__dirname + '/checkout.html', {orderid:ord});
 	
 // });
+
+/************Cashfree PG part******/
+router.post('/calculateSecretKey', (req, res, next)=>{
+    const {paymentType} = req.body;
+    var {formObj} = req.body;
+    const secretKey = config.secretKey;
+	const notify=""
+
+    switch(paymentType){
+        case enums.paymentTypeEnum.checkout: {
+            const returnUrl = "http://localhost:3000/payments/result";
+            formObj.returnUrl = returnUrl;
+            formObj.notifyUrl = notify;
+            formObj.appId = config.appId;
+            const signature = helpers.signatureRequest1(formObj, secretKey);
+            additionalFields = {
+                returnUrl,
+                notifyUrl:"",
+                signature,
+                appId: config.appId,
+            };
+            return res.status(200).send({
+                status:"success",
+                additionalFields,
+            });
+        }
+        case enums.paymentTypeEnum.merchantHosted: {
+            var { formObj } = req.body;
+            formObj.appId = config.appId;
+            formObj.returnUrl = "";
+            formObj.notifyUrl = notifyUrl;
+            formObj.paymentToken = helpers.signatureRequest2(formObj, config.secretKey);
+            return res.status(200).send({
+                status: "success",
+                paymentData: formObj,
+            });
+        }
+        case enums.paymentTypeEnum.seamlessbasic: {
+            //for now assume mode to be popup
+            //TODO: add support for redirect
+            var { formObj } = req.body;
+            var additionalFields = {}; 
+            formObj.appId = config.appId;
+            additionalFields.paymentToken = helpers.signatureRequest3(formObj, config.secretKey);
+            additionalFields.notifyUrl = notifyUrl;
+            additionalFields.appId = config.appId;
+            additionalFields.orderCurrency = "INR";
+            return res.status(200).send({
+                status: "success",
+                additionalFields
+            });
+        }
+
+        default: {
+            console.log("incorrect payment option recieved");
+            console.log("paymentOption:", paymentType);
+            return res.status(200).send({
+                status:"error",
+                message:"incorrect payment type sent"
+            });
+        }
+    }
+});
+
+//below will not be hit as server is not on https://
+router.post('/notify', (req, res, next)=>{
+    console.log("notify hit");
+    console.log(req.body);
+    return res.status(200).send({
+        status: "success",
+    })
+});
+
+router.get('/index' , (req, res, next)=>{
+    console.log("index get hit");
+    res.render('checkout',{ 
+        postUrl: config.paths[config.enviornment].cashfreePayUrl
+    });
+});
+
+router.post('/result',(req, res, next)=>{
+    console.log("merchantHosted result hit");
+    console.log(req.body);
+
+    const txnTypes = enums.transactionStatusEnum;
+    try{
+    switch(req.body.txStatus){
+        case txnTypes.cancelled: {
+            //buisness logic if payment was cancelled
+            return res.status(200).render('result',{data:{
+                status: "failed",
+                message: "transaction was cancelled by user",
+            }});
+        }
+        case txnTypes.failed: {
+            //buisness logic if payment failed
+            const signature = req.body.signature;
+            const derivedSignature = helpers.signatureResponse1(req.body, config.secretKey);
+            if(derivedSignature !== signature){
+                throw {name:"signature missmatch", message:"there was a missmatch in signatures genereated and received"}
+            }
+			// res.redirect(url.format({
+			// 	pathname: `${constants.frontendUrl}/Bangalore/failure`,
+			// 	query: {
+			// 	   "transID": 123,
+			// 	 }
+			// }));
+            return res.status(200).render('result',{data:{
+                status: "failed",
+                message: "payment failure",
+            }});
+        }
+        case txnTypes.success: {
+            //buisness logic if payments succeed
+            const signature = req.body.signature;
+            const derivedSignature = helpers.signatureResponse1(req.body, config.secretKey);
+            if(derivedSignature !== signature){
+                throw {name:"signature missmatch", message:"there was a missmatch in signatures genereated and received"}
+            }
+			// res.redirect(url.format({
+			// 	pathname: `${constants.frontendUrl}/Bangalore/order-success`,
+			// 	query: {
+			// 	   "transID": 123,
+			// 	 }
+			// }));
+            return res.status(200).render('result',{data:{
+                status: "success",
+                message: "payment success",
+            }});
+        }
+    }
+    }
+    catch(err){
+        return res.status(500).render('result',{data:{
+            status:"error",
+            err: err,
+            name: err.name,
+            message: err.message,
+        }});
+    }
+
+    const signature = req.body.signature;
+    const derivedSignature = helpers.signatureResponse1(req.body, config.secretKey);
+    if(derivedSignature === signature){
+        console.log("works");
+        return res.status(200).send({
+            status:req.body.txStatus,
+        })
+    }
+    else{
+        console.log("signature gotten: ", signature);
+        console.log("signature derived: ", derivedSignature);
+        return res.status(200).send({
+            status: "error",
+            message: "signature mismatch",
+        })
+    }
+});
+/************End of Cashfree PG part******/
 	
 
 router.post('/', function(req, res){
