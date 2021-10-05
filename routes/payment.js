@@ -902,28 +902,7 @@ router.post('/result',(req, res, next)=>{
             if(derivedSignature !== signature){
                 throw {name:"signature missmatch", message:"there was a missmatch in signatures genereated and received"}
             }
-			// var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`, `status`, `type`, `createdAt`) VALUES (?,?,?,?,?)";  
-			// sql.query(sqlInsert,
-			// 	[
-			// 	req.body.referenceId,
-			// 	req.body.orderId,
-			// 	req.body.txStatus,
-			// 	req.body.paymentMode,
-			// 	req.body.txTime
-			// 	],
-			// 	(err) => {
-			// 	if (!err) {
-			// 		var updateOrder = `UPDATE orders SET orderStatus = ? where order_id= ?`;
-			// 		sql.query(updateOrder,
-			// 		[
-			// 			'FAILED',
-			// 			req.body.orderId,
-			// 		]);
-			// 	} else {
-			// 		res.send({message: err});
-			// 	}
-			// 	}
-			// );
+			
 			res.redirect(url.format({
 				pathname: `${constants.frontendUrl}/Bangalore/failure`,
 				query: {

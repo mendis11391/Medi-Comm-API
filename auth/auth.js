@@ -5,7 +5,70 @@ var router = express.Router();
 const querystring = require("querystring");
 const TokenGenerator = require("uuid-token-generator");
 const constants = require("../constant/constUrl");
+const Speakeasy = require("speakeasy");
 
+/********************txt local **** */
+var http = require('http');
+
+var urlencode = require('urlencode');
+
+var msg=urlencode('Hi there, thank you for sending your first test message from Textlocal. See how you can send effective SMS campaigns here: https://tx.gl/r/2nGVj/');
+
+var number='8971870126';
+
+var username='santosh@reachfci.com';
+
+var hash='afb9b5fa88478754ecf0036bbaf520169e0fabe5614917be930f32512128717b'; // The hash key could be found under Help->All Documentation->Your hash key. Alternatively you can use your Textlocal password in plain text.
+
+var sender='600010';
+
+var data='username='+username+'&hash='+hash+'&sender='+sender+'&numbers='+number+'&message='+msg
+
+var options = {
+
+ 
+
+ host: 'api.textlocal.in',
+
+  path: '/send?'+data
+
+};
+
+ 
+
+callback = function(response) {
+
+  var str = '';
+
+ 
+
+  //another chunk of data has been recieved, so append it to `str`
+
+  response.on('data', function (chunk) {
+
+  str += chunk;
+
+  });
+
+ 
+
+  //the whole response has been recieved, so we just print it out here
+
+  response.on('end', function () {
+
+  console.log(str);
+
+  });
+
+}
+
+ 
+
+//console.log('hello js'))
+
+http.request(options, callback).end();
+
+/*****************End of txt local** */
 var sql = require("../db.js");
 
 router.get(constants.facebookOpenUrl, passport.authenticate("facebook"));
@@ -418,6 +481,50 @@ router.post("/otpRegister", (req, res) => {
     }
   });
 });
+
+/************** OTP LOGIN ***************/
+
+router.post("/totp-secret", (request, response, next) => {
+  var secret = Speakeasy.generateSecret({ length: 20 });
+  response.send({ "secret": secret.base32 });
+});
+
+router.post("/totp-generate", (request, response, next) => {
+  response.send({
+      "token": Speakeasy.totp({
+          secret: request.body.secret,
+          encoding: "base32"
+      }),
+      "remaining": (60 - Math.floor((new Date()).getTime() / 1000.0 % 60))
+  });
+});
+
+router.post("/totp-validate", (request, response, next) => {
+  var a  = Speakeasy.totp.verify({
+    secret: request.body.secret,
+    encoding: "base32",
+    token: request.body.token,
+    window: 0});
+    console.log(a);
+  response.send({
+      "valid": a
+  });
+});
+
+router.post('/otpUserdetails', (req, res) => {
+  let getDetails = "select customer_id, firstName, login_type from customer where mobile = ?";
+  sql.query(getDetails, [req.body.mobile], (err, rows) => {
+    if (!err) {
+      if (rows.length > 0) {
+       res.send({'data': rows, authenticated: true});
+      } else {
+        res.send({'data': {}, authenticated: false});
+      }
+    }
+  });
+});
+
+/*********End of OTP LOGIN *************/
 
 router.get("/failure", (req, res) => {
   return res.redirect(`${constants.frontendUrl}/login`);
