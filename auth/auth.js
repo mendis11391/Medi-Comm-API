@@ -8,65 +8,59 @@ const constants = require("../constant/constUrl");
 const Speakeasy = require("speakeasy");
 
 /********************txt local **** */
-var http = require('http');
+router.post('/smsOtp',(req,res)=>{
+  var http = require('http');
 
-var urlencode = require('urlencode');
-
-var msg=urlencode('Hi there, thank you for sending your first test message from Textlocal. See how you can send effective SMS campaigns here: https://tx.gl/r/2nGVj/');
-
-var number='8971870126';
-
-var username='santosh@reachfci.com';
-
-var hash='afb9b5fa88478754ecf0036bbaf520169e0fabe5614917be930f32512128717b'; // The hash key could be found under Help->All Documentation->Your hash key. Alternatively you can use your Textlocal password in plain text.
-
-var sender='600010';
-
-var data='username='+username+'&hash='+hash+'&sender='+sender+'&numbers='+number+'&message='+msg
-
-var options = {
-
- 
-
- host: 'api.textlocal.in',
-
-  path: '/send?'+data
-
-};
-
- 
-
-callback = function(response) {
-
-  var str = '';
-
- 
-
-  //another chunk of data has been recieved, so append it to `str`
-
-  response.on('data', function (chunk) {
-
-  str += chunk;
-
-  });
-
- 
-
-  //the whole response has been recieved, so we just print it out here
-
-  response.on('end', function () {
-
-  console.log(str);
-
-  });
-
-}
-
- 
-
-//console.log('hello js'))
-
-http.request(options, callback).end();
+  var urlencode = require('urlencode');
+  
+  var otp = req.body.otp;
+  var msg=urlencode(`Dear user, ${otp} is your secure OTP for login to irentout.com.%nOTP is valid for 100 seconds. Please DO NOT share this OTP.%nWarm regards,%nTEAM Irentout.com`);
+  
+  var number=req.body.mobile;
+  
+  var username='santosh@reachfci.com';
+  
+  var hash='afb9b5fa88478754ecf0036bbaf520169e0fabe5614917be930f32512128717b'; // The hash key could be found under Help->All Documentation->Your hash key. Alternatively you can use your Textlocal password in plain text.
+  
+  var sender='IROOTP';
+  
+  var data='username='+username+'&hash='+hash+'&sender='+sender+'&numbers='+number+'&message='+msg
+  
+  var options = {
+  
+   
+  
+   host: 'api.textlocal.in',
+  
+    path: '/send?'+data
+  
+  };
+  
+   
+  
+  callback = function(response) {
+  
+    var str = '';
+    //another chunk of data has been recieved, so append it to `str`
+    response.on('data', function (chunk) {
+  
+      console.log(chunk)
+    str += chunk;
+  
+    });
+    //the whole response has been recieved, so we just print it out here
+  
+    response.on('end', function () {
+  
+    console.log(str);
+  
+    });
+  
+  }
+  
+  http.request(options, callback).end();
+  res.send({ Mesaage: 'SMS sent'});
+});
 
 /*****************End of txt local** */
 var sql = require("../db.js");
@@ -495,7 +489,7 @@ router.post("/totp-generate", (request, response, next) => {
           secret: request.body.secret,
           encoding: "base32"
       }),
-      "remaining": (60 - Math.floor((new Date()).getTime() / 1000.0 % 60))
+      "remaining": (100 - Math.floor((new Date()).getTime() / 1000.0 % 100))
   });
 });
 
@@ -504,7 +498,7 @@ router.post("/totp-validate", (request, response, next) => {
     secret: request.body.secret,
     encoding: "base32",
     token: request.body.token,
-    window: 0});
+    window: 1});
     console.log(a);
   response.send({
       "valid": a

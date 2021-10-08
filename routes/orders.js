@@ -54,7 +54,7 @@ router.get("/", (req, res) => {
   let shipped=[];
   let others=[];
   sql.query(
-    `CALL 	get_all_orders()`,
+    `CALL get_all_orders()`,
     (err, rows, fields) => {
       if (!err) {
         rows[0].forEach((resp)=>{
