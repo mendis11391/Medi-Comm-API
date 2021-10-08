@@ -9,6 +9,7 @@ const enums = require('../helpers/enums');
 
 var sql = require("../db.js");
 const constants = require("../constant/constUrl");
+const constUrl = require('../constant/constUrl');
 
 function dateDiffInDays(a, b) {
 	const _MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -94,7 +95,7 @@ router.post('/saveNewOrder', function(req, res) {
 		resp.billPeriod = 'To be assigned';
 	});
 
-	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`,`paymentStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
       req.body.orderID,
@@ -114,6 +115,7 @@ router.post('/saveNewOrder', function(req, res) {
 	  req.body.billingAddress,
 	  req.body.shippingAddress,
 	  req.body.orderType,
+	  '1',
 	  req.body.orderStatus,
 	  1,
 	  req.body.refundStatus,
@@ -222,7 +224,7 @@ router.post('/newRenew', function(req, res) {
 		// resp.deliveryAssigned=0;
 	});
 
-	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`,`paymentStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
       req.body.primaryID,
@@ -242,6 +244,7 @@ router.post('/newRenew', function(req, res) {
 	  req.body.billingAddress,
 	  req.body.shippingAddress,
 	  req.body.orderType,
+	  '1',
 	  req.body.orderStatus,
 	  req.body.deliveryStatus,
 	  req.body.refundStatus,
@@ -308,7 +311,7 @@ router.post('/newReturn', function(req, res) {
 
 	checkoutPInfo=JSON.parse(req.body.products);
 
-	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`, `paymentStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
       req.body.primaryID,
@@ -328,6 +331,7 @@ router.post('/newReturn', function(req, res) {
 	  57,
 	  57,
 	  req.body.orderType,
+	  '1',
 	  req.body.orderStatus,
 	  req.body.deliveryStatus,
 	  req.body.refundStatus,
@@ -390,7 +394,7 @@ router.post('/newReplace', function(req, res) {
 
 	checkoutPInfo=JSON.parse(req.body.products);
 
-	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`, `paymentStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
       req.body.primaryID,
@@ -410,6 +414,7 @@ router.post('/newReplace', function(req, res) {
 	  57,
 	  57,
 	  3,
+	  '1',
 	  req.body.orderStatus,
 	  'To be paid',
 	  req.body.refundStatus,
@@ -783,7 +788,7 @@ router.post('/calculateSecretKey', (req, res, next)=>{
 
     switch(paymentType){
         case enums.paymentTypeEnum.checkout: {
-            const returnUrl = "http://localhost:3000/payments/result";
+            const returnUrl = `${constUrl.apiUrl}payments/result`;
             formObj.returnUrl = returnUrl;
             formObj.notifyUrl = notify;
             formObj.appId = config.appId;
@@ -861,20 +866,24 @@ router.post('/result',(req, res, next)=>{
     try{
     switch(req.body.txStatus){
         case txnTypes.cancelled: {
-			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`, `status`, `type`, `createdAt`) VALUES (?,?,?,?,?)";  
+			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
 			sql.query(sqlInsert,
 				[
 				req.body.referenceId,
 				req.body.orderId,
+				req.body.orderAmount,
 				req.body.txStatus,
 				req.body.paymentMode,
+				'Cashfree',
+				req.body.txMsg,
 				req.body.txTime
 				],
 				(err) => {
 				if (!err) {
-					var updateOrder = `UPDATE orders SET orderStatus = ? where order_id= ?`;
+					var updateOrder = `UPDATE orders SET orderStatus = ?, paymentStatus = ? where order_id= ?`;
 					sql.query(updateOrder,
 					[
+						'2',
 						req.body.txStatus,
 						req.body.orderId,
 					]);
@@ -902,7 +911,7 @@ router.post('/result',(req, res, next)=>{
             if(derivedSignature !== signature){
                 throw {name:"signature missmatch", message:"there was a missmatch in signatures genereated and received"}
             }
-			
+
 			res.redirect(url.format({
 				pathname: `${constants.frontendUrl}/Bangalore/failure`,
 				query: {
@@ -921,18 +930,222 @@ router.post('/result',(req, res, next)=>{
             if(derivedSignature !== signature){
                 throw {name:"signature missmatch", message:"there was a missmatch in signatures genereated and received"}
             }
-			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`, `status`, `type`, `createdAt`) VALUES (?,?,?,?,?)";  
+			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
 			sql.query(sqlInsert,
 				[
 				req.body.referenceId,
 				req.body.orderId,
+				req.body.orderAmount,
 				req.body.txStatus,
 				req.body.paymentMode,
+				'Cashfree',
+				req.body.txMsg,
 				req.body.txTime
 				],
 				(err1) => {
 				if (!err1) {
-					var updateOrder = `UPDATE orders SET orderStatus = ? where order_id= ?`;
+					var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+					sql.query(updateOrder,
+					[
+						req.body.txStatus,
+						req.body.orderId,
+					]);
+				} else {
+					res.send({message: err});
+				}
+				}
+			);
+			
+			res.redirect(url.format({
+				pathname: `${constants.frontendUrl}/Bangalore/order-success`,
+				query: {
+				   "transID": req.body,
+				 }
+			}));
+            // return res.status(200).render('result',{data:{
+            //     status: "success",
+            //     message: "payment success",
+            // }});
+        }
+    }
+    }
+    catch(err){
+        return res.status(500).render('result',{data:{
+            status:"error",
+            err: err,
+            name: err.name,
+            message: err.message,
+        }});
+    }
+
+    const signature = req.body.signature;
+    const derivedSignature = helpers.signatureResponse1(req.body, config.secretKey);
+    if(derivedSignature === signature){
+        console.log("works");
+        return res.status(200).send({
+            status:req.body.txStatus,
+        })
+    }
+    else{
+        console.log("signature gotten: ", signature);
+        console.log("signature derived: ", derivedSignature);
+        return res.status(200).send({
+            status: "error",
+            message: "signature mismatch",
+        })
+    }
+});
+/************ End of Cashfree PG part *****************/
+
+
+/************ Cashfree PG for renewals ***************/
+
+router.post('/calculateSecretKeyForRenewals', (req, res, next)=>{
+    const {paymentType} = req.body;
+    var {formObj} = req.body;
+    const secretKey = config.secretKey;
+	const notify=""
+
+    switch(paymentType){
+        case enums.paymentTypeEnum.checkout: {
+            const returnUrl = `${constUrl.apiUrl}payments/renewalsResult`;
+            formObj.returnUrl = returnUrl;
+            formObj.notifyUrl = notify;
+            formObj.appId = config.appId;
+            const signature = helpers.signatureRequest1(formObj, secretKey);
+            additionalFields = {
+                returnUrl,
+                notifyUrl:"",
+                signature,
+                appId: config.appId,
+            };
+            return res.status(200).send({
+                status:"success",
+                additionalFields,
+            });
+        }
+        case enums.paymentTypeEnum.merchantHosted: {
+            var { formObj } = req.body;
+            formObj.appId = config.appId;
+            formObj.returnUrl = "";
+            formObj.notifyUrl = notifyUrl;
+            formObj.paymentToken = helpers.signatureRequest2(formObj, config.secretKey);
+            return res.status(200).send({
+                status: "success",
+                paymentData: formObj,
+            });
+        }
+        case enums.paymentTypeEnum.seamlessbasic: {
+            //for now assume mode to be popup
+            //TODO: add support for redirect
+            var { formObj } = req.body;
+            var additionalFields = {}; 
+            formObj.appId = config.appId;
+            additionalFields.paymentToken = helpers.signatureRequest3(formObj, config.secretKey);
+            additionalFields.notifyUrl = notifyUrl;
+            additionalFields.appId = config.appId;
+            additionalFields.orderCurrency = "INR";
+            return res.status(200).send({
+                status: "success",
+                additionalFields
+            });
+        }
+
+        default: {
+            console.log("incorrect payment option recieved");
+            console.log("paymentOption:", paymentType);
+            return res.status(200).send({
+                status:"error",
+                message:"incorrect payment type sent"
+            });
+        }
+    }
+});
+
+router.post('/renewalsResult',(req, res, next)=>{
+    console.log("merchantHosted result hit");
+    console.log(req.body);
+
+    const txnTypes = enums.transactionStatusEnum;
+    try{
+    switch(req.body.txStatus){
+        case txnTypes.cancelled: {
+
+			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
+			sql.query(sqlInsert,
+				[
+				req.body.referenceId,
+				req.body.orderId,
+				req.body.orderAmount,
+				req.body.txStatus,
+				req.body.paymentMode,
+				'Cashfree',
+				req.body.txMsg,
+				req.body.txTime
+				],
+				(err) => {
+				if (!err) {
+					var updateOrder = `UPDATE orders SET orderStatus = ?, paymentStatus = ? where order_id= ?`;
+					sql.query(updateOrder,
+					[
+						'2',
+						req.body.txStatus,
+						req.body.orderId,
+					]);
+				} else {
+					res.send({message: err});
+				}
+				}
+			);
+			
+			res.redirect(url.format({
+				pathname: `${constants.frontendUrl}/Bangalore/failure`,
+				query: {
+				   "transID": req.body.orderId,
+				 }
+			}));
+        }
+        case txnTypes.failed: {
+            //buisness logic if payment failed
+            const signature = req.body.signature;
+            const derivedSignature = helpers.signatureResponse1(req.body, config.secretKey);
+            if(derivedSignature !== signature){
+                throw {name:"signature missmatch", message:"there was a missmatch in signatures genereated and received"}
+            }
+
+			res.redirect(url.format({
+				pathname: `${constants.frontendUrl}/Bangalore/failure`,
+				query: {
+				   "transID": req.body.orderId,
+				 }
+			}));
+            // return res.status(200).render('result',{data:{
+            //     status: "failed",
+            //     message: "payment failure",
+            // }});
+        }
+        case txnTypes.success: {
+            //buisness logic if payments succeed
+            const signature = req.body.signature;
+            const derivedSignature = helpers.signatureResponse1(req.body, config.secretKey);
+            if(derivedSignature !== signature){
+                throw {name:"signature missmatch", message:"there was a missmatch in signatures genereated and received"}
+            }
+			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
+			sql.query(sqlInsert,
+				[
+				req.body.referenceId,
+				req.body.orderId,
+				req.body.orderAmount,
+				req.body.txStatus,
+				req.body.paymentMode,
+				'Cashfree',
+				req.body.txMsg,
+				req.body.txTime
+				],
+				(err1) => {
+				if (!err1) {
+					var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
 					sql.query(updateOrder,
 					[
 						req.body.txStatus,
@@ -983,7 +1196,9 @@ router.post('/result',(req, res, next)=>{
         })
     }
 });
-/************End of Cashfree PG part******/
+
+
+/************ End of Cashfree PG for renewals ********/
 	
 
 router.post('/', function(req, res){
