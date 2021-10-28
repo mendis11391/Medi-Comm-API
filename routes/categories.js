@@ -122,6 +122,55 @@ function isTimeValid(dt2, dt1) {
 }
 
 // Get all categoris
+router.get("/getMainCategory", (req, res) => { 
+  let subCategories=[];
+  let subItems=[];
+  let len=0;
+  sql.query(
+    `CALL get_mainCategory()`,
+    (err, rows, fields) => {
+      if (!err) {
+        rows[0].forEach((res)=>{
+          subCategories.push(res);          
+        });
+      } else {
+        res.send({ error: 'Error' });
+      }
+
+      subCategories.forEach((subCat,i,ele) => {
+        sql.query(
+          `CALL get_categoryByID(${subCat.id})`,
+          (err2, rows2) => {
+            if(!err2){
+              len++;
+              subCat.subItems = rows2[0];
+              subItems.push(subCat); 
+              if(len===ele.length){
+                              
+                res.send(subItems);
+              }
+            }            
+          });
+      });
+    }
+  );
+});
+
+// Get all categoris
+router.get("/categoryAndSub", (req, res) => { 
+  sql.query(
+    `CALL mainAndSubCategory()`,
+    (err, rows, fields) => {
+      if (!err) {
+        res.json(rows[0]);
+      } else {
+        res.send({ error: 'Error' });
+      }
+    }
+  );
+});
+
+// Get all categoris
 router.get("/", (req, res) => { 
   sql.query(
     `CALL get_categories()`,

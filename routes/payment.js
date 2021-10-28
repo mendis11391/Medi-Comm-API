@@ -416,7 +416,6 @@ router.post('/newReplace', function(req, res) {
 	  3,
 	  '1',
 	  req.body.orderStatus,
-	  'To be paid',
 	  req.body.refundStatus,
 	  req.body.createdBy,
 	  req.body.modifiedBy,
@@ -872,7 +871,7 @@ router.post('/result',(req, res, next)=>{
 				req.body.referenceId,
 				req.body.orderId,
 				req.body.orderAmount,
-				req.body.txStatus,
+				2,
 				req.body.paymentMode,
 				'Cashfree',
 				req.body.txMsg,
@@ -883,8 +882,8 @@ router.post('/result',(req, res, next)=>{
 					var updateOrder = `UPDATE orders SET orderStatus = ?, paymentStatus = ? where order_id= ?`;
 					sql.query(updateOrder,
 					[
-						'2',
-						req.body.txStatus,
+						2,
+						2,
 						req.body.orderId,
 					]);
 				} else {
@@ -927,16 +926,22 @@ router.post('/result',(req, res, next)=>{
             //buisness logic if payments succeed
             const signature = req.body.signature;
             const derivedSignature = helpers.signatureResponse1(req.body, config.secretKey);
+			var status=1;
             if(derivedSignature !== signature){
                 throw {name:"signature missmatch", message:"there was a missmatch in signatures genereated and received"}
             }
+			if(req.body.txStatus=='SUCCESS'){
+				status=1;
+			} else{
+				status=3;
+			}
 			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
 			sql.query(sqlInsert,
 				[
 				req.body.referenceId,
 				req.body.orderId,
 				req.body.orderAmount,
-				req.body.txStatus,
+				status,
 				req.body.paymentMode,
 				'Cashfree',
 				req.body.txMsg,
@@ -947,7 +952,7 @@ router.post('/result',(req, res, next)=>{
 					var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
 					sql.query(updateOrder,
 					[
-						req.body.txStatus,
+						status,
 						req.body.orderId,
 					]);
 				} else {
@@ -1077,7 +1082,7 @@ router.post('/renewalsResult',(req, res, next)=>{
 				req.body.referenceId,
 				req.body.orderId,
 				req.body.orderAmount,
-				req.body.txStatus,
+				2,
 				req.body.paymentMode,
 				'Cashfree',
 				req.body.txMsg,
@@ -1088,8 +1093,8 @@ router.post('/renewalsResult',(req, res, next)=>{
 					var updateOrder = `UPDATE orders SET orderStatus = ?, paymentStatus = ? where order_id= ?`;
 					sql.query(updateOrder,
 					[
-						'2',
-						req.body.txStatus,
+						2,
+						2,
 						req.body.orderId,
 					]);
 				} else {
@@ -1128,16 +1133,22 @@ router.post('/renewalsResult',(req, res, next)=>{
             //buisness logic if payments succeed
             const signature = req.body.signature;
             const derivedSignature = helpers.signatureResponse1(req.body, config.secretKey);
+			var status=1
             if(derivedSignature !== signature){
                 throw {name:"signature missmatch", message:"there was a missmatch in signatures genereated and received"}
             }
+			if(req.body.txStatus=='SUCCESS'){
+				status=1;
+			} else{
+				status=3;
+			}
 			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
 			sql.query(sqlInsert,
 				[
 				req.body.referenceId,
 				req.body.orderId,
 				req.body.orderAmount,
-				req.body.txStatus,
+				status,
 				req.body.paymentMode,
 				'Cashfree',
 				req.body.txMsg,
@@ -1148,7 +1159,7 @@ router.post('/renewalsResult',(req, res, next)=>{
 					var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
 					sql.query(updateOrder,
 					[
-						req.body.txStatus,
+						status,
 						req.body.orderId,
 					]);
 				} else {
@@ -1199,6 +1210,216 @@ router.post('/renewalsResult',(req, res, next)=>{
 
 
 /************ End of Cashfree PG for renewals ********/
+
+
+/*********** Cashfree PG for RR *********************/
+router.post('/calculateSecretKeyForRR', (req, res, next)=>{
+    const {paymentType} = req.body;
+    var {formObj} = req.body;
+    const secretKey = config.secretKey;
+	const notify=""
+
+    switch(paymentType){
+        case enums.paymentTypeEnum.checkout: {
+            const returnUrl = `${constUrl.apiUrl}payments/RRResult`;
+            formObj.returnUrl = returnUrl;
+            formObj.notifyUrl = notify;
+            formObj.appId = config.appId;
+            const signature = helpers.signatureRequest1(formObj, secretKey);
+            additionalFields = {
+                returnUrl,
+                notifyUrl:"",
+                signature,
+                appId: config.appId,
+            };
+            return res.status(200).send({
+                status:"success",
+                additionalFields,
+            });
+        }
+        case enums.paymentTypeEnum.merchantHosted: {
+            var { formObj } = req.body;
+            formObj.appId = config.appId;
+            formObj.returnUrl = "";
+            formObj.notifyUrl = notifyUrl;
+            formObj.paymentToken = helpers.signatureRequest2(formObj, config.secretKey);
+            return res.status(200).send({
+                status: "success",
+                paymentData: formObj,
+            });
+        }
+        case enums.paymentTypeEnum.seamlessbasic: {
+            //for now assume mode to be popup
+            //TODO: add support for redirect
+            var { formObj } = req.body;
+            var additionalFields = {}; 
+            formObj.appId = config.appId;
+            additionalFields.paymentToken = helpers.signatureRequest3(formObj, config.secretKey);
+            additionalFields.notifyUrl = notifyUrl;
+            additionalFields.appId = config.appId;
+            additionalFields.orderCurrency = "INR";
+            return res.status(200).send({
+                status: "success",
+                additionalFields
+            });
+        }
+
+        default: {
+            console.log("incorrect payment option recieved");
+            console.log("paymentOption:", paymentType);
+            return res.status(200).send({
+                status:"error",
+                message:"incorrect payment type sent"
+            });
+        }
+    }
+});
+
+router.post('/RRResult',(req, res, next)=>{
+    console.log("merchantHosted result hit");
+    console.log(req.body);
+
+    const txnTypes = enums.transactionStatusEnum;
+    try{
+    switch(req.body.txStatus){
+        case txnTypes.cancelled: {
+
+			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
+			sql.query(sqlInsert,
+				[
+				req.body.referenceId,
+				req.body.orderId,
+				req.body.orderAmount,
+				2,
+				req.body.paymentMode,
+				'Cashfree',
+				req.body.txMsg,
+				req.body.txTime
+				],
+				(err) => {
+				if (!err) {
+					var updateOrder = `UPDATE orders SET orderStatus = ?, paymentStatus = ? where order_id= ?`;
+					sql.query(updateOrder,
+					[
+						2,
+						4,
+						req.body.orderId,
+					]);
+				} else {
+					res.send({message: err});
+				}
+				}
+			);
+			
+			res.redirect(url.format({
+				pathname: `${constants.frontendUrl}/Bangalore/failure`,
+				query: {
+				   "transID": req.body.orderId,
+				 }
+			}));
+        }
+        case txnTypes.failed: {
+            //buisness logic if payment failed
+            const signature = req.body.signature;
+            const derivedSignature = helpers.signatureResponse1(req.body, config.secretKey);
+            if(derivedSignature !== signature){
+                throw {name:"signature missmatch", message:"there was a missmatch in signatures genereated and received"}
+            }
+
+			res.redirect(url.format({
+				pathname: `${constants.frontendUrl}/Bangalore/failure`,
+				query: {
+				   "transID": req.body.orderId,
+				 }
+			}));
+            // return res.status(200).render('result',{data:{
+            //     status: "failed",
+            //     message: "payment failure",
+            // }});
+        }
+        case txnTypes.success: {
+            //buisness logic if payments succeed
+            const signature = req.body.signature;
+            const derivedSignature = helpers.signatureResponse1(req.body, config.secretKey);
+			var status =1;
+            if(derivedSignature !== signature){
+                throw {name:"signature missmatch", message:"there was a missmatch in signatures genereated and received"}
+            }
+			if(req.body.txStatus=='SUCCESS'){
+				status=1;
+			} else{
+				status=3;
+			}
+			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
+			sql.query(sqlInsert,
+				[
+				req.body.referenceId,
+				req.body.orderId,
+				req.body.orderAmount,
+				status,
+				req.body.paymentMode,
+				'Cashfree',
+				req.body.txMsg,
+				req.body.txTime
+				],
+				(err1) => {
+				if (!err1) {
+					if(req.body.txStatus=='SUCCESS'){
+						var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+						sql.query(updateOrder,
+						[
+							status,
+							req.body.orderId,
+						]);
+					}
+					
+				} else {
+					res.send({message: err});
+				}
+				}
+			);
+			
+			res.redirect(url.format({
+				pathname: `${constants.frontendUrl}/Bangalore/order-success`,
+				query: {
+				   "transID": req.body.orderId,
+				 }
+			}));
+            // return res.status(200).render('result',{data:{
+            //     status: "success",
+            //     message: "payment success",
+            // }});
+        }
+    }
+    }
+    catch(err){
+        return res.status(500).render('result',{data:{
+            status:"error",
+            err: err,
+            name: err.name,
+            message: err.message,
+        }});
+    }
+
+    const signature = req.body.signature;
+    const derivedSignature = helpers.signatureResponse1(req.body, config.secretKey);
+    if(derivedSignature === signature){
+        console.log("works");
+        return res.status(200).send({
+            status:req.body.txStatus,
+        })
+    }
+    else{
+        console.log("signature gotten: ", signature);
+        console.log("signature derived: ", derivedSignature);
+        return res.status(200).send({
+            status: "error",
+            message: "signature mismatch",
+        })
+    }
+});
+
+/*********** End of Cashfree PG for RR *************/
 	
 
 router.post('/', function(req, res){
