@@ -3,6 +3,23 @@ var router = express.Router();
 
 var sql = require("../db.js");
 
+const winston = require('winston');
+var currentDate = new Date().toJSON().slice(0,10)
+ 
+var logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'products.js' },
+  transports: [
+    //
+    // - Write all logs with level `error` and below to `error.log`
+    // - Write all logs with level `info` and below to `combined.log`
+    //
+    // new winston.transports.File({ filename: `./bin/logs/error-${currentDate}.log`, level: 'error' }),
+    new winston.transports.File({ filename: `./bin/logs/all-${currentDate}.log` }),
+  ],
+});
+
 function dateDiffInDays(a, b) {
   const _MS_PER_DAY = 1000 * 60 * 60 * 24;
   const utc1 = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
@@ -46,6 +63,10 @@ function addOneDay(date){
 
 // Get all orders
 router.get("/", (req, res) => {
+  logger.info({
+    message: '/all orders api started',
+    dateTime: new Date()
+  });
   let orders=[];
   let orderAddress=[];
   let orderItem = [];
@@ -57,11 +78,19 @@ router.get("/", (req, res) => {
     `CALL get_all_orders()`,
     (err, rows, fields) => {
       if (!err) {
+        logger.info({
+          message: '/all orders fetched successfully',
+          dateTime: new Date()
+        });
         rows[0].forEach((resp)=>{
           orders.push(resp);
           
         });
       } else {
+        logger.info({
+          message: '/all orders failed to load',
+          dateTime: new Date()
+        });
         res.send({ error: err });
       }
       orders.forEach((orders,i,ele) => {
@@ -120,13 +149,25 @@ router.get("/", (req, res) => {
 });
 
 router.get('/orderItemsByorderId/:id', function(req, res) {
+  logger.info({
+    message: '/orderItemsByorderId/:id api started',
+    dateTime: new Date()
+  });
   sql.query(
       `CALL get_orderItemById(${req.params.id}) `,
       (err, rows) => {
         if (!err) {
+          logger.info({
+            message: '/orderItemsByorderId/:id fetched successfully',
+            dateTime: new Date()
+          });
           rows[0][0]['renewals_timline']=JSON.parse(rows[0][0].renewals_timline);
           res.send(rows[0]);
         } else {
+          logger.info({
+            message: '/orderItemsByorderId/:id failed to load',
+            dateTime: new Date()
+          });
           res.send({ error: 'Error' });
         }
 
@@ -137,17 +178,29 @@ router.get('/orderItemsByorderId/:id', function(req, res) {
 
 
 router.get('/orderItems/:id', function(req, res) {
+  logger.info({
+    message: '/orderItems/:id api started',
+    dateTime: new Date()
+  });
   let orderItem=[];
   let len=0;
   sql.query(
       `CALL get_orderItemsByCustomerId(${req.params.id}) `,
       (err, rows) => {
         if (!err) {
+          logger.info({
+            message: '/orderItems/:id fetched successfully',
+            dateTime: new Date()
+          });
           rows[0].forEach((res)=>{
             orderItem.push(res);
             
           });
         } else {
+          logger.info({
+            message: '/orderItems/:id failed to load',
+            dateTime: new Date()
+          });
           res.send({ error: 'Error' });
         }
 

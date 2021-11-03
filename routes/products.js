@@ -22,6 +22,25 @@ var router = express.Router();
 
 var sql = require("../db.js");
 
+const winston = require('winston');
+var currentDate = new Date().toJSON().slice(0,10)
+ 
+var logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'products.js' },
+  transports: [
+    //
+    // - Write all logs with level `error` and below to `error.log`
+    // - Write all logs with level `info` and below to `combined.log`
+    //
+    // new winston.transports.File({ filename: `./bin/logs/error-${currentDate}.log`, level: 'error' }),
+    new winston.transports.File({ filename: `./bin/logs/all-${currentDate}.log` }),
+  ],
+});
+ 
+
+
 
 
 // Verify token and session valid time
@@ -102,12 +121,24 @@ function isTimeValid(dt2, dt1) {
 
 // Get all products
 router.get("/", (req, res) => { 
+  logger.info({
+    message: '/products api started',
+    dateTime: new Date()
+  });
   sql.query(
     `CALL get_products()`,
     (err, rows, fields) => {
       if (!err) {
+        logger.info({
+          message: '/products fetched successfully',
+          dateTime: new Date()
+        });
           res.send(rows[0]);
       } else {
+        logger.info({
+          message: '/products failed to load',
+          dateTime: new Date()
+        });
         res.send({ error: err });
       }
     }
@@ -116,12 +147,24 @@ router.get("/", (req, res) => {
 
 // Get all products tenures
 router.get("/tenures/:id", (req, res) => { 
+  logger.info({
+    message: '/tenures/:id api started',
+    dateTime: new Date()
+  });
   sql.query(
     `CALL get_tenure_by_priority(${req.params.id})`,
     (err, rows, fields) => {
       if (!err) {
+        logger.info({
+          message: '/tenures/:id fetched successfully',
+          dateTime: new Date()
+        });
         res.json(rows);
       } else {
+        logger.info({
+          message: '/tenures/:id failed to load',
+          dateTime: new Date()
+        });
         res.send({ error: err });
       }
     }
@@ -130,13 +173,25 @@ router.get("/tenures/:id", (req, res) => {
 
 // Get all products tenures
 router.get("/tenure/:id", (req, res) => { 
+  logger.info({
+    message: '/tenure/:id api started',
+    dateTime: new Date()
+  });
   let id = req.params.id;
   sql.query(
     `SELECT tenure_id, tenure, tenure_period, tenure_desc, tenure_status FROM tenure WHERE tenure=${id};`,
     (err, rows, fields) => {
       if (!err) {
+        logger.info({
+          message: '/tenure/:id fetched successfully',
+          dateTime: new Date()
+        });
         res.json(rows);
       } else {
+        logger.info({
+          message: '/tenure/:id failed to load',
+          dateTime: new Date()
+        });
         res.send({ error: err });
       }
     }
@@ -144,13 +199,25 @@ router.get("/tenure/:id", (req, res) => {
 });
 
 // Get all products specs
-router.get("/specs", (req, res) => { 
+router.get("/specs", (req, res) => {
+  logger.info({
+    message: '/specs api started',
+    dateTime: new Date()
+  }); 
   sql.query(
     `CALL get_product_specs()`,
     (err, rows, fields) => {
       if (!err) {
+        logger.info({
+          message: '/specs fetched successfully',
+          dateTime: new Date()
+        });
         res.json(rows[0]);
       } else {
+        logger.info({
+          message: '/specs failed to load',
+          dateTime: new Date()
+        });
         res.send({ error: err });
       }
     }
@@ -159,26 +226,50 @@ router.get("/specs", (req, res) => {
 
 // Get all products specs by id
 router.get("/specs/:id", (req, res) => { 
+  logger.info({
+    message: '/specs/:id api started',
+    dateTime: new Date()
+  });
   sql.query(
     `CALL get_ProductSpecById(${req.params.id})`,
     (err, rows, fields) => {
       if (!err) {
+        logger.info({
+          message: '/specs/:id fetched successfully',
+          dateTime: new Date()
+        });
         res.json(rows);
       } else {
+        logger.info({
+          message: '/specs/:id failed to load',
+          dateTime: new Date()
+        });
         res.send({ error: err });
       }
     }
   );
 });
 
-// Get all products
+// Get all tenure by id
 router.get("/:id", (req, res) => { 
+  logger.info({
+    message: '/get_tenureById/:id api started',
+    dateTime: new Date()
+  });
   sql.query(
     `CALL get_tenureById(${req.params.id})`,
     (err, rows, fields) => {
       if (!err) {
         res.json(rows);
+        logger.info({
+          message: '/get_tenureById/:id fetched successfully',
+          dateTime: new Date()
+        });
       } else {
+        logger.info({
+          message: '/get_tenureById/:id failed to load',
+          dateTime: new Date()
+        });
         res.send({ error: err });
       }
     }
@@ -190,6 +281,10 @@ router.get("/productsByCity/:id", (req, res) => {
   var pro2=[];
   var len=0;
   var len2=0;
+  logger.info({
+    message: '/productsByCity/:id api started',
+    dateTime: new Date()
+  });
   sql.query(
     `CALL get_products_by_city(${req.params.id})`,
     (err, rows, fields) => {
@@ -198,8 +293,15 @@ router.get("/productsByCity/:id", (req, res) => {
           products.push(res);
           
         });
-        
+        logger.info({
+          message: '/productsByCity/:id fetched successfully',
+          dateTime: new Date()
+        });
       } else {
+        logger.info({
+          message: '/productsByCity/:id failed to load',
+          dateTime: new Date()
+        });
         res.send({ error: err });
       }
       products.forEach((products,i,ele) => {
@@ -240,14 +342,25 @@ router.get("/productsByCity/:id", (req, res) => {
 
 // Update users name
 router.put("/updateProductQuantity/:id", (req, res) => {
-
+  logger.info({
+    message: '/updateProductQuantity/:id api started',
+    dateTime: new Date()
+  });
   var sqlUpdate = `CALL updateProductQty(${req.body.quantity},${req.params.id})`;
   sql.query(
     sqlUpdate,
     (err, rows) => {
       if (!err) {
+        logger.info({
+          message: '/updateProductQuantity/:id fetched successfully',
+          dateTime: new Date()
+        });
         res.send({'message': 'Product quantity updated'});
       } else {
+        logger.info({
+          message: '/updateProductQuantity/:id failed to load',
+          dateTime: new Date()
+        });
         res.send({ error: err });
       }
     }
@@ -305,30 +418,30 @@ router.put("/updateProductQuantity/:id", (req, res) => {
 // });
 
 // Get product by product id
-router.get("/:id", (req, res) => {
-  let queryDta = `SELECT * FROM products a, prod_details b, brand c WHERE a.prod_id = "${req.params.id}" && a.prod_id = b.prod_id && c.brand_id = a.prod_brand_id`;
+// router.get("/:id", (req, res) => {
+//   let queryDta = `SELECT * FROM products a, prod_details b, brand c WHERE a.prod_id = "${req.params.id}" && a.prod_id = b.prod_id && c.brand_id = a.prod_brand_id`;
 
-  let arr = [];
-  sql.query(queryDta, [req.params.id], (err, rows) => {
-    if (!err) {
-      rows.forEach((row) => {
-        var splitPath = row.prod_img.split("[--split--]");
-        row.prod_img = splitPath;
-      });
+//   let arr = [];
+//   sql.query(queryDta, [req.params.id], (err, rows) => {
+//     if (!err) {
+//       rows.forEach((row) => {
+//         var splitPath = row.prod_img.split("[--split--]");
+//         row.prod_img = splitPath;
+//       });
 
-      rows.forEach((row) => {
-        tenureSplit = row.prod_tenure.split("[--split--]");
-        tenureSplit.forEach((a) => {
-          arr.push(a.split(":"));
-        });
-        row.prod_tenure = arr;
-      });
-      res.send(rows[0]);
-    } else {
-      res.send({ error: err });
-    }
-  });
-});
+//       rows.forEach((row) => {
+//         tenureSplit = row.prod_tenure.split("[--split--]");
+//         tenureSplit.forEach((a) => {
+//           arr.push(a.split(":"));
+//         });
+//         row.prod_tenure = arr;
+//       });
+//       res.send(rows[0]);
+//     } else {
+//       res.send({ error: err });
+//     }
+//   });
+// });
 
 // Delete a products by id
 router.delete("/:id", verifyToken, (req, res) => {

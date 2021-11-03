@@ -3,14 +3,43 @@ var router = express.Router();
 
 var sql = require("../db.js");
 
+const winston = require('winston');
+var currentDate = new Date().toJSON().slice(0,10)
+ 
+var logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'products.js' },
+  transports: [
+    //
+    // - Write all logs with level `error` and below to `error.log`
+    // - Write all logs with level `info` and below to `combined.log`
+    //
+    // new winston.transports.File({ filename: `./bin/logs/error-${currentDate}.log`, level: 'error' }),
+    new winston.transports.File({ filename: `./bin/logs/all-${currentDate}.log` }),
+  ],
+});
+
 /* GET all assets */
 router.get('/', function(req, res) {
+  logger.info({
+    message: '/assets api started',
+    dateTime: new Date()
+  });
     sql.query(
         `CALL get_allAssets()`,
         (err, rows) => {
           if (!err) {
+            logger.info({
+              message: '/assets loaded successfully',
+              dateTime: new Date()
+            });
             res.send(rows[0]);
           } else {
+            logger.info({
+              message: '/assets  failed to load',
+              dateTime: new Date()
+            });
             res.send({ error: 'Error' });
           }
         }

@@ -11,6 +11,23 @@ var sql = require("../db.js");
 const constants = require("../constant/constUrl");
 const constUrl = require('../constant/constUrl');
 
+const winston = require('winston');
+var currentDate = new Date().toJSON().slice(0,10)
+ 
+var logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'products.js' },
+  transports: [
+    //
+    // - Write all logs with level `error` and below to `error.log`
+    // - Write all logs with level `info` and below to `combined.log`
+    //
+    // new winston.transports.File({ filename: `./bin/logs/error-${currentDate}.log`, level: 'error' }),
+    new winston.transports.File({ filename: `./bin/logs/all-${currentDate}.log` }),
+  ],
+});
+
 function dateDiffInDays(a, b) {
 	const _MS_PER_DAY = 1000 * 60 * 60 * 24;
 	const utc1 = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
@@ -43,6 +60,10 @@ router.get('/', function(req, res) {
 
 /************New code************ */
 router.post('/saveNewOrder', function(req, res) {
+	logger.info({
+		message: '/saveNewOrder post orders api started',
+		dateTime: new Date()
+	});
 	datetime = new Date();
 	orderDate = (this.datetime.getMonth()+1)+'/'+this.datetime.getDate()+'/'+this.datetime.getFullYear();
 	orderTime = this.datetime.getHours()+':'+this.datetime.getMinutes()+':'+this.datetime.getSeconds();
@@ -126,6 +147,10 @@ router.post('/saveNewOrder', function(req, res) {
     ],
     (err, results) => {
       if (!err) {
+		logger.info({
+			message: '/saveNewOrder posted to orders query sucessfully',
+			dateTime: new Date()
+		  });
 		var products = checkoutPInfo;
 
 		products.forEach((resProduct)=>{
@@ -162,6 +187,10 @@ router.post('/saveNewOrder', function(req, res) {
 		});
         res.send({message: 'Inserted Successfully', txnid: req.body.txnid});
       } else {
+		logger.info({
+			message: 'failed to post /saveNewOrder',
+			dateTime: new Date()
+		  });
         res.send({message: err});
       }
     }
@@ -173,6 +202,10 @@ router.post('/saveNewOrder', function(req, res) {
 });
 
 router.post('/newRenew', function(req, res) {
+	logger.info({
+		message: '/newRenew api post started',
+		dateTime: new Date()
+	});
 	datetime = new Date();
 	orderDate = (this.datetime.getMonth()+1)+'/'+this.datetime.getDate()+'/'+this.datetime.getFullYear();
 	orderTime = this.datetime.getHours()+':'+this.datetime.getMinutes()+':'+this.datetime.getSeconds();
@@ -255,6 +288,10 @@ router.post('/newRenew', function(req, res) {
     ],
     (err, results) => {
       if (!err) {
+		logger.info({
+			message: '/newRenew posted to orders table successfully',
+			dateTime: new Date()
+		});
 		var products = checkoutPInfo;
 
 		products.forEach((resProduct)=>{
@@ -291,6 +328,10 @@ router.post('/newRenew', function(req, res) {
 		});
         res.send({message: 'Inserted Successfully', txnid: req.body.txnid});
       } else {
+		logger.info({
+			message: '/newRenew failed to post in orders query',
+			dateTime: new Date()
+		});
         res.send({message: err});
       }
     }
@@ -302,6 +343,10 @@ router.post('/newRenew', function(req, res) {
 });
 
 router.post('/newReturn', function(req, res) {
+	logger.info({
+		message: '/newReturn api post started',
+		dateTime: new Date()
+	});
 	datetime = new Date();
 	orderDate = (this.datetime.getMonth()+1)+'/'+this.datetime.getDate()+'/'+this.datetime.getFullYear();
 	orderTime = this.datetime.getHours()+':'+this.datetime.getMinutes()+':'+this.datetime.getSeconds();
@@ -376,8 +421,17 @@ router.post('/newReturn', function(req, res) {
 			  ]
 		  );
 		});
+
+		logger.info({
+			message: '/newReturn posted in orders successfully',
+			dateTime: new Date()
+		});
         res.send({message: 'Inserted Successfully', txnid: req.body.txnid});
       } else {
+		logger.info({
+			message: '/newReturn failed to post in orders query',
+			dateTime: new Date()
+		});
         res.send({message: err});
       }
     }
@@ -385,6 +439,10 @@ router.post('/newReturn', function(req, res) {
 });
 
 router.post('/newReplace', function(req, res) {
+	logger.info({
+		message: '/newReplace post api started',
+		dateTime: new Date()
+	});
 	datetime = new Date();
 	orderDate = (this.datetime.getMonth()+1)+'/'+this.datetime.getDate()+'/'+this.datetime.getFullYear();
 	orderTime = this.datetime.getHours()+':'+this.datetime.getMinutes()+':'+this.datetime.getSeconds();
@@ -458,8 +516,16 @@ router.post('/newReplace', function(req, res) {
 			  ]
 		  );
 		});
+		logger.info({
+			message: '/newReplace posted in orders successfully',
+			dateTime: new Date()
+		});
         res.send({message: 'Inserted Successfully', txnid: req.body.txnid});
       } else {
+		logger.info({
+			message: '/newReplace failed to post',
+			dateTime: new Date()
+		});
         res.send({message: err});
       }
     }
@@ -780,6 +846,10 @@ router.post('/return', function(req, res) {
 
 /************Cashfree PG part******/
 router.post('/calculateSecretKey', (req, res, next)=>{
+	logger.info({
+		message: '/calculateSecretKey api post started',
+		dateTime: new Date()
+	});
     const {paymentType} = req.body;
     var {formObj} = req.body;
     const secretKey = config.secretKey;
@@ -798,6 +868,10 @@ router.post('/calculateSecretKey', (req, res, next)=>{
                 signature,
                 appId: config.appId,
             };
+			logger.info({
+				message: '/calculateSecretKey success',
+				dateTime: new Date()
+			});
             return res.status(200).send({
                 status:"success",
                 additionalFields,
@@ -858,6 +932,10 @@ router.get('/index' , (req, res, next)=>{
 });
 
 router.post('/result',(req, res, next)=>{
+	logger.info({
+		message: '/result cashfree api started',
+		dateTime: new Date()
+	});
     console.log("merchantHosted result hit");
     console.log(req.body);
 
@@ -879,6 +957,10 @@ router.post('/result',(req, res, next)=>{
 				],
 				(err) => {
 				if (!err) {
+					logger.info({
+						message: '/result cashfree posted successfully to transaction table',
+						dateTime: new Date()
+					});
 					var updateOrder = `UPDATE orders SET orderStatus = ?, paymentStatus = ? where order_id= ?`;
 					sql.query(updateOrder,
 					[
@@ -887,6 +969,10 @@ router.post('/result',(req, res, next)=>{
 						req.body.orderId,
 					]);
 				} else {
+					logger.info({
+						message: '/result cashfree failed to post in transaction table',
+						dateTime: new Date()
+					});
 					res.send({message: err});
 				}
 				}
@@ -1006,6 +1092,10 @@ router.post('/result',(req, res, next)=>{
 /************ Cashfree PG for renewals ***************/
 
 router.post('/calculateSecretKeyForRenewals', (req, res, next)=>{
+	logger.info({
+		message: '/calculateSecretKeyForRenewals api post started',
+		dateTime: new Date()
+	});
     const {paymentType} = req.body;
     var {formObj} = req.body;
     const secretKey = config.secretKey;
@@ -1024,6 +1114,10 @@ router.post('/calculateSecretKeyForRenewals', (req, res, next)=>{
                 signature,
                 appId: config.appId,
             };
+			logger.info({
+				message: '/calculateSecretKeyForRenewals api post started',
+				dateTime: new Date()
+			});
             return res.status(200).send({
                 status:"success",
                 additionalFields,
@@ -1070,7 +1164,10 @@ router.post('/calculateSecretKeyForRenewals', (req, res, next)=>{
 router.post('/renewalsResult',(req, res, next)=>{
     console.log("merchantHosted result hit");
     console.log(req.body);
-
+	logger.info({
+		message: '/renewalsResult api post started',
+		dateTime: new Date()
+	});
     const txnTypes = enums.transactionStatusEnum;
     try{
     switch(req.body.txStatus){
@@ -1102,7 +1199,10 @@ router.post('/renewalsResult',(req, res, next)=>{
 				}
 				}
 			);
-			
+			logger.info({
+				message: '/renewalsResult transaction cancelled',
+				dateTime: new Date()
+			});
 			res.redirect(url.format({
 				pathname: `${constants.frontendUrl}/Bangalore/failure`,
 				query: {
@@ -1117,7 +1217,10 @@ router.post('/renewalsResult',(req, res, next)=>{
             if(derivedSignature !== signature){
                 throw {name:"signature missmatch", message:"there was a missmatch in signatures genereated and received"}
             }
-
+			logger.info({
+				message: '/renewalsResult transaction failed',
+				dateTime: new Date()
+			});
 			res.redirect(url.format({
 				pathname: `${constants.frontendUrl}/Bangalore/failure`,
 				query: {
@@ -1167,7 +1270,10 @@ router.post('/renewalsResult',(req, res, next)=>{
 				}
 				}
 			);
-			
+			logger.info({
+				message: '/renewalsResult transaction successfully',
+				dateTime: new Date()
+			});
 			res.redirect(url.format({
 				pathname: `${constants.frontendUrl}/Bangalore/order-success`,
 				query: {

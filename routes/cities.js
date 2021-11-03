@@ -3,6 +3,23 @@ var router = express.Router();
 
 var sql = require("../db.js");
 
+const winston = require('winston');
+var currentDate = new Date().toJSON().slice(0,10)
+ 
+var logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'products.js' },
+  transports: [
+    //
+    // - Write all logs with level `error` and below to `error.log`
+    // - Write all logs with level `info` and below to `combined.log`
+    //
+    // new winston.transports.File({ filename: `./bin/logs/error-${currentDate}.log`, level: 'error' }),
+    new winston.transports.File({ filename: `./bin/logs/all-${currentDate}.log` }),
+  ],
+});
+
 /* GET all cities */
 router.get('/', function(req, res) {
     sql.query(
@@ -18,12 +35,24 @@ router.get('/', function(req, res) {
 });
 
 router.get('/:id', function(req, res) {
+  logger.info({
+    message: '/cities by id api started',
+    dateTime: new Date()
+  });
   sql.query(
       `CALL get_cityById(${req.params.id}) `,
       (err, rows) => {
         if (!err) {
+          logger.info({
+            message: '/cities by id fetched successfully',
+            dateTime: new Date()
+          });
           res.send(rows[0]);
         } else {
+          logger.info({
+            message: '/cities by id failed to load',
+            dateTime: new Date()
+          });
           res.send({ error: 'Error' });
         }
       }
@@ -31,12 +60,24 @@ router.get('/:id', function(req, res) {
 });
 
 router.get('/taxes/:id', function(req, res) {
+  logger.info({
+    message: '/taxes/:id api started',
+    dateTime: new Date()
+  });
   sql.query(
       `CALL get_taxesByCity(${req.params.id}) `,
       (err, rows) => {
         if (!err) {
+          logger.info({
+            message: '/taxes/:id fetched successfully',
+            dateTime: new Date()
+          });
           res.send(rows[0]);
         } else {
+          logger.info({
+            message: '/taxes/:id  failed to load',
+            dateTime: new Date()
+          });
           res.send({ error: 'Error' });
         }
       }

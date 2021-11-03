@@ -21,6 +21,23 @@ var router = express.Router();
 
 var sql = require("../db.js");
 
+const winston = require('winston');
+var currentDate = new Date().toJSON().slice(0,10)
+ 
+var logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'products.js' },
+  transports: [
+    //
+    // - Write all logs with level `error` and below to `error.log`
+    // - Write all logs with level `info` and below to `combined.log`
+    //
+    // new winston.transports.File({ filename: `./bin/logs/error-${currentDate}.log`, level: 'error' }),
+    new winston.transports.File({ filename: `./bin/logs/all-${currentDate}.log` }),
+  ],
+});
+
 // function verifyToken(req, res, next) {
 //   if (!req.headers.authorization) {
 //     return res.status(401).send("Unauthorized request");
@@ -123,6 +140,10 @@ function isTimeValid(dt2, dt1) {
 
 // Get all categoris
 router.get("/getMainCategory", (req, res) => { 
+  logger.info({
+    message: '/getMainCategory api started',
+    dateTime: new Date()
+  });
   let subCategories=[];
   let subItems=[];
   let len=0;
@@ -130,10 +151,18 @@ router.get("/getMainCategory", (req, res) => {
     `CALL get_mainCategory()`,
     (err, rows, fields) => {
       if (!err) {
+        logger.info({
+          message: '/getMainCategory fetched successfully',
+          dateTime: new Date()
+        });
         rows[0].forEach((res)=>{
           subCategories.push(res);          
         });
       } else {
+        logger.info({
+          message: '/getMainCategory failed to load',
+          dateTime: new Date()
+        });
         res.send({ error: 'Error' });
       }
 
@@ -162,8 +191,16 @@ router.get("/categoryAndSub", (req, res) => {
     `CALL mainAndSubCategory()`,
     (err, rows, fields) => {
       if (!err) {
+        logger.info({
+          message: '/categoryAndSub fetched successfully',
+          dateTime: new Date()
+        });
         res.json(rows[0]);
       } else {
+        logger.info({
+          message: '/categoryAndSub failed to load',
+          dateTime: new Date()
+        });
         res.send({ error: 'Error' });
       }
     }
@@ -172,12 +209,24 @@ router.get("/categoryAndSub", (req, res) => {
 
 // Get all categoris
 router.get("/", (req, res) => { 
+  logger.info({
+    message: '/all categories api started',
+    dateTime: new Date()
+  });
   sql.query(
     `CALL get_categories()`,
     (err, rows, fields) => {
       if (!err) {
+        logger.info({
+          message: '/all categories fetched successfully',
+          dateTime: new Date()
+        });
         res.json(rows);
       } else {
+        logger.info({
+          message: '/all categories failed load',
+          dateTime: new Date()
+        });
         res.send({ error: 'Error' });
       }
     }
