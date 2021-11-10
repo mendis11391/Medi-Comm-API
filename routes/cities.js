@@ -84,6 +84,44 @@ router.get('/taxes/:id', function(req, res) {
     );
 });
 
+// Update padding
+router.put('/padding/:id', (req, res) => {
+  var sqlUpdate = "UPDATE `cities` SET `city_padding`= ? WHERE `city_id` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.bangalore,
+      req.params.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'taxes updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update padding
+router.put('/serialNo/:id', (req, res) => {
+  var sqlUpdate = "UPDATE `cities` SET `last_serial_no`= ? WHERE `city_id` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.serialNo,
+      req.params.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'taxes updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 // Update deliveryDate
 router.put('/', (req, res) => {
   // var sqlUpdate = "UPDATE `cities` SET `tentitiveDeleivery`= ? WHERE `cityname` = 'Bangalore'";
@@ -127,6 +165,7 @@ router.put('/taxes', (req, res) => {
     }
   );
 });
+
 
 // Add new city
 router.post('/', function(req, res) {

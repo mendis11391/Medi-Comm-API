@@ -155,6 +155,7 @@ router.post('/saveNewOrder', function(req, res) {
 
 		products.forEach((resProduct)=>{
 		  let renewalProduct = [];
+		  resProduct.prod_img='';
 		  renewalProduct.push(resProduct);
 		  let startDate = getDates(resProduct.startDate);
 		  let expiryDate = getDates(resProduct.expiryDate);
@@ -317,7 +318,7 @@ router.post('/newRenew', function(req, res) {
 			  0,
 			  JSON.stringify(renewalProduct),
 			  0,
-			  'Renewed',
+			  4,
 			  startDate,
 			  expiryDate,
 			  1,
@@ -373,8 +374,8 @@ router.post('/newReturn', function(req, res) {
 	  req.body.lastName,
 	  req.body.mobile,
 	  req.body.email,
-	  57,
-	  57,
+	  req.body.billingAddress,
+	  req.body.shippingAddress,
 	  req.body.orderType,
 	  '1',
 	  req.body.orderStatus,
@@ -469,11 +470,12 @@ router.post('/newReplace', function(req, res) {
 	  req.body.lastName,
 	  req.body.mobile,
 	  req.body.email,
-	  57,
-	  57,
-	  3,
+	  req.body.billingAddress,
+	  req.body.shippingAddress,
+	  req.body.orderType,
 	  '1',
 	  req.body.orderStatus,
+	  req.body.deliveryStatus,
 	  req.body.refundStatus,
 	  req.body.createdBy,
 	  req.body.modifiedBy,
@@ -507,7 +509,7 @@ router.post('/newReplace', function(req, res) {
 			  0,
 			  JSON.stringify(renewalProduct),
 			  0,
-			  'Delivery awaited',
+			  4,
 			  startDate,
 			  expiryDate,
 			  1,
