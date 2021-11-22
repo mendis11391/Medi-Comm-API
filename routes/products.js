@@ -119,6 +119,41 @@ function isTimeValid(dt2, dt1) {
   return Math.abs(Math.round(diff));
 }
 
+// Get product by filters
+// router.get("/filterProducts", (req, res) => {
+//   let specs;
+//   let singleFilter = `SELECT * FROM(
+//     select * from prod_details where id IN(SELECT product_id FROM product_specs 
+//   WHERE spec_id IN(select spec_id from specifications where spec_name ="RAM")
+//   AND spec_value IN("4 GB"))
+//   )t1`;
+
+//   let multipleFilter = `INNER JOIN(
+//     select * from prod_details where id IN(SELECT product_id FROM product_specs 
+//     WHERE spec_id IN(select spec_id from specifications where spec_name ="diskSize")
+//     AND spec_value IN("500 GB")))t2 on t1.id = t2.id`;
+
+//   let length = specs.length;
+
+//   if(length==1){
+//     singleFilter
+//   }else if(length>1){
+//     for(let i=0;i<specs.length;i++){
+
+//     }  
+//   }
+
+  
+
+//   sql.query(queryDta, [req.params.id], (err, rows) => {
+//     if (!err) {
+//       res.send(rows);
+//     } else {
+//         res.send({ error: 'Error' });
+//     }
+//   });
+// });
+
 // Get all products
 router.get("/", (req, res) => { 
   logger.info({
@@ -141,6 +176,72 @@ router.get("/", (req, res) => {
         });
         res.send({ error: err });
       }
+    }
+  );
+});
+
+router.get("/prodById/:id", (req, res) => { 
+  let products=[];
+  var pro2=[];
+  var len=0;
+  var len2=0;
+  logger.info({
+    message: '/:id api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_productById(${req.params.id})`,
+    (err, rows, fields) => {
+      if (!err) {
+        rows[0].forEach((res)=>{
+          products.push(res);
+          
+        });
+        logger.info({
+          message: '/:id fetched successfully',
+          dateTime: new Date()
+        });
+      } else {
+        logger.info({
+          message: '/:id failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+      products.forEach((products,i,ele) => {
+        sql.query(
+          `CALL get_ProductSpecById(${products.product_id})`,
+          (err1, rows1, fields) => {
+            if (!err1) {  
+              len++;
+              // rows1[0].forEach((specs,i,el)=>{
+              //   let specifics=[];
+              //   len2++;
+              //   specifics.push(specs.spec_value);
+              //   if(len2===el.length){
+              //     products.specs=specifics;
+              //   }                
+              // });
+              let specObj={};
+              for(let i=0;i<rows1[0].length;i++){
+                // products[rows1[0][i].spec_name ] = rows1[0][i].spec_value;
+                Object.assign(specObj, {[rows1[0][i].spec_name]:rows1[0][i].spec_value});
+                // products.specs = specObj;
+              }
+              products.specs = specObj;
+              // products.specs = rows1[0];  
+              pro2.push(products); 
+              if(len===ele.length){
+                res.send(pro2);
+              }
+            }
+          }
+        ); 
+        
+      });
+      
+        
+      
     }
   );
 });
@@ -198,6 +299,28 @@ router.get("/tenure/:id", (req, res) => {
   );
 });
 
+router.post("/postSpecs", function (req, res) {
+  productImgArr = [];
+
+  var sqlInsert =
+    "INSERT INTO `specifications`( `spec_name`, `spec_image`, `spec_status`) VALUES ( ?, ?, ?)";
+  sql.query(
+    sqlInsert,
+    [
+      req.body.spec_name,
+      req.body.specIMage,
+      req.body.spec_status
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: 'Inserted Successfully'});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
 // Get all products specs
 router.get("/specs", (req, res) => {
   logger.info({
@@ -224,6 +347,32 @@ router.get("/specs", (req, res) => {
   );
 });
 
+// Get all tenure by id
+router.get("/getAllSpecValues", (req, res) => { 
+  logger.info({
+    message: '/getAllSpecValues api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_AllSpecValues()`,
+    (err, rows, fields) => {
+      if (!err) {
+        res.json(rows[0]);
+        logger.info({
+          message: '/getAllSpecValues fetched successfully',
+          dateTime: new Date()
+        });
+      } else {
+        logger.info({
+          message: '/getAllSpecValues failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 // Get all products specs by id
 router.get("/specs/:id", (req, res) => { 
   logger.info({
@@ -242,6 +391,32 @@ router.get("/specs/:id", (req, res) => {
       } else {
         logger.info({
           message: '/specs/:id failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Get all products specs by id
+router.get("/getSpecsValuesById/:id", (req, res) => { 
+  logger.info({
+    message: '/specs/:id api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_specValueById(${req.params.id})`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/getSpecsValuesById/:id fetched successfully',
+          dateTime: new Date()
+        });
+        res.json(rows[0]);
+      } else {
+        logger.info({
+          message: '/getSpecsValuesById/:id failed to load',
           dateTime: new Date()
         });
         res.send({ error: err });
@@ -320,9 +495,11 @@ router.get("/productsByCity/:id", (req, res) => {
               // });
               let specObj={};
               for(let i=0;i<rows1[0].length;i++){
-                products[rows1[0][i].spec_name ] = rows1[0][i].spec_value;
+                // products[rows1[0][i].spec_name ] = rows1[0][i].spec_value;
+                Object.assign(specObj, {[rows1[0][i].spec_name]:rows1[0][i].spec_value});
                 // products.specs = specObj;
               }
+              products.specs = specObj;
               // products.specs = rows1[0];  
               pro2.push(products); 
               if(len===ele.length){
@@ -512,16 +689,16 @@ router.put("/:id",upload.array("product_image",12), (req, res) => {
 });
 
 // Insert product
-router.post("/", upload.array("product_image", 12), function (req, res, next) {
-  var imgName = productImgArr.join("[--split--]");
-  productImgArr = [];
+router.post("/",  function (req, res, next) {
+  // var imgName = productImgArr.join("[--split--]");
+  // productImgArr = [];
 
-  let prodModel = req.body.name.split(' ');
-  prodModel = prodModel.reverse();
-  prodModel = prodModel[0];
+  // let prodModel = req.body.name.split(' ');
+  // prodModel = prodModel.reverse();
+  // prodModel = prodModel[0];
 
-  let categoryCode = req.body.categoryName;
-  categoryCode = categoryCode.substr(0, 3).toLocaleUpperCase();
+  // let categoryCode = req.body.categoryName;
+  // categoryCode = categoryCode.substr(0, 3).toLocaleUpperCase();
 
   // const tokgen = new TokenGenerator(256, TokenGenerator.BASE71);
   // const prodId = `irentout-${tokgen.generate()}`;
@@ -539,53 +716,88 @@ router.post("/", upload.array("product_image", 12), function (req, res, next) {
     "-" +
     dte.getHours() +
     "-" +
-    dte.getMinutes() +
-    "-" +
-    dte.getSeconds() +
-    "-" +
-    dte.getMilliseconds();
+    dte.getMinutes() ;
 
-  const prodCode = `IRO${categoryCode}${prodModel}${rand}`;
+  // const prodCode = `IRO${categoryCode}${prodModel}${rand}`;
 
-  var sqlInsert =
-    "INSERT INTO `prod_details`(`prod_id`, `prod_name`, `prod_qty`, `prod_price`,`prod_deliveryDate`, `prod_img`, `prod_offers`, `prod_description`, `prod_ram`, `prod_disktype`, `prod_disksize`, `prod_specification`, `prod_status`, `prod_processor`, `prod_screensize`, `specs`, `prod_tenure`, `prod_featured`, `prod_bestseller`, `prod_newproducts`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-  var sqlBrandIns =
-    "INSERT INTO `products`(`prod_id`,`prod_brand_id`,`prod_cat_id`,`prod_status`, `prod_available_cities`, `prod_code`) values (?, ?, ?, ?, ?, ?)";
+  var prodDetailsInsert =
+    "INSERT INTO `prod_details`(`prod_id`, `offer_id`, `prod_name`, `metaTitle`, `slug`, `prod_image`, `prod_description`, `prod_qty`, `securityDeposit`, `tenure_base_price`, `prod_status`, `publishedAt`, `startsAt`, `endsAt`, `priority`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  var productsInsert =
+    "INSERT INTO `products`( `product_id`, `quantity`, `prod_code`, `cat_id`, `brand_id`, `city_id`, `delivery_timeline`) values (?, ?, ?, ?, ?, ?, ?)";
+  var prodSpecsInsert = "INSERT INTO `product_specs`(`product_id`, `spec_id`, `spec_value`, `status`) values (?, ?, ?, ?)";  
+  var prodHighlightsInsert = "INSERT INTO `prod_highlights`(`product_id`, `highlight_type`, `status`) values ( ?, ?, ?)";
   sql.query(
-    sqlInsert,
+    prodDetailsInsert,
     [
       unqProdId,
-      req.body.name,
-      req.body.qty,
-      req.body.price,
-      req.body.deliveryDate,
-      imgName,
-      req.body.offers,
-      req.body.description,
-      req.body.ram,
-      req.body.disk_type,
-      req.body.disk_size,
-      req.body.specifications,
-      req.body.status,
-      req.body.processor,
-      req.body.screen_size,
-      req.body.specs,
-      req.body.tenure,
-      req.body.featured,
-      req.body.bestSeller,
-      req.body.newProducts
+      1,
+      req.body.productName,
+      req.body.metaTitle,
+      req.body.slug,
+      req.body.prodImage,
+      req.body.prodDescription,
+      req.body.prodQty,
+      req.body.securityDeposit,
+      req.body.tenureBasePrice,
+      req.body.prodStatus,
+      req.body.publishedAt,
+      req.body.startsAt,
+      req.body.endsAt,
+      req.body.priority,
+      req.body.createdBy,
+      req.body.modifiedBy,
+      new Date(),
+      new Date()
     ],
-    (err) => {
+    (err, results) => {
       if (!err) {
-        sql.query(
-          sqlBrandIns,
-          [unqProdId, req.body.brand, req.body.category, req.body.status, req.body.cities, prodCode],
-          (err1) => {
-            if (!err1) {
-              res.send({ res: "Inserted succesfully" });
+        let citiesLength = req.body.cityId;
+        let specsLength = req.body.specs;
+        let highlightLength = req.body.highlightType;
+
+        for(let i=0;i<citiesLength.length;i++){
+          sql.query(
+            productsInsert,
+            [results.insertId, req.body.prodQty, '', req.body.subCatId, req.body.brandId, citiesLength[i], req.body.deliveryTimeline],
+            (err1) => {
+              if (!err1) {
+                // res.send({ res: "Inserted succesfully" });
+              } else{
+                res.send({error:err1});
+              }
             }
-          }
-        );
+          );
+        }
+
+        for(let s in specsLength){
+          sql.query(
+            prodSpecsInsert,
+            [results.insertId, s, specsLength[s], 1],
+            (err2) => {
+              if (!err2) {
+                // res.send({ res: "Inserted succesfully" });
+              } else{
+                res.send({error:err2});
+              }
+            }
+          );
+        }
+        
+        for(let j=0;j<highlightLength.length;j++){
+          sql.query(
+            prodHighlightsInsert,
+            [results.insertId, highlightLength[j], 1],
+            (err3) => {
+              if (!err3) {
+                // res.send({ res: "Inserted succesfully" });
+              } else{
+                res.send({error:err3});
+              }
+            }
+          );
+        }
+        
+
       } else {
         res.send({error:err});
       }

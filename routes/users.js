@@ -4,6 +4,19 @@ var crypto = require("crypto");
 
 var sql = require("../db.js");
 
+router.get('/:id', function(req, res, next) {
+  sql.query(
+    `CALL get_customersById(${req.params.id})`,
+    (err, rows) => {
+      if (!err) {
+        res.send(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 router.get('/getCustomerAddressById/:id', function(req, res) {
   sql.query(
       `CALL get_addressById(${req.params.id}) `,
@@ -203,12 +216,12 @@ router.put("/updateDefaultAddress/:auid", (req, res) => {
 /* GET all users */
 router.get('/', function(req, res) {
   sql.query(
-      `SELECT uid, uname, email, phone, logintype, wishlist, cart, address,billingaddress FROM users`,
+      `CALL get_AllCustomers()`,
       (err, rows) => {
         if (!err) {
-          res.send(rows);
+          res.send(rows[0]);
         } else {
-          res.send({ error: 'Error' });
+          res.send({ error:err });
         }
       }
     );
