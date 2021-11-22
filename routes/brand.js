@@ -103,7 +103,7 @@ router.get("/", (req, res) => {
     `CALL get_brands()`,
     (err, rows, fields) => {
       if (!err) {
-        res.json(rows);
+        res.json(rows[0]);
       } else {
         res.send({ error: err });
       }

@@ -233,6 +233,47 @@ router.get("/", (req, res) => {
   );
 });
 
+// Get all specs
+router.get("/getAllSpecs", (req, res) => { 
+  logger.info({
+    message: '/all specs api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_all_specs()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/all specs fetched successfully',
+          dateTime: new Date()
+        });
+        res.json(rows[0]);
+      } else {
+        logger.info({
+          message: '/all specs failed load',
+          dateTime: new Date()
+        });
+        res.send({ error: 'Error' });
+      }
+    }
+  );
+});
+
+// Get all specs by cat id
+router.get("/getSpecsByCatId/:id", (req, res) => {
+  sql.query(
+    `CALL get_CategorySpecsByCatId(${req.params.id})`,
+    (err, rows, fields) => {
+      if (!err) {
+        res.json(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+
 // Get product by categories id
 router.get("/:id", (req, res) => {
   let queryDta = `SELECT * FROM category WHERE cat_id = '${req.params.id}'`;
@@ -291,39 +332,60 @@ router.put(":id", (req, res) => {
 });
 
 router.post("/", function (req, res) {
-  productImgArr = [];
-  var dte = new Date();
-  var rand = Math.floor(Math.random() * 9999 + 1);
-  var unqProdId =
-    "fci-cat" +
-    rand +
-    "-" +
-    dte.getDate() +
-    ":" +
-    (dte.getMonth() + 1) +
-    ":" +
-    dte.getFullYear() +
-    "-" +
-    dte.getHours() +
-    "-" +
-    dte.getMinutes() +
-    "-" +
-    dte.getSeconds() +
-    "-" +
-    dte.getMilliseconds();
   var sqlInsert =
-    "INSERT INTO `category`(`cat_id`, `cat_name`, `cat_desc`, `cat_image`) VALUES (?, ?, ?, ?)";
+    "INSERT INTO `category`(`cat_group`, `cat_name`,`cat_image`,`slug`,`metaTitle`,`metaDescription`, `createdBy`,`modifiedBy`,`createdAt`, `modifiedAt`, `cat_status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   sql.query(
     sqlInsert,
     [
-      unqProdId,
-      req.body.cat_name,
-      'N/A',
-      'N/A'
+      req.body.mainCatName,
+      req.body.subCatName,
+      '',
+      req.body.subCatSlug,
+      req.body.subCatMetaTitle,
+      req.body.subCatMetaDescription,
+      1,
+      1,
+      new Date(),
+      new Date(),
+      req.body.status
     ],
-    (err) => {
+    (err, results) => {
       if (!err) {
-        res.send({message: 'Inserted Successfully'});
+        let specs = req.body.specNames;
+
+        for(let i=0;i<specs.length;i++){
+          var specsInsert = "INSERT INTO `category_specs`(`cat_id`,`spec_id`, `status`) VALUES (?, ?, ?)";
+          sql.query(
+            specsInsert,
+            [
+              results.insertId,
+              specs[i],
+              1
+            ]
+          );
+        }
+        // res.send({message: 'Inserted Successfully'});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
+router.post("/addSpecValue", function (req, res) {
+  var sqlInsert =
+    "INSERT INTO `specification_value`(`spec_id`, `spec_value`, `status`) VALUES (?, ?, ?)";
+  sql.query(
+    sqlInsert,
+    [
+      req.body.specId,
+      req.body.specValue,
+      1,
+    ],
+    (err, results) => {
+      if (!err) {
+        
+        res.send({message: 'Spec value Inserted Successfully'});
       } else {
         res.send({message: err});
       }

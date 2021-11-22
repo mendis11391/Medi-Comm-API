@@ -419,8 +419,8 @@ router.post("/otpRegister", (req, res) => {
 
   let insQuery =
     "INSERT INTO `customer`( `firstName`, `lastName`, `mobile`, `email`, `password`, `registeredAt`, `lastLogin`,`login_type`, `token`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-  let checkUser = "select firstName from customer where email = ? and login_type = 'web'";
-  sql.query(checkUser, [req.body.email], (err, rows) => {
+  let checkUser = "select firstName from customer where mobile = ? and login_type = 'web'";
+  sql.query(checkUser, [req.body.phone], (err, rows) => {
     if (!err) {
       if (rows.length === 0) {
         sql.query(
@@ -436,8 +436,8 @@ router.post("/otpRegister", (req, res) => {
             "web",
             logintoken
           ],
-          (err, results) => {
-            if (!err) {
+          (err1, results) => {
+            if (!err1) {
               var sqlInsert = "INSERT INTO `cart`(`customer_id`,`products`,`modifiedAt`) VALUES (?,?,?)";
               sql.query(sqlInsert,
                 [
