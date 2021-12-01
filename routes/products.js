@@ -544,6 +544,57 @@ router.put("/updateProductQuantity/:id", (req, res) => {
   );
 });
 
+// Get all products tenures
+router.get("/promos/promotions", (req, res) => { 
+  logger.info({
+    message: '/promotions/:id api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_allPromotions()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/promotions/:id fetched successfully',
+          dateTime: new Date()
+        });
+        res.json(rows[0]);
+      } else {
+        logger.info({
+          message: '/promotions/:id failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Get all products tenures
+router.get("/promos/promoNames", (req, res) => { 
+  logger.info({
+    message: '/promos/promoNames api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_allPromotionalNames()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/promos/promoNames fetched successfully',
+          dateTime: new Date()
+        });
+        res.json(rows[0]);
+      } else {
+        logger.info({
+          message: '/promos/promoNames failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+    }
+  );
+});
 
 // Get all products by city
 // router.get("/productsByCity/:city", (req, res) => {

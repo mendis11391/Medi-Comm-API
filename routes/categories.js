@@ -175,7 +175,6 @@ router.get("/getMainCategory", (req, res) => {
               subCat.subItems = rows2[0];
               subItems.push(subCat); 
               if(len===ele.length){
-                              
                 res.send(subItems);
               }
             }            
