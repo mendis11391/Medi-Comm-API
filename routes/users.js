@@ -34,12 +34,14 @@ router.get('/getCustomerAddressById/:id', function(req, res) {
 router.post("/addresses", function (req, res) {
     
   var sqlInsert =
-    "INSERT INTO `address`(`customer_id`, `nickName`, `address_line1`, `address_line2`,`landmark`, `city`, `state`, `pincode`, `address_type`, `default_address`,`status`) VALUES (?,?, ?, ?, ?, ?, ?,?,?,?,?)";
+    "INSERT INTO `address`(`customer_id`, `display_name`,`nickName`, `addressMobile`, `address_line1`, `address_line2`,`landmark`, `city`, `state`, `pincode`, `address_type`, `default_address`,`status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?)";
   sql.query(
     sqlInsert,
     [
       req.body.uid,
+      req.body.displayName,
       req.body.nickName,
+      req.body.addressMobile,
       req.body.address1,
       req.body.address2,
       req.body.landmark,
@@ -55,6 +57,27 @@ router.post("/addresses", function (req, res) {
         res.send({message: 'address Inserted Successfully'});
       } else {
         res.send({message: err});
+      }
+    }
+  );
+});
+
+// Update user firstName, lastName, and email
+router.put("/updateBasicUserDetails/:id", (req, res) => {
+  var sqlUpdate = "UPDATE `customer` SET `firstName`= ?, `lastName`=?, `email`=? WHERE `customer_id` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.firstName,
+      req.body.lastName,
+      req.body.email,
+      req.params.id
+    ],
+    (err) => {
+      if (!err) {
+        res.send({'message': 'user details updated'});
+      } else {
+        res.send({ error: err });
       }
     }
   );

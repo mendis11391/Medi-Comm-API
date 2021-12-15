@@ -1052,7 +1052,7 @@ router.post('/result',(req, res, next)=>{
 			res.redirect(url.format({
 				pathname: `${constants.frontendUrl}/Bangalore/order-success`,
 				query: {
-				   "transID": req.body,
+				   "transID": req.body.orderId,
 				 }
 			}));
             // return res.status(200).render('result',{data:{

@@ -207,6 +207,28 @@ router.get("/categoryAndSub", (req, res) => {
 });
 
 // Get all categoris
+router.get("/categoryAndSub/:id", (req, res) => { 
+  sql.query(
+    `CALL get_catByCatGroupId(${JSON.stringify(req.params.id)})`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/categoryAndSub/:id fetched successfully',
+          dateTime: new Date()
+        });
+        res.json(rows[0]);
+      } else {
+        logger.info({
+          message: '/categoryAndSub/:id failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Get all categoris
 router.get("/", (req, res) => { 
   logger.info({
     message: '/all categories api started',
@@ -227,6 +249,20 @@ router.get("/", (req, res) => {
           dateTime: new Date()
         });
         res.send({ error: 'Error' });
+      }
+    }
+  );
+});
+
+// Get all category heading by slug
+router.get("/getCatHeadingByslug/:id", (req, res) => {
+  sql.query(
+    `CALL get_CatHeadingByCatname(${JSON.stringify(req.params.id)})`,
+    (err, rows, fields) => {
+      if (!err) {
+        res.json(rows[0]);
+      } else {
+        res.send({ error: err });
       }
     }
   );
