@@ -384,11 +384,12 @@ router.get('/wishlist/:id', function(req, res, next) {
 // Update users name
 router.put("/updateuser", (req, res) => {
 
-  var sqlUpdate = "UPDATE `users` SET `uname`= ? WHERE `uid` = ?";
+  var sqlUpdate = "UPDATE `customer` SET `firstName`= ? , `lastName`= ? WHERE `customer_id` = ?";
   sql.query(
     sqlUpdate,
     [
-      uname=req.body.firstName+" "+req.body.lastName,
+      req.body.firstName,
+      req.body.lastName,
       req.body.id
     ],
     (err, rows) => {
@@ -404,7 +405,7 @@ router.put("/updateuser", (req, res) => {
 // Update users email
 router.put("/updateemail", (req, res) => {
 
-  var sqlUpdate = "UPDATE `users` SET `email`= ? WHERE `uid` = ?";
+  var sqlUpdate = "UPDATE `customer` SET `email`= ? WHERE `customer_id` = ?";
   sql.query(
     sqlUpdate,
     [

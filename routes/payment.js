@@ -142,8 +142,8 @@ router.post('/saveNewOrder', function(req, res) {
 	  req.body.refundStatus,
 	  req.body.createdBy,
 	  req.body.modifiedBy,
-	  req.body.createdAt,
-	  req.body.modifiedAt
+	  new Date(),
+	  new Date()
     ],
     (err, results) => {
       if (!err) {
@@ -189,7 +189,7 @@ router.post('/saveNewOrder', function(req, res) {
         res.send({message: 'Inserted Successfully', txnid: req.body.txnid});
       } else {
 		logger.info({
-			message: 'failed to post /saveNewOrder',
+			message: 'failed to post /saveNewOrder'+err,
 			dateTime: new Date()
 		  });
         res.send({message: err});

@@ -897,14 +897,14 @@ router.get('/orderDetails/:id', function(req, res) {
                                 } else if(shipped.includes(0) && delivered.includes(1) && others.includes(0)){
                                   ot['deliveryStatus'] = 4;
                                 }
-                                var sqlUpdate = 'UPDATE orders SET deliveryStatus= ? WHERE id= ?';
-                                sql.query(
-                                  sqlUpdate,
-                                  [
-                                    ot['deliveryStatus'],
-                                    ot['id']
-                                  ]
-                                );
+                                // var sqlUpdate = 'UPDATE orders SET deliveryStatus= ? WHERE id= ?';
+                                // sql.query(
+                                //   sqlUpdate,
+                                //   [
+                                //     ot['deliveryStatus'],
+                                //     ot['id']
+                                //   ]
+                                // );
                               });
                               if(len===ele.length){
                               
