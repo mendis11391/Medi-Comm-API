@@ -294,6 +294,72 @@ router.get("/getAllSpecs", (req, res) => {
   );
 });
 
+router.get("/getAllAccs", (req, res) => { 
+  logger.info({
+    message: '/all specs api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_AllAccessories()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/all specs fetched successfully',
+          dateTime: new Date()
+        });
+        res.json(rows[0]);
+      } else {
+        logger.info({
+          message: '/all specs failed load',
+          dateTime: new Date()
+        });
+        res.send({ error: 'Error' });
+      }
+    }
+  );
+});
+
+// Add new city
+router.post('/postCategorySpecs', function(req, res) {
+  sql.query(
+      `INSERT INTO category_specs(cat_id, spec_id, status) VALUES (?, ?, ?)`, [req.body.cat_id, req.body.spec_id, 1],
+      (err) => {
+        if (!err) {
+          res.send({message: 'category_specs Inserted Successfully'});
+        } else {
+          res.send({ error: 'Error' });
+        }
+      }
+    );
+});
+
+// Delete a tenure discounts by id
+router.delete('/deleteCategorySpecs/:id', (req, res) => {
+  sql.query('DELETE FROM category_specs where cs_id = ?', [req.params.id], (err) => {
+    if (!err) {
+        res.send('Deleted succesfully');
+    }
+     else{
+      res.send({ error: 'Error' });
+    }
+      
+  })
+});
+
+// Get all specs by cat id
+router.get("/getCategorySpecs", (req, res) => {
+  sql.query(
+    `CALL get_CategorySpecs()`,
+    (err, rows, fields) => {
+      if (!err) {
+        res.json(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 // Get all specs by cat id
 router.get("/getSpecsByCatId/:id", (req, res) => {
   sql.query(
@@ -301,6 +367,61 @@ router.get("/getSpecsByCatId/:id", (req, res) => {
     (err, rows, fields) => {
       if (!err) {
         res.json(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Get all pricing schemes
+router.get("/getAllPricingSchemes", (req, res) => {
+  sql.query(
+    `CALL get_allPricingSchemes()`,
+    (err, rows, fields) => {
+      if (!err) {
+        res.json(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+
+// Update users specValue
+router.put("/updateSpecValue", (req, res) => {
+
+  var sqlUpdate = "UPDATE `specification_value` SET `spec_value`= ? WHERE `id` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.spec_value,
+      req.body.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'users email updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update users specValue
+router.put("/updateAccsValue", (req, res) => {
+
+  var sqlUpdate = "UPDATE `accessories` SET `acceesory_name`= ? WHERE `id` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.acceesory_name,
+      req.body.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'users email updated'});
       } else {
         res.send({ error: err });
       }

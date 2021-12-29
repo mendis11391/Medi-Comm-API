@@ -180,6 +180,32 @@ router.get("/", (req, res) => {
   );
 });
 
+// Get all products excluding city,qty,delivery_timeline
+router.get("/getAllProducts", (req, res) => { 
+  logger.info({
+    message: '/products api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_AllProducts()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/products fetched successfully',
+          dateTime: new Date()
+        });
+          res.send(rows[0]);
+      } else {
+        logger.info({
+          message: '/products failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 router.get("/prodById/:id", (req, res) => { 
   let products=[];
   var pro2=[];
@@ -247,6 +273,131 @@ router.get("/prodById/:id", (req, res) => {
 });
 
 // Get all products tenures
+router.get("/getHighlights/:id", (req, res) => { 
+  logger.info({
+    message: '/getHighlights/:id api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_HighlitsByProductId(${req.params.id})`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/getHighlights/:id fetched successfully',
+          dateTime: new Date()
+        });
+        res.json(rows[0]);
+      } else {
+        logger.info({
+          message: '/getHighlights/:id failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Get all products tenures
+router.get("/getAllTenures", (req, res) => { 
+  logger.info({
+    message: '/getAllTenures api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_AllTenures()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/getAllTenures fetched successfully',
+          dateTime: new Date()
+        });
+        res.json(rows[0]);
+      } else {
+        logger.info({
+          message: '/getAllTenures failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Add new city
+router.post('/postTenureDiscounts', function(req, res) {
+  sql.query(
+      `INSERT INTO tenure_discounts(priority, tenure_id, discount, discount_status) VALUES (?, ?, ?, ?)`, [req.body.priority, req.body.tenure_id, 0,1],
+      (err) => {
+        if (!err) {
+          res.send({message: 'City Inserted Successfully'});
+        } else {
+          res.send({ error: 'Error' });
+        }
+      }
+    );
+});
+
+// Update users specValue
+router.put("/updateTenureDiscounts", (req, res) => {
+
+  var sqlUpdate = "UPDATE `tenure_discounts` SET `discount`= ? WHERE `id` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.discount,
+      req.body.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'users email updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Delete a tenure discounts by id
+router.delete('/deleteTenureDiscount/:id', (req, res) => {
+  sql.query('DELETE FROM tenure_discounts where id = ?', [req.params.id], (err) => {
+    if (!err) {
+        res.send('Deleted succesfully');
+    }
+     else{
+      res.send({ error: 'Error' });
+    }
+      
+  })
+});
+
+// Get all products tenures
+router.get("/tenures", (req, res) => { 
+  logger.info({
+    message: '/tenures api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_AllPriorityTenuresDiscounts()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/tenures fetched successfully',
+          dateTime: new Date()
+        });
+        res.json(rows[0]);
+      } else {
+        logger.info({
+          message: '/tenures failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Get all products tenures
 router.get("/tenures/:id", (req, res) => { 
   logger.info({
     message: '/tenures/:id api started',
@@ -294,6 +445,28 @@ router.get("/tenure/:id", (req, res) => {
           dateTime: new Date()
         });
         res.send({ error: err });
+      }
+    }
+  );
+});
+
+router.post("/postAccs", function (req, res) {
+  productImgArr = [];
+
+  var sqlInsert =
+    "INSERT INTO `accessories`(`acceesory_name`, `accessory_image`, `status`) VALUES ( ?, ?, ?)";
+  sql.query(
+    sqlInsert,
+    [
+      req.body.accsName,
+      req.body.accsIMage,
+      req.body.accsStatus
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: 'Inserted Successfully'});
+      } else {
+        res.send({message: err});
       }
     }
   );
@@ -426,6 +599,7 @@ router.get("/getSpecsValuesById/:id", (req, res) => {
   );
 });
 
+
 // Get all tenure by id
 router.get("/:id", (req, res) => { 
   logger.info({
@@ -518,6 +692,8 @@ router.get("/productsByCity/:id", (req, res) => {
   );
 });
 
+
+
 // Update users name
 router.put("/updateProductQuantity/:id", (req, res) => {
   logger.info({
@@ -564,6 +740,32 @@ router.get("/blob/:id", (req, res) => {
       } else {
         logger.info({
           message: '/promotions/:id failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Get all products
+router.get("/accessories", (req, res) => { 
+  logger.info({
+    message: '/accessories api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_AllAccessories()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/accessories fetched successfully',
+          dateTime: new Date()
+        });
+          res.send(rows[0]);
+      } else {
+        logger.info({
+          message: '/accessories failed to load',
           dateTime: new Date()
         });
         res.send({ error: err });
@@ -775,39 +977,30 @@ router.delete("/:id", verifyToken, (req, res) => {
 });
 
 // Update a product information
-router.put("/:id",upload.array("product_image",12), (req, res) => {
-  var imgName = productImgArr.join("[--split--]");
-  const editImages=[];
-  editImages.push(req.body.product_image);
-  if(imgName.length==0){
-    imgName=editImages[0].join("[--split--]");
-  }
-  productImgArr = [];
+router.put("/:id", (req, res) => {
   var id = req.params.id;
-
-  var prodUpdate =
-    "UPDATE `products` SET `prod_brand_id`=?,`prod_cat_id`=?,`prod_status`=? WHERE `prod_id` = ?";
-  var sqlUpdate = `UPDATE prod_details SET prod_name= ?,prod_price= ?,prod_qty= ?,prod_deliveryDate= ?,prod_img=?,prod_description= ?,prod_ram= ?,prod_disktype= ?,prod_disksize= ?,prod_specification= ?,prod_status= ?,prod_processor= ?,prod_screensize= ?,specs= ?,prod_tenure= ? WHERE prod_id = ?`;
-  var sqlGet = "select * from prod_details where prod_id = ?";
+  var specsLength = req.body.specs;
+  // var highlightLength = req.body.highlightType;
+  var accessoriesLength = req.body.accessory;
+  var prodDetailsUpdate =
+    `UPDATE prod_details SET prod_name=?,metaTitle=?,slug=?,prod_description='?,securityDeposit=?,tenure_base_price=?,prod_status=?,priority=? WHERE id=${id}`;
+  var prodSpecsDelete = `DELETE FROM product_specs WHERE product_id=?`;
+  var prodSpecsInsert = "INSERT INTO `product_specs`(`product_id`, `spec_id`, `spec_value`, `status`) values (?, ?, ?, ?)";
+  // var prodHighlightsDelete =  `DELETE FROM prod_highlights WHERE product_id=?`;
+  // var prodHighlightsInsert = "INSERT INTO `prod_highlights`(`product_id`, `highlight_type`, `status`) values ( ?, ?, ?)";
+  var accessoryDelete =  `DELETE FROM product_accessories WHERE product_id=?`;
+  var accessoryInsert = "INSERT INTO `product_accessories`(`product_id`, `accessory_id`, `status`) values ( ?, ?, ?)";
   sql.query(
-    sqlUpdate,
+    prodDetailsUpdate,
     [
-      req.body.title,
-      req.body.price,
-      req.body.qty,
-      req.body.deliveryDate,
-      imgName,
-      req.body.description,
-      req.body.ram,
-      req.body.disk_type,
-      req.body.disk_size,
-      req.body.specifications,
-      req.body.status,
-      req.body.processor,
-      req.body.screen_size,
-      req.body.specs,
-      req.body.tenure,
-      req.params.id
+      req.body.productName,
+      req.body.metaTitle,
+      req.body.slug,
+      req.body.prodDescription,
+      req.body.securityDeposit,
+      req.body.tenureBasePrice,
+      req.body.prodStatus,
+      req.body.priority
     ],
     (err) => {
       if (!err) {
@@ -817,6 +1010,76 @@ router.put("/:id",upload.array("product_image",12), (req, res) => {
       }
     }
   );
+
+  sql.query(
+    prodSpecsDelete,
+    [
+      id
+    ],
+    (err) => {
+    }
+  );
+
+  // sql.query(
+  //   prodHighlightsDelete,
+  //   [
+  //     id
+  //   ],
+  //   (err) => {
+  //   }
+  // );
+
+  sql.query(
+    accessoryDelete,
+    [
+      id
+    ],
+    (err) => {
+    }
+  );
+
+  for(let s in specsLength){
+    sql.query(
+      prodSpecsInsert,
+      [id, s, specsLength[s], 1],
+      (err2) => {
+        if (!err2) {
+          // res.send({ res: "Inserted succesfully" });
+        } else{
+          res.send({error:err2});
+        }
+      }
+    );
+  }
+  
+  // for(let j=0;j<highlightLength.length;j++){
+  //   sql.query(
+  //     prodHighlightsInsert,
+  //     [id, highlightLength[j], 1],
+  //     (err3) => {
+  //       if (!err3) {
+  //         // res.send({ res: "Inserted succesfully" });
+  //       } else{
+  //         res.send({error:err3});
+  //       }
+  //     }
+  //   );
+  // }
+
+  for(let k=0;k<accessoriesLength.length;k++){
+    sql.query(
+      accessoryInsert,
+      [id, accessoriesLength[k], 1],
+      (err4) => {
+        if (!err4) {
+          // res.send({ res: "Inserted succesfully" });
+        } else{
+          res.send({error:err4});
+        }
+      }
+    );
+  }
+
 });
 
 // Insert product
@@ -857,6 +1120,7 @@ router.post("/",  function (req, res, next) {
     "INSERT INTO `products`( `product_id`, `quantity`, `prod_code`, `cat_id`, `brand_id`, `city_id`, `delivery_timeline`) values (?, ?, ?, ?, ?, ?, ?)";
   var prodSpecsInsert = "INSERT INTO `product_specs`(`product_id`, `spec_id`, `spec_value`, `status`) values (?, ?, ?, ?)";  
   var prodHighlightsInsert = "INSERT INTO `prod_highlights`(`product_id`, `highlight_type`, `status`) values ( ?, ?, ?)";
+  var accessoryInsert = "INSERT INTO `product_accessories`(`product_id`, `accessory_id`, `status`) values ( ?, ?, ?)";
   sql.query(
     prodDetailsInsert,
     [
@@ -871,9 +1135,12 @@ router.post("/",  function (req, res, next) {
       req.body.securityDeposit,
       req.body.tenureBasePrice,
       req.body.prodStatus,
-      req.body.publishedAt,
-      req.body.startsAt,
-      req.body.endsAt,
+      new Date(),
+      new Date(),
+      new Date(),
+      // req.body.publishedAt,
+      // req.body.startsAt,
+      // req.body.endsAt,
       req.body.priority,
       req.body.createdBy,
       req.body.modifiedBy,
@@ -882,9 +1149,11 @@ router.post("/",  function (req, res, next) {
     ],
     (err, results) => {
       if (!err) {
-        let citiesLength = req.body.cityId;
+        // let citiesLength = req.body.cityId;
+        let citiesLength = ["1", "2", "3","4"];
         let specsLength = req.body.specs;
         let highlightLength = req.body.highlightType;
+        let accessoriesLength = req.body.accessory;
 
         for(let i=0;i<citiesLength.length;i++){
           sql.query(
@@ -927,9 +1196,27 @@ router.post("/",  function (req, res, next) {
             }
           );
         }
+
+        for(let k=0;k<accessoriesLength.length;k++){
+          sql.query(
+            accessoryInsert,
+            [results.insertId, accessoriesLength[k], 1],
+            (err4) => {
+              if (!err4) {
+                // res.send({ res: "Inserted succesfully" });
+              } else{
+                res.send({error:err4});
+              }
+            }
+          );
+        }
         
 
       } else {
+        logger.info({
+          message: `failed to post products load. error:${err}`,
+          dateTime: new Date()
+        });
         res.send({error:err});
       }
     }

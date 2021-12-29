@@ -224,7 +224,7 @@ router.post("/login", (req, res) => {
   adpass += secretkey.final('hex');
 
   sql.query(
-    `SELECT * from admin WHERE uname = ? and passcode = ?`,
+    `SELECT * from customer WHERE firstName = ? and password = ?`,
     [req.body.userName, adpass],
     (err, rows) => {
       if (!err) {
@@ -249,7 +249,7 @@ router.post("/login", (req, res) => {
 
           // token += ' ' + finalCurTime;
           
-          const updateTokenQuery = `UPDATE admin SET token=? where uname= ? and passcode = ?`;
+          const updateTokenQuery = `UPDATE customer SET token=? where firstName= ? and password = ?`;
           sql.query(
             updateTokenQuery,
             [token, req.body.userName, adpass],
@@ -539,8 +539,8 @@ router.post('/userdetails', (req, res) => {
 });
 
 router.post('/admindetails', (req, res) => {
-  let getDetails = `SELECT user_id, uname, usertype, email FROM admin WHERE token = ?`;
-  sql.query(getDetails, [req.body.token], (err, rows) => {
+  let getDetails = `SELECT customer_id, firstName FROM customer WHERE token = ? AND login_type= ?`;
+  sql.query(getDetails, [req.body.token, 'admin'], (err, rows) => {
     if (!err) {
       if (rows.length > 0) {
        res.send({'data': rows, authenticated: true});
