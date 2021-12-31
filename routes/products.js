@@ -476,13 +476,12 @@ router.post("/postSpecs", function (req, res) {
   productImgArr = [];
 
   var sqlInsert =
-    "INSERT INTO `specifications`( `spec_name`, `spec_image`, `spec_status`) VALUES ( ?, ?, ?)";
+    "INSERT INTO `specifications`( `spec_name`, `spec_imageb64`, `spec_status`) VALUES ( ?, ?, ?)";
   sql.query(
     sqlInsert,
     [
       req.body.spec_name,
-      // req.body.specIMage,
-      file_get_contents($_FILES[req.body.specIMage]['tmp_name']),
+      req.body.specIMage,
       req.body.spec_status
     ],
     (err) => {
@@ -494,6 +493,26 @@ router.post("/postSpecs", function (req, res) {
     }
   );
 });
+
+// router.post("/postSpecs", function (req, res) {
+//   productImgArr = [];
+
+//   var query = "INSERT INTO `specifications` SET ?",
+//     values = {
+//       spec_image: req.body.specIMage
+//     };
+//   sql.query(
+//     query,
+//     values,
+//     (err) => {
+//       if (!err) {
+//         res.send({message: 'Inserted Successfully'});
+//       } else {
+//         res.send({message: err});
+//       }
+//     }
+//   );
+// });
 
 // Get all products specs
 router.get("/specs", (req, res) => {
@@ -983,9 +1002,9 @@ router.put("/:id", (req, res) => {
   // var highlightLength = req.body.highlightType;
   var accessoriesLength = req.body.accessory;
   var prodDetailsUpdate =
-    `UPDATE prod_details SET prod_name=?,metaTitle=?,slug=?,prod_description='?,securityDeposit=?,tenure_base_price=?,prod_status=?,priority=? WHERE id=${id}`;
+    `UPDATE prod_details SET prod_name=?,metaTitle=?,slug=?,prod_description=?, prod_image=?, securityDeposit=?,tenure_base_price=?,prod_status=?,priority=? WHERE id=?`;
   var prodSpecsDelete = `DELETE FROM product_specs WHERE product_id=?`;
-  var prodSpecsInsert = "INSERT INTO `product_specs`(`product_id`, `spec_id`, `spec_value`, `status`) values (?, ?, ?, ?)";
+  var prodSpecsInsert = "INSERT INTO `product_specs`(`product_id`, `spec_id`, `status`, `Spec_Value_id`) values (?, ?, ?, ?)";
   // var prodHighlightsDelete =  `DELETE FROM prod_highlights WHERE product_id=?`;
   // var prodHighlightsInsert = "INSERT INTO `prod_highlights`(`product_id`, `highlight_type`, `status`) values ( ?, ?, ?)";
   var accessoryDelete =  `DELETE FROM product_accessories WHERE product_id=?`;
@@ -997,13 +1016,85 @@ router.put("/:id", (req, res) => {
       req.body.metaTitle,
       req.body.slug,
       req.body.prodDescription,
+      req.body.prodImage,
       req.body.securityDeposit,
       req.body.tenureBasePrice,
       req.body.prodStatus,
-      req.body.priority
+      req.body.priority,
+      id
     ],
     (err) => {
       if (!err) {
+        sql.query(
+          prodSpecsDelete,
+          [
+            id
+          ],
+          (err2) => {
+          }
+        );
+      
+        // sql.query(
+        //   prodHighlightsDelete,
+        //   [
+        //     id
+        //   ],
+        //   (err3) => {
+        //   }
+        // );
+      
+        sql.query(
+          accessoryDelete,
+          [
+            id
+          ],
+          (err4) => {
+          }
+        );
+      
+        for(let s in specsLength){
+          if(specsLength[s]){
+            sql.query(
+              prodSpecsInsert,
+              [id, s, 1,specsLength[s]],
+              (err5) => {
+                if (!err5) {
+                  // res.send({ res: "Inserted succesfully" });
+                } else{
+                  res.send({error:err5});
+                }
+              }
+            );
+          }
+        }
+        
+        // for(let j=0;j<highlightLength.length;j++){
+        //   sql.query(
+        //     prodHighlightsInsert,
+        //     [id, highlightLength[j], 1],
+        //     (err6) => {
+        //       if (!err6) {
+        //         // res.send({ res: "Inserted succesfully" });
+        //       } else{
+        //         res.send({error:err6});
+        //       }
+        //     }
+        //   );
+        // }
+      
+        for(let k=0;k<accessoriesLength.length;k++){
+          sql.query(
+            accessoryInsert,
+            [id, accessoriesLength[k], 1],
+            (err7) => {
+              if (!err7) {
+                // res.send({ res: "Inserted succesfully" });
+              } else{
+                res.send({error:err7});
+              }
+            }
+          );
+        }
         res.send({ message: "Update Successfully" });
       } else {
         res.send({"Error": err});
@@ -1011,74 +1102,7 @@ router.put("/:id", (req, res) => {
     }
   );
 
-  sql.query(
-    prodSpecsDelete,
-    [
-      id
-    ],
-    (err) => {
-    }
-  );
-
-  // sql.query(
-  //   prodHighlightsDelete,
-  //   [
-  //     id
-  //   ],
-  //   (err) => {
-  //   }
-  // );
-
-  sql.query(
-    accessoryDelete,
-    [
-      id
-    ],
-    (err) => {
-    }
-  );
-
-  for(let s in specsLength){
-    sql.query(
-      prodSpecsInsert,
-      [id, s, specsLength[s], 1],
-      (err2) => {
-        if (!err2) {
-          // res.send({ res: "Inserted succesfully" });
-        } else{
-          res.send({error:err2});
-        }
-      }
-    );
-  }
   
-  // for(let j=0;j<highlightLength.length;j++){
-  //   sql.query(
-  //     prodHighlightsInsert,
-  //     [id, highlightLength[j], 1],
-  //     (err3) => {
-  //       if (!err3) {
-  //         // res.send({ res: "Inserted succesfully" });
-  //       } else{
-  //         res.send({error:err3});
-  //       }
-  //     }
-  //   );
-  // }
-
-  for(let k=0;k<accessoriesLength.length;k++){
-    sql.query(
-      accessoryInsert,
-      [id, accessoriesLength[k], 1],
-      (err4) => {
-        if (!err4) {
-          // res.send({ res: "Inserted succesfully" });
-        } else{
-          res.send({error:err4});
-        }
-      }
-    );
-  }
 
 });
 
@@ -1116,6 +1140,7 @@ router.post("/",  function (req, res, next) {
 
   var prodDetailsInsert =
     "INSERT INTO `prod_details`(`prod_id`, `offer_id`, `prod_name`, `metaTitle`, `slug`, `prod_image`, `prod_description`, `prod_qty`, `securityDeposit`, `tenure_base_price`, `prod_status`, `publishedAt`, `startsAt`, `endsAt`, `priority`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    
   var productsInsert =
     "INSERT INTO `products`( `product_id`, `quantity`, `prod_code`, `cat_id`, `brand_id`, `city_id`, `delivery_timeline`) values (?, ?, ?, ?, ?, ?, ?)";
   var prodSpecsInsert = "INSERT INTO `product_specs`(`product_id`, `spec_id`, `spec_value`, `status`) values (?, ?, ?, ?)";  
@@ -1154,6 +1179,7 @@ router.post("/",  function (req, res, next) {
         let specsLength = req.body.specs;
         let highlightLength = req.body.highlightType;
         let accessoriesLength = req.body.accessory;
+
 
         for(let i=0;i<citiesLength.length;i++){
           sql.query(

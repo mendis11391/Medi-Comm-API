@@ -388,8 +388,48 @@ router.get("/getAllPricingSchemes", (req, res) => {
   );
 });
 
+// Update spec name and image
+router.put("/updateSpecNameAndImage", (req, res) => {
 
-// Update users specValue
+  var sqlUpdate = "UPDATE `specifications` SET `spec_image`= ? WHERE `spec_id` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.spec_image,
+      req.body.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'users email updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update spec name and image
+router.put("/updateAccsImage", (req, res) => {
+
+  var sqlUpdate = "UPDATE `accessories` SET `accessory_image`= ? WHERE `id` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.accs_image,
+      req.body.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'accs image updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+
+// Update specValue
 router.put("/updateSpecValue", (req, res) => {
 
   var sqlUpdate = "UPDATE `specification_value` SET `spec_value`= ? WHERE `id` = ?";
