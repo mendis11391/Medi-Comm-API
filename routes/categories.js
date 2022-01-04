@@ -319,6 +319,32 @@ router.get("/getAllAccs", (req, res) => {
   );
 });
 
+// Get all specs
+router.get("/getAllScrollersNames", (req, res) => { 
+  logger.info({
+    message: '/ getAllScrollersNames api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_Allscrollers()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/getAllScrollersNames fetched successfully',
+          dateTime: new Date()
+        });
+        res.json(rows[0]);
+      } else {
+        logger.info({
+          message: '/getAllScrollersNames failed load',
+          dateTime: new Date()
+        });
+        res.send({ error: 'Error' });
+      }
+    }
+  );
+});
+
 // Add new city
 router.post('/postCategorySpecs', function(req, res) {
   sql.query(
