@@ -653,6 +653,44 @@ router.post("/postScroller", function (req, res) {
   );
 });
 
+router.post("/postPromotionalProducts", function (req, res) {
+
+  var sqlInsert =
+    "INSERT INTO `promotional_products`( `promotion_id`, `product_id`, `position`, `status`) VALUES (?, ?, ?, ?)";
+  sql.query(
+    sqlInsert,
+    [
+      req.body.promotion_id,
+      req.body.product_id,
+      0,
+      1
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: 'Scroller Inserted Successfully'});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
+// Delete a tenure discounts by id
+router.delete('/deletePromotionProduct/:id', (req, res) => {
+  sql.query('DELETE FROM promotional_products where id=?', 
+  [
+    req.params.id
+  ], 
+  (err) => {
+    if (!err) {
+        res.send('Deleted succesfully');
+    }
+     else{
+      res.send({ error: 'Error' });
+    }
+      
+  })
+});
 // router.post("/postSpecs", function (req, res) {
 //   productImgArr = [];
 
@@ -804,25 +842,24 @@ router.get("/getAllScrollerValues", (req, res) => {
   );
 });
 
-
-// Get all tenure by id
-router.get("/:id", (req, res) => { 
+// // Get all get_AllScrollerValues2. this api call to be used only for admin part where product_id AS id
+router.get("/getAllScrollerValues2", (req, res) => { 
   logger.info({
-    message: '/get_tenureById/:id api started',
+    message: '/get_AllScrollerValues2 api started',
     dateTime: new Date()
   });
   sql.query(
-    `CALL get_tenureById(${req.params.id})`,
+    `CALL get_AllScrollerValues2()`,
     (err, rows, fields) => {
       if (!err) {
-        res.json(rows);
+        res.json(rows[0]);
         logger.info({
-          message: '/get_tenureById/:id fetched successfully',
+          message: '/get_AllScrollerValues2 fetched successfully',
           dateTime: new Date()
         });
       } else {
         logger.info({
-          message: '/get_tenureById/:id failed to load',
+          message: '/get_AllScrollerValues2 failed to load',
           dateTime: new Date()
         });
         res.send({ error: err });
@@ -830,6 +867,33 @@ router.get("/:id", (req, res) => {
     }
   );
 });
+
+
+// Get all tenure by id
+// router.get("/:id", (req, res) => { 
+//   logger.info({
+//     message: '/get_tenureById/:id api started',
+//     dateTime: new Date()
+//   });
+//   sql.query(
+//     `CALL get_tenureById(${req.params.id})`,
+//     (err, rows, fields) => {
+//       if (!err) {
+//         res.json(rows);
+//         logger.info({
+//           message: '/get_tenureById/:id fetched successfully',
+//           dateTime: new Date()
+//         });
+//       } else {
+//         logger.info({
+//           message: '/get_tenureById/:id failed to load',
+//           dateTime: new Date()
+//         });
+//         res.send({ error: err });
+//       }
+//     }
+//   );
+// });
 
 router.get("/productsByCity/:id", (req, res) => { 
   let products=[];
@@ -864,7 +928,28 @@ router.get("/productsByCity/:id", (req, res) => {
           `CALL get_ProductSpecById(${products.product_id})`,
           (err1, rows1, fields) => {
             if (!err1) {  
-              len++;
+              sql.query(
+                `CALL get_DefaultTenurePrice(${products.priority}, ${products.tenure_base_price})`,
+                (err2, rows2) => {
+                  if (!err2) {                      
+                    len++;
+                    
+                    let specObj={};
+                    for(let i=0;i<rows1[0].length;i++){
+                      // products[rows1[0][i].spec_name ] = rows1[0][i].spec_value;
+                      Object.assign(specObj, {[rows1[0][i].spec_name]:rows1[0][i].spec_value});
+                      // products.specs = specObj;
+                    }
+                    products.specs = specObj;
+                    products.defaultTenurePrice = rows2[0][0].discountPrice;
+                    // products.specs = rows1[0];  
+                    pro2.push(products); 
+                    if(len===ele.length){
+                      res.send(pro2);
+                    }
+                  }
+                }
+              );
               // rows1[0].forEach((specs,i,el)=>{
               //   let specifics=[];
               //   len2++;
@@ -873,18 +958,7 @@ router.get("/productsByCity/:id", (req, res) => {
               //     products.specs=specifics;
               //   }                
               // });
-              let specObj={};
-              for(let i=0;i<rows1[0].length;i++){
-                // products[rows1[0][i].spec_name ] = rows1[0][i].spec_value;
-                Object.assign(specObj, {[rows1[0][i].spec_name]:rows1[0][i].spec_value});
-                // products.specs = specObj;
-              }
-              products.specs = specObj;
-              // products.specs = rows1[0];  
-              pro2.push(products); 
-              if(len===ele.length){
-                res.send(pro2);
-              }
+              
             }
           }
         ); 
@@ -1187,6 +1261,8 @@ router.put("/:id", (req, res) => {
   var specsLength = req.body.specs;
   var highlightLength = req.body.highlightType;
   var accessoriesLength = req.body.accessory;
+  var prodUpdate =
+  `UPDATE products SET cat_id=? WHERE product_id=?`;
   var prodDetailsUpdate =
     `UPDATE prod_details SET prod_name=?,metaTitle=?,slug=?,prod_description=?, prod_image=?, securityDeposit=?,tenure_base_price=?,prod_status=?,priority=? WHERE id=?`;
   var prodSpecsDelete = `DELETE FROM product_specs WHERE product_id=?`;
@@ -1211,6 +1287,16 @@ router.put("/:id", (req, res) => {
     ],
     (err) => {
       if (!err) {
+        sql.query(
+          prodUpdate,
+          [
+            req.body.subCatId,
+            id
+          ],
+          (err6) => {
+          }
+        );
+
         sql.query(
           prodSpecsDelete,
           [
