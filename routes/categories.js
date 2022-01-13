@@ -185,6 +185,52 @@ router.get("/getMainCategory", (req, res) => {
 });
 
 // Get all categoris
+router.get("/getMainCategoryLite", (req, res) => { 
+  logger.info({
+    message: '/getMainCategoryLite api started',
+    dateTime: new Date()
+  });
+  let subCategories=[];
+  let subItems=[];
+  let len=0;
+  sql.query(
+    `CALL get_mainCategory()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/getMainCategoryLite fetched successfully',
+          dateTime: new Date()
+        });
+        rows[0].forEach((res)=>{
+          subCategories.push(res);          
+        });
+      } else {
+        logger.info({
+          message: '/getMainCategoryLite failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: 'Error' });
+      }
+
+      subCategories.forEach((subCat,i,ele) => {
+        sql.query(
+          `CALL get_categoryByIDLite(${subCat.id})`,
+          (err2, rows2) => {
+            if(!err2){
+              len++;
+              subCat.subItems = rows2[0];
+              subItems.push(subCat); 
+              if(len===ele.length){
+                res.send(subItems);
+              }
+            }            
+          });
+      });
+    }
+  );
+});
+
+// Get all categoris
 router.get("/categoryAndSub", (req, res) => { 
   sql.query(
     `CALL mainAndSubCategory()`,

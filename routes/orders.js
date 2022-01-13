@@ -242,6 +242,11 @@ router.put("/updateOrderItemAsset/:id", (req, res) => {
 
 // Update delivery status in order item
 router.put("/updateRenewTimline/:id", (req, res) => {
+  
+  var delivered=[];
+  var shipped=[];
+  var others=[];
+  var deliverStatus;
   var id = req.params.id;
   var sqlUpdate = 'UPDATE order_item SET delivery_status=? WHERE order_item_id= ?';
   sql.query(
@@ -253,8 +258,83 @@ router.put("/updateRenewTimline/:id", (req, res) => {
     ],
     (err, rows) => {
       if (!err) {
+        var orderId = req.body.orderId;
+        sql.query(
+          `CALL get_orderItemsBYOrderId(${orderId}) `,
+          (err2, rows2) => {
+            if (!err2) {
+              logger.info({
+                message: '/updateRenewTimline/:id fetched successfully',
+                dateTime: new Date()
+              });
+              let orderItems = rows2[0];
+              // console.log(orderItems.length);
+                for(let i=0; i<orderItems.length;i++){
+                  if(orderItems[i].delivery_status==4 ){
+                    delivered.push(1);              
+                  } else {
+                    delivered.push(0);
+                  }
+                  if(orderItems[i].delivery_status==3 ){
+                    shipped.push(1);              
+                  } else {
+                    shipped.push(0);
+                  }
+                  if(orderItems[i].delivery_status==1 || orderItems[i].delivery_status==2 ){
+                    others.push(1);              
+                  } else {
+                    others.push(0);
+                  }
+                }
+
+                console.log(others);
+                console.log(delivered);
+                console.log(shipped);
+                if(shipped.includes(1) && (others.includes(1) && !delivered.includes(1))){
+                  deliverStatus = 2;
+                } else if(shipped.includes(1) && !others.includes(1) && !delivered.includes(1)){
+                  deliverStatus = 3;
+                } else if(!shipped.includes(1) && delivered.includes(1) && !others.includes(1) ){
+                  deliverStatus = 4;
+                } else if(!shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
+                  deliverStatus = 5;
+                } else if(shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
+                  deliverStatus = 5;
+                }  else if(shipped.includes(1) && delivered.includes(1) && others.includes(0) ){
+                  deliverStatus = 5;
+                } else if(shipped.includes(0) && delivered.includes(1) && others.includes(0)){
+                  deliverStatus = 4;
+                }
+                console.log(deliverStatus);
+                var sqlUpdate = 'UPDATE orders SET deliveryStatus= ? WHERE id= ?';
+                sql.query(
+                  sqlUpdate,
+                  [
+                    deliverStatus,
+                    orderId
+                  ],(err3, rows3) => {
+                    if (err3) {
+                      logger.info({
+                        message: '/updateRenewTimline/:id Error:'+err3,
+                        dateTime: new Date()
+                      });
+                      res.send({ error: err3 });
+                    }
+                  }
+                );
+            }               
+          }
+        );
+        logger.info({
+          message: '/updateRenewTimline/:id delivery status updated for order item',
+          dateTime: new Date()
+        });
         res.send({'message': 'delivery status updated for order item'});
       } else {
+        logger.info({
+          message: '/updateRenewTimline/:id Error:'+err,
+          dateTime: new Date()
+        });
         res.send({ error: err });
       }
     }
@@ -345,6 +425,10 @@ router.put("/updateOrderItemDeliveryDate/:id", (req, res) => {
       if (!err) {
         res.send({'message': 'delivery date updated for order item'});
       } else {
+        logger.info({
+          message: 'Failed to update delivery date'+err,
+          dateTime: new Date()
+        });
         res.send({ error: err });
       }
     }
@@ -379,198 +463,204 @@ router.get('/renewals/:id', function(req, res) {
       `CALL get_renewalsByCustomerId(${req.params.id}) `,
       (err, rows) => {
         if (!err) {
-          rows[0].forEach((res)=>{
-            orderItem.push(res);
-            
-          });
+          if(rows[0].length>0){
+            rows[0].forEach((res)=>{
+              orderItem.push(res);              
+            });
+          } else{
+            res.send(rows[0]);
+          }
+          
         } else {
           res.send({ error: err });
         }
 
-          orderItem.forEach((ot, i, ele)=>{
-            len++;
-            let forOT = ot;
-            let delivered=[];
-            let shipped=[];
-            let others=[];
-            let currDate=new Date();
-              
-            forOT['renewals_timline'] = JSON.parse(forOT.renewals_timline);
-            forOT['renewals_timline'] .forEach((resp)=>{              
-              resp['indexs']=Math.floor((Math.random() * 9999) + 1);
-              resp.order_item_id = forOT.order_item_id                     
-              
-            });            
-            
-            let cid = forOT.renewals_timline;
-            
-            for(let i=0;i<cid.length;i++){
-              // cid[i].indexs=Math.floor((Math.random() * 9999) + 1);
-              
-              let ucid={ 
-                indexs:Math.floor((Math.random() * 9999) + 1),
-                id: cid[i].id,
-                order_item_id: forOT.order_item_id,
-                prod_name:cid[i].prod_name,
-                prod_price:cid[i].prod_price,
-                // prod_img:cid[i].prod_img,
-                delvdate: cid[i].delvdate,
-                actualStartDate:cid[i].actualStartDate,
-                qty: cid[i].qty, 
-                price: cid[i].price, 
-                tenure: cid[i].tenure,
-                primaryOrderNo:cid[i].primaryOrderNo, 
-                currentOrderNo: cid[i].currentOrderNo,
-                renewed:cid[i].renewed,
-                startDate:cid[i].startDate,
-                expiryDate:cid[i].startDate,
-                nextStartDate:cid[i].expiryDate,
-                overdew:cid[i].overdew,
-                assetId:cid[i].assetId,
-                deliveryStatus:cid[i].deliveryStatus,
-                deliveryDateAssigned:cid[i].deliveryDateAssigned,
-                deliveryAssigned:cid[i].deliveryAssigned,
-                dp:cid[i].dp,
-                replacement:cid[i].replacement,
-                returnDate:cid[i].returnDate,
-                billPeriod:cid[i].billPeriod,
-                billAmount:cid[i].billAmount,
-                damageCharges:cid[i].damageCharges,
-                tenure_id:cid[i].tenure_id,
-                tenureBasePrice:cid[i].tenureBasePrice
-              }
-              
-              
-              let ed = cid[i].nextStartDate;
-              let dateParts = ed.split("/");
-  
-              // month is 0-based, that's why we need dataParts[1] - 1
-              let dateObject = new Date(+dateParts[2], dateParts[1]-1, +dateParts[0]);	
-              let dd= dateObject.getDate();
-              let mm=dateObject.getMonth();
-              let yy=dateObject.getFullYear();
-  
-              let db = mm+1+'/'+dd+'/'+yy;
-              let expiryDate= new Date(db);
-              let Days=new Date(yy, mm+2, 0).getDate();
-  
-              if(Days<dd){
-                newED = new Date(yy, mm+1, Days);              
-                ned  = new Date(yy, mm+1, Days);
-              }else{					
-                newED = new Date(yy, mm+1, dd-1);
-                ned = new Date(yy, mm+1, dd-1);              
-              }
-              ned.setDate(ned.getDate() + 1);
+          if(orderItem){
+            orderItem.forEach((ot, i, ele)=>{
+              len++;
+              let forOT = ot;
+              let delivered=[];
+              let shipped=[];
+              let others=[];
+              let currDate=new Date();
                 
-              let sd = cid[i].startDate;
-              let sdateParts = sd.split("/");
-  
-              // month is 0-based, that's why we need dataParts[1] - 1
-              let sDateObject = new Date(+sdateParts[2], sdateParts[1]-1, +sdateParts[0]);	
-              let sdd= sDateObject.getDate();
-              let smm=sDateObject.getMonth();
-              let syy=sDateObject.getFullYear();
-  
-              let sdb = smm+1+'/'+sdd+'/'+syy;
-              let startDate= new Date(sdb);
-  
-              let daysInDiff=dateDiffInDays(startDate, currDate); 
-              if(daysInDiff>=0 && (cid[i].renewed!=4 && cid[i].overdew!=1)){
-                if(cid[i].ordered==1){
-                  cid[i].renewed=1
-                  cid[i].overdew=0
-                } else if(cid[i].renewed==1 || cid[i].renewed==4){
-                  cid[i].overdew=0
+              forOT['renewals_timline'] = JSON.parse(forOT.renewals_timline);
+              forOT['renewals_timline'] .forEach((resp)=>{              
+                resp['indexs']=Math.floor((Math.random() * 9999) + 1);
+                resp.order_item_id = forOT.order_item_id                     
+                
+              });            
+              
+              let cid = forOT.renewals_timline;
+              
+              for(let i=0;i<cid.length;i++){
+                // cid[i].indexs=Math.floor((Math.random() * 9999) + 1);
+                
+                let ucid={ 
+                  indexs:Math.floor((Math.random() * 9999) + 1),
+                  id: cid[i].id,
+                  order_item_id: forOT.order_item_id,
+                  prod_name:cid[i].prod_name,
+                  prod_price:cid[i].prod_price,
+                  // prod_img:cid[i].prod_img,
+                  delvdate: cid[i].delvdate,
+                  actualStartDate:cid[i].actualStartDate,
+                  qty: cid[i].qty, 
+                  price: cid[i].price, 
+                  tenure: cid[i].tenure,
+                  primaryOrderNo:cid[i].primaryOrderNo, 
+                  currentOrderNo: cid[i].currentOrderNo,
+                  renewed:cid[i].renewed,
+                  startDate:cid[i].startDate,
+                  expiryDate:cid[i].startDate,
+                  nextStartDate:cid[i].expiryDate,
+                  overdew:cid[i].overdew,
+                  assetId:cid[i].assetId,
+                  deliveryStatus:cid[i].deliveryStatus,
+                  deliveryDateAssigned:cid[i].deliveryDateAssigned,
+                  deliveryAssigned:cid[i].deliveryAssigned,
+                  dp:cid[i].dp,
+                  replacement:cid[i].replacement,
+                  returnDate:cid[i].returnDate,
+                  billPeriod:cid[i].billPeriod,
+                  billAmount:cid[i].billAmount,
+                  damageCharges:cid[i].damageCharges,
+                  tenure_id:cid[i].tenure_id,
+                  tenureBasePrice:cid[i].tenureBasePrice
                 }
-
-                cid[i].overdew=1;
-                // row['overdue']=1;
-                ucid.renewed=0;
-                ucid.startDate=cid[i].nextStartDate;
-                ucid.expiryDate=ISTDate(newED);
-                ucid.nextStartDate=ISTDate(ned);
-                ucid.billPeriod = ucid.startDate+'-'+ucid.expiryDate
-                ucid.overdew=0;
-                ucid.ordered=0;
-                forOT['renewals_timline'].push(ucid);
-                var sqlUpdate = 'UPDATE order_item SET renewals_timline= ? WHERE order_item_id= ?';
-                sql.query(
-                  sqlUpdate,
-                  [
-                    JSON.stringify(forOT['renewals_timline']),
-                    forOT['order_item_id']
-                  ]
-                );
-              }
-
-              if(cid[i].ordered==1){
-                var sqlUpdate = 'UPDATE order_item SET overdue=? WHERE order_item_id= ?';
-                sql.query(
-                  sqlUpdate,
-                  [
-                    0,
-                    forOT['order_item_id']
-                  ]
-                );
-              } else if((cid[i].overdew==1)){
-                var sqlUpdate = 'UPDATE order_item SET overdue=? WHERE order_item_id= ?';
-                sql.query(
-                  sqlUpdate,
-                  [
-                    1,
-                    forOT['order_item_id']
-                  ]
-                );
-              }
-
-              
+                
+                
+                let ed = cid[i].nextStartDate;
+                let dateParts = ed.split("/");
+    
+                // month is 0-based, that's why we need dataParts[1] - 1
+                let dateObject = new Date(+dateParts[2], dateParts[1]-1, +dateParts[0]);	
+                let dd= dateObject.getDate();
+                let mm=dateObject.getMonth();
+                let yy=dateObject.getFullYear();
+    
+                let db = mm+1+'/'+dd+'/'+yy;
+                let expiryDate= new Date(db);
+                let Days=new Date(yy, mm+2, 0).getDate();
+    
+                if(Days<dd){
+                  newED = new Date(yy, mm+1, Days);              
+                  ned  = new Date(yy, mm+1, Days);
+                }else{					
+                  newED = new Date(yy, mm+1, dd-1);
+                  ned = new Date(yy, mm+1, dd-1);              
+                }
+                ned.setDate(ned.getDate() + 1);
+                  
+                let sd = cid[i].startDate;
+                let sdateParts = sd.split("/");
+    
+                // month is 0-based, that's why we need dataParts[1] - 1
+                let sDateObject = new Date(+sdateParts[2], sdateParts[1]-1, +sdateParts[0]);	
+                let sdd= sDateObject.getDate();
+                let smm=sDateObject.getMonth();
+                let syy=sDateObject.getFullYear();
+    
+                let sdb = smm+1+'/'+sdd+'/'+syy;
+                let startDate= new Date(sdb);
+    
+                let daysInDiff=dateDiffInDays(startDate, currDate); 
+                if(daysInDiff>=0 && (cid[i].renewed!=4 && cid[i].overdew!=1)){
+                  if(cid[i].ordered==1){
+                    cid[i].renewed=1
+                    cid[i].overdew=0
+                  } else if(cid[i].renewed==1 || cid[i].renewed==4){
+                    cid[i].overdew=0
+                  }
   
-              if((cid[i].renewed==1 || cid[i].renewed==4) && cid[i].ordered!=1){
+                  cid[i].overdew=1;
+                  // row['overdue']=1;
+                  ucid.renewed=0;
+                  ucid.startDate=cid[i].nextStartDate;
+                  ucid.expiryDate=ISTDate(newED);
+                  ucid.nextStartDate=ISTDate(ned);
+                  ucid.billPeriod = ucid.startDate+'-'+ucid.expiryDate
+                  ucid.overdew=0;
+                  ucid.ordered=0;
+                  forOT['renewals_timline'].push(ucid);
+                  var sqlUpdate = 'UPDATE order_item SET renewals_timline= ? WHERE order_item_id= ?';
+                  sql.query(
+                    sqlUpdate,
+                    [
+                      JSON.stringify(forOT['renewals_timline']),
+                      forOT['order_item_id']
+                    ]
+                  );
+                }
+  
+                if(cid[i].ordered==1){
+                  var sqlUpdate = 'UPDATE order_item SET overdue=? WHERE order_item_id= ?';
+                  sql.query(
+                    sqlUpdate,
+                    [
+                      0,
+                      forOT['order_item_id']
+                    ]
+                  );
+                } else if((cid[i].overdew==1)){
+                  var sqlUpdate = 'UPDATE order_item SET overdue=? WHERE order_item_id= ?';
+                  sql.query(
+                    sqlUpdate,
+                    [
+                      1,
+                      forOT['order_item_id']
+                    ]
+                  );
+                }
+  
                 
-                var sqlUpdate = 'UPDATE assets SET startDate=?, EndDate=?, nextStartDate=? WHERE asset_no= ?';
-                sql.query(
-                  sqlUpdate,
-                  [
-                    cid[i].startDate,
-                    cid[i].expiryDate,
-                    cid[i].nextStartDate,
-                    ucid.assetId
-                  ]
-                );
-
-                var sqlUpdate = 'UPDATE order_item SET overdue=? WHERE order_item_id= ?';
-                sql.query(
-                  sqlUpdate,
-                  [
-                    0,
-                    forOT['order_item_id']
-                  ]
-                );
-
+    
+                if((cid[i].renewed==1 || cid[i].renewed==4) && cid[i].ordered!=1){
+                  
+                  var sqlUpdate = 'UPDATE assets SET startDate=?, EndDate=?, nextStartDate=? WHERE asset_no= ?';
+                  sql.query(
+                    sqlUpdate,
+                    [
+                      cid[i].startDate,
+                      cid[i].expiryDate,
+                      cid[i].nextStartDate,
+                      ucid.assetId
+                    ]
+                  );
+  
+                  var sqlUpdate = 'UPDATE order_item SET overdue=? WHERE order_item_id= ?';
+                  sql.query(
+                    sqlUpdate,
+                    [
+                      0,
+                      forOT['order_item_id']
+                    ]
+                  );
+  
+                  
+                }
                 
               }
-              
-            }
-
-            cid.forEach((cidResults)=>{
-              if(cidResults.overdew==1 && cidResults.ordered!=1){
-                var sqlUpdate = 'UPDATE order_item SET overdue=? WHERE order_item_id= ?';
-                sql.query(
-                  sqlUpdate,
-                  [
-                    1,
-                    forOT['order_item_id']
-                  ]
-                );
+  
+              cid.forEach((cidResults)=>{
+                if(cidResults.overdew==1 && cidResults.ordered!=1){
+                  var sqlUpdate = 'UPDATE order_item SET overdue=? WHERE order_item_id= ?';
+                  sql.query(
+                    sqlUpdate,
+                    [
+                      1,
+                      forOT['order_item_id']
+                    ]
+                  );
+                }
+  
+              })
+  
+              if(len===ele.length){          
+                res.send(orderItem);
               }
-
-            })
-
-            if(len===ele.length){          
-              res.send(orderItem);
-            }
-          });
+            });
+          }
           
       }
     );
@@ -758,21 +848,21 @@ router.get('/orderDetails2/:id', function(req, res) {
                                   }
                                 }
 
-                                if(shipped.includes(1) && (others.includes(1) && !delivered.includes(1))){
-                                  ot['deliveryStatus'] = 5;
-                                } else if(shipped.includes(1) && !others.includes(1) && !delivered.includes(1)){
-                                  ot['deliveryStatus'] = 3;
-                                } else if(!shipped.includes(1) && delivered.includes(1) && !others.includes(1) ){
-                                  ot['deliveryStatus'] = 4;
-                                } else if(!shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
-                                  ot['deliveryStatus'] = 5;
-                                } else if(shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
-                                  ot['deliveryStatus'] = 5;
-                                }  else if(shipped.includes(1) && delivered.includes(1) && others.includes(0) ){
-                                  ot['deliveryStatus'] = 5;
-                                } else if(shipped.includes(0) && delivered.includes(1) && others.includes(0)){
-                                  ot['deliveryStatus'] = 4;
-                                }
+                                // if(shipped.includes(1) && (others.includes(1) && !delivered.includes(1))){
+                                //   ot['deliveryStatus'] = 5;
+                                // } else if(shipped.includes(1) && !others.includes(1) && !delivered.includes(1)){
+                                //   ot['deliveryStatus'] = 3;
+                                // } else if(!shipped.includes(1) && delivered.includes(1) && !others.includes(1) ){
+                                //   ot['deliveryStatus'] = 4;
+                                // } else if(!shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
+                                //   ot['deliveryStatus'] = 5;
+                                // } else if(shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
+                                //   ot['deliveryStatus'] = 5;
+                                // }  else if(shipped.includes(1) && delivered.includes(1) && others.includes(0) ){
+                                //   ot['deliveryStatus'] = 5;
+                                // } else if(shipped.includes(0) && delivered.includes(1) && others.includes(0)){
+                                //   ot['deliveryStatus'] = 4;
+                                // }
                                 // var sqlUpdate = 'UPDATE orders SET deliveryStatus= ? WHERE id= ?';
                                 // sql.query(
                                 //   sqlUpdate,
@@ -950,153 +1040,147 @@ router.get('/:id', function(req, res) {
   sql.query(
       `CALL get_ordersByCustomer(${req.params.id}) `,
       (err, rows) => {
-        if (!err) {
-          rows[0].forEach((res)=>{
-            orders.push(res);
-            
-          });
+        if (!err) {          
+          if(rows[0].length>0){
+            rows[0].forEach((res)=>{
+                orders.push(res);            
+            });
+          } else{
+            res.send(rows[0]);
+          }
         } else {
           res.send({ error: 'Error' });
         }
-        orders.forEach((orders,i,ele) => {
-          sql.query(
-            `CALL get_addressById(${orders.billingAddress})`,
-            (err1, rows1, fields) => {
-              if (!err1) { 
-                sql.query(
-                  `CALL get_orderItemByorder(${orders.id})`,
-                  (err2, rows2, fields) => {
-                    if (!err2) { 
-                      sql.query(
-                        `CALL get_addressById(${orders.shippingAddress})`,
-                        (err3, rows3) => {
-                          if(!err3){
-                            len++;
-                            console.log(orders);
-                            orders.orderItem = rows2[0];  
-
-                            for(let ds=0; ds<orders.orderItem[0].length;ds++){
-                              if(orders.orderItem[0][ds].deliveryStatus_id.includes(4) ){
-                                delivered.push(1);              
-                              } else {
-                                delivered.push(0);
-                              }
-                              if(orders.orderItem[0][ds].deliveryStatus_id.includes(3) ){
-                                shipped.push(1);              
-                              } else {
-                                shipped.push(0);
-                              }
-                              if(orders.orderItem[0][ds].deliveryStatus_id.includes(1) || orders.orderItem[0][ds].deliveryStatus_id.includes(2) ){
-                                others.push(1);              
-                              } else {
-                                others.push(0);
-                              }
-                            }
-
-                            if(shipped.includes(1) && (others.includes(1) && !delivered.includes(1))){
-                              orders['deliveryStatus'] = 5;
-                            } else if(shipped.includes(1) && !others.includes(1) && !delivered.includes(1)){
-                              orders['deliveryStatus'] = 3;
-                            } else if(!shipped.includes(1) && delivered.includes(1) && !others.includes(1) ){
-                              orders['deliveryStatus'] = 4;
-                            } else if(!shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
-                              orders['deliveryStatus'] = 5;
-                            } else if(shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
-                              orders['deliveryStatus'] = 5;
-                            }  else if(shipped.includes(1) && delivered.includes(1) && others.includes(0) ){
-                              orders['deliveryStatus'] = 5;
-                            } else if(shipped.includes(0) && delivered.includes(1) && others.includes(0)){
-                              orders['deliveryStatus'] = 4;
-                            }
-                            var sqlUpdate = 'UPDATE orders SET deliveryStatus= ? WHERE id= ?';
-                            sql.query(
-                              sqlUpdate,
-                              [
-                                orders['deliveryStatus'],
-                                orders['id']
-                              ]
-                            );
-
-                            orders.billingAddress = rows1[0]; 
-                            orders.shippingAddress = rows3[0];
-                            orderItem.push(orders); 
-                            if(len===ele.length){
-                              orderItem.forEach((ot, i)=>{
-                                let forOT = ot.orderItem;
-                                for(let i=0;i<forOT.length;i++){
-                                  forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
-                                  sql.query(
-                                    `CALL getCustomerRequestsByOTID(${forOT[i].order_item_id})`,
-                                    (err4, rows4, fields) => {
-                                      if(!err4){
-                                        forOT[i]['customerRequests'] = rows4[0];
-                                      }
-                                    })
-
-                                  // if(forOT[i].deliveryStatus_id.includes(4) ){
-                                  //   delivered.push(1);              
-                                  // } else {
-                                  //   delivered.push(0);
-                                  // }
-                                  // if(forOT[i].deliveryStatus_id.includes(3) ){
-                                  //   shipped.push(1);              
-                                  // } else {
-                                  //   shipped.push(0);
-                                  // }
-                                  // if(forOT[i].deliveryStatus_id.includes(1) || forOT[i].deliveryStatus_id.includes(2) ){
-                                  //   others.push(1);              
-                                  // } else {
-                                  //   others.push(0);
-                                  // }
-                                }
-
-                                // if(shipped.includes(1) && (others.includes(1) && !delivered.includes(1))){
-                                //   ot['deliveryStatus'] = 5;
-                                // } else if(shipped.includes(1) && !others.includes(1) && !delivered.includes(1)){
-                                //   ot['deliveryStatus'] = 3;
-                                // } else if(!shipped.includes(1) && delivered.includes(1) && !others.includes(1) ){
-                                //   ot['deliveryStatus'] = 4;
-                                // } else if(!shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
-                                //   ot['deliveryStatus'] = 5;
-                                // } else if(shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
-                                //   ot['deliveryStatus'] = 5;
-                                // }  else if(shipped.includes(1) && delivered.includes(1) && others.includes(0) ){
-                                //   ot['deliveryStatus'] = 5;
-                                // } else if(shipped.includes(0) && delivered.includes(1) && others.includes(0)){
-                                //   ot['deliveryStatus'] = 4;
-                                // }
-                                // var sqlUpdate = 'UPDATE orders SET deliveryStatus= ? WHERE id= ?';
-                                // sql.query(
-                                //   sqlUpdate,
-                                //   [
-                                //     ot['deliveryStatus'],
-                                //     ot['id']
-                                //   ]
-                                // );
-                              });
+        if(orders){
+          orders.forEach((orders,i,ele) => {
+            sql.query(
+              `CALL get_addressById(${orders.billingAddress})`,
+              (err1, rows1, fields) => {
+                if (!err1) { 
+                  sql.query(
+                    `CALL get_orderItemByorder(${orders.id})`,
+                    (err2, rows2, fields) => {
+                      if (!err2) { 
+                        sql.query(
+                          `CALL get_addressById(${orders.shippingAddress})`,
+                          (err3, rows3) => {
+                            if(!err3){
+                              len++;
+                              // console.log(orders);
+                              orders.orderItem = rows2[0];  
+                              // let OrderItems= rows2[0][0];
+                              // console.log(OrderItems.deliveryStatus_id);
+                              // for(let ds=0; ds<orders.orderItem[0].length;ds++){
+                              //   if(orders.orderItem[0][ds].deliveryStatus_id.includes(4) ){
+                              //     delivered.push(1);              
+                              //   } else {
+                              //     delivered.push(0);
+                              //   }
+                              //   if(orders.orderItem[0][ds].deliveryStatus_id.includes(3) ){
+                              //     shipped.push(1);              
+                              //   } else {
+                              //     shipped.push(0);
+                              //   }
+                              //   if(orders.orderItem[0][ds].deliveryStatus_id.includes(1) || orders.orderItem[0][ds].deliveryStatus_id.includes(2) ){
+                              //     others.push(1);              
+                              //   } else {
+                              //     others.push(0);
+                              //   }
+                              // }
+                              // console.log(shipped);
+                              // console.log(delivered);
+                              // console.log(others);
+  
+                              // if(shipped.includes('1') && (others.includes('1') && !delivered.includes('1'))){
+                              //   orders['deliveryStatus'] = 2;
+                              // } else if(shipped.includes('1') && !others.includes('1') && !delivered.includes('1')){
+                              //   orders['deliveryStatus'] = 3;
+                              // } else if(!shipped.includes('1') && delivered.includes('1') && !others.includes('1') ){
+                              //   orders['deliveryStatus'] = 4;
+                              // } else if(!shipped.includes('1') && delivered.includes('1') && others.includes('1') ){
+                              //   orders['deliveryStatus'] = 5;
+                              // } else if(shipped.includes('1') && delivered.includes('1') && others.includes('1') ){
+                              //   orders['deliveryStatus'] = 5;
+                              // }  else if(shipped.includes('1') && delivered.includes('1') && others.includes('0') ){
+                              //   orders['deliveryStatus'] = 5;
+                              // } else if(shipped.includes('0') && delivered.includes('1') && others.includes('0')){
+                              //   orders['deliveryStatus'] = 4;
+                              // }
+                              // var sqlUpdate = 'UPDATE orders SET deliveryStatus= ? WHERE id= ?';
+                              // sql.query(
+                              //   sqlUpdate,
+                              //   [
+                              //     orders['deliveryStatus'],
+                              //     orders['id']
+                              //   ]
+                              // );
+  
+                              orders.billingAddress = rows1[0]; 
+                              orders.shippingAddress = rows3[0];
+                              orderItem.push(orders); 
                               if(len===ele.length){
-                              
-                                res.send(orderItem);
+                                orderItem.forEach((ot, i)=>{
+                                  let forOT = ot.orderItem;
+                                  for(let i=0;i<forOT.length;i++){
+                                    forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
+                                    sql.query(
+                                      `CALL getCustomerRequestsByOTID(${forOT[i].order_item_id})`,
+                                      (err4, rows4, fields) => {
+                                        if(!err4){
+                                          forOT[i]['customerRequests'] = rows4[0];
+                                        }
+                                      })
+  
+                                  }
+  
+                                  // if(shipped.includes(1) && (others.includes(1) && !delivered.includes(1))){
+                                  //   ot['deliveryStatus'] = 5;
+                                  // } else if(shipped.includes(1) && !others.includes(1) && !delivered.includes(1)){
+                                  //   ot['deliveryStatus'] = 3;
+                                  // } else if(!shipped.includes(1) && delivered.includes(1) && !others.includes(1) ){
+                                  //   ot['deliveryStatus'] = 4;
+                                  // } else if(!shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
+                                  //   ot['deliveryStatus'] = 5;
+                                  // } else if(shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
+                                  //   ot['deliveryStatus'] = 5;
+                                  // }  else if(shipped.includes(1) && delivered.includes(1) && others.includes(0) ){
+                                  //   ot['deliveryStatus'] = 5;
+                                  // } else if(shipped.includes(0) && delivered.includes(1) && others.includes(0)){
+                                  //   ot['deliveryStatus'] = 4;
+                                  // }
+                                  // var sqlUpdate = 'UPDATE orders SET deliveryStatus= ? WHERE id= ?';
+                                  // sql.query(
+                                  //   sqlUpdate,
+                                  //   [
+                                  //     ot['deliveryStatus'],
+                                  //     ot['id']
+                                  //   ]
+                                  // );
+                                });
+                                if(len===ele.length){
+                                
+                                  res.send(orderItem);
+                                }
                               }
                             }
-                          }
-                        });
-                      
+                          });
+                        
+                      }
                     }
-                  }
-                );
-                // orders.address = rows1[0];  
-                // orderAddress.push(orders); 
-                // if(len===ele.length){
-                //   // res.send(orderAddress);
-                // }
+                  );
+                  // orders.address = rows1[0];  
+                  // orderAddress.push(orders); 
+                  // if(len===ele.length){
+                  //   // res.send(orderAddress);
+                  // }
+                }
               }
-            }
-          ); 
-
-          
-          
-        });
+            ); 
+  
+            
+            
+          });
+        }
 
         
 

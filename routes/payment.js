@@ -153,6 +153,8 @@ router.post('/saveNewOrder', function(req, res) {
 		  });
 		var products = checkoutPInfo;
 
+
+
 		products.forEach((resProduct)=>{
 		  let renewalProduct = [];
 		  resProduct.prod_img='';
@@ -1023,6 +1025,7 @@ router.post('/result',(req, res, next)=>{
 			} else{
 				status=3;
 			}
+			var invoiceInsert = "INSERT INTO `invoice`(`invoice_id`, `order_id`, `invoice_description`, `status`) VALUES (?,?,?,?)";
 			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
 			sql.query(sqlInsert,
 				[
@@ -1042,6 +1045,29 @@ router.post('/result',(req, res, next)=>{
 					[
 						status,
 						req.body.orderId,
+					]);
+				} else {
+					res.send({message: err});
+				}
+				}
+			);
+
+			
+			sql.query(invoiceInsert,
+				[
+				'N/A',
+				req.body.orderId,
+				'N/A',
+				1
+				],
+				(err1, results) => {
+				if (!err1) {
+					var invoiceNo = 'IRO/21-22/'+results.insertId;
+					var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
+					sql.query(updateInvoice,
+					[
+						invoiceNo,
+						results.insertId,
 					]);
 				} else {
 					res.send({message: err});
@@ -1247,6 +1273,7 @@ router.post('/renewalsResult',(req, res, next)=>{
 			} else{
 				status=3;
 			}
+			var invoiceInsert = "INSERT INTO `invoice`(`invoice_id`, `order_id`, `invoice_description`, `status`) VALUES (?,?,?,?)";
 			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
 			sql.query(sqlInsert,
 				[
@@ -1272,6 +1299,29 @@ router.post('/renewalsResult',(req, res, next)=>{
 				}
 				}
 			);
+
+			sql.query(invoiceInsert,
+				[
+				'N/A',
+				req.body.orderId,
+				'N/A',
+				1
+				],
+				(err1, results) => {
+				if (!err1) {
+					var invoiceNo = 'IRO/21-22/'+results.insertId;
+					var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
+					sql.query(updateInvoice,
+					[
+						invoiceNo,
+						results.insertId,
+					]);
+				} else {
+					res.send({message: err});
+				}
+				}
+			);
+			
 			logger.info({
 				message: '/renewalsResult transaction successfully',
 				dateTime: new Date()

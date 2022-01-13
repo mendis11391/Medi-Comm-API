@@ -454,11 +454,12 @@ router.put("/productStocksAndTimeline", (req, res) => {
 // Update users specValue
 router.put("/updateTenureDiscounts", (req, res) => {
 
-  var sqlUpdate = "UPDATE `tenure_discounts` SET `discount`= ? WHERE `id` = ?";
+  var sqlUpdate = "UPDATE `tenure_discounts` SET `discount`= ?, `default_tenure`=? WHERE `id` = ?";
   sql.query(
     sqlUpdate,
     [
       req.body.discount,
+      req.body.default_tenure,
       req.body.id
     ],
     (err, rows) => {
@@ -933,7 +934,7 @@ router.get("/productsByCity/:id", (req, res) => {
                 (err2, rows2) => {
                   if (!err2) {                      
                     len++;
-                    
+                    let disPrice = rows2[0][0].discountPrice;
                     let specObj={};
                     for(let i=0;i<rows1[0].length;i++){
                       // products[rows1[0][i].spec_name ] = rows1[0][i].spec_value;
@@ -941,7 +942,11 @@ router.get("/productsByCity/:id", (req, res) => {
                       // products.specs = specObj;
                     }
                     products.specs = specObj;
-                    products.defaultTenurePrice = rows2[0][0].discountPrice;
+                    if(disPrice){
+                      products.defaultTenurePrice = disPrice;
+                    } else{
+                      products.defaultTenurePrice = 0;
+                    }
                     // products.specs = rows1[0];  
                     pro2.push(products); 
                     if(len===ele.length){
@@ -1452,19 +1457,9 @@ router.post("/",  function (req, res, next) {
         let highlightLength = req.body.highlightType;
         let accessoriesLength = req.body.accessory;
 
-        let unqProdId = 'IRO'+results.insertId;
+        
 
-        sql.query(
-          updateProdId,
-          [unqProdId, results.insertId],
-          (err0) => {
-            if (!err0) {
-              // res.send({ res: "Inserted succesfully" });
-            } else{
-              res.send({error:err0});
-            }
-          }
-        );
+        
         for(let i=0;i<citiesLength.length;i++){
           sql.query(
             productsInsert,
@@ -1523,6 +1518,18 @@ router.post("/",  function (req, res, next) {
           );
         }
         
+        let unqProdId = 'IRO'+results.insertId;
+        sql.query(
+          updateProdId,
+          [unqProdId, results.insertId],
+          (err0) => {
+            if (!err0) {
+              // res.send({ res: "Inserted succesfully" });
+            } else{
+              res.send({error:err0});
+            }
+          }
+        );
 
       } else {
         logger.info({
