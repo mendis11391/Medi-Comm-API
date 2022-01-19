@@ -300,6 +300,28 @@ router.get("/", (req, res) => {
   );
 });
 
+// Get all categoris
+router.get("/getCategoryMetaData/:id", (req, res) => { 
+  sql.query(
+    `CALL get_catMetaDataBySlug(${JSON.stringify(req.params.id)})`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/getCategoryMetaData fetched successfully',
+          dateTime: new Date()
+        });
+        res.json(rows[0]);
+      } else {
+        logger.info({
+          message: '/getCategoryMetaData failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: 'Error' });
+      }
+    }
+  );
+});
+
 // Get all category heading by slug
 router.get("/getCatHeadingByslug/:id", (req, res) => {
   sql.query(
