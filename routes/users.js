@@ -122,26 +122,7 @@ router.put("/deleteAddressById/:id",  (req, res) => {
   );
 });
 
-router.get('/getCustomerRequests', function(req, res) {
-  let len=0;
-  sql.query(
-      `CALL get_customerRequests() `,
-      (err, rows) => {
-        if (!err) {
-          let requests = rows[0];
-          for(let i=0;i<requests.length;i++){
-            len++;
-            requests[i].renewals_timline=JSON.parse(requests[i].renewals_timline); 
-            if(len==requests.length){
-              res.send(requests);   
-            }
-          }            
-        } else {
-          res.send({ error: 'Error' });
-        }
-      }
-    );
-});
+
 
 router.get('/getCustomerById/:id', function(req, res) {
   let id =req.params.id
@@ -523,6 +504,47 @@ router.put("/cart/:id", (req, res) => {
         res.send({'message': 'cart updated'});
       } else {
         res.send({ error: err });
+      }
+    }
+  );
+});
+
+router.post('/kycSubmit', function(req, res) {
+	var sqlInsert = "INSERT INTO `kyc`( `customer_id`, `first_name`, `last_name`, `mobile_no`, `alernate_mobile_no`, `email`, `aadhar_no`, `facebook_link`, `address_line1`, `address_line2`, `city`, `state`, `pincode`, `r1_first_name`, `r1_last_name`, `r1_mobile_no`, `r2_first_name`, `r2_last_name`, `r2_mobile_no`, `ref_verify`, `company`, `photo`, `id_proof`, `address_proof`, `created_at`, `kyc_status`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	sql.query(sqlInsert,
+    [
+      req.body.customer_id,
+      req.body.Name_First,
+      req.body.Name_Last,
+      req.body.PhoneNumber_countrycode,
+      req.body.PhoneNumber1_countrycode,
+      req.body.Email,
+      req.body.Number,
+      req.body.Website,
+      req.body.Address_AddressLine1,
+      req.body.Address_AddressLine2,
+      req.body.Address_City,
+      req.body.Address_Region,
+      req.body.Address_ZipCode,
+      req.body.Name1_First,
+      req.body.Name1_Last,
+      req.body.PhoneNumber2_countrycode,
+      req.body.Name2_First,
+      req.body.Name2_Last,
+      req.body.PhoneNumber3_countrycode,
+      req.body.Radio,
+      req.body.SingleLine,
+      req.body.ImageUpload,
+      req.body.FileUpload,
+      req.body.FileUpload1,
+      new Date(),
+      1
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: 'Inserted Successfully'});
+      } else {
+        res.send({message: err});
       }
     }
   );

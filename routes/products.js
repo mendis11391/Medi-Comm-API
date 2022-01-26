@@ -896,6 +896,7 @@ router.get("/getAllScrollerValues2", (req, res) => {
 //   );
 // });
 
+//getProductsByCityId
 router.get("/productsByCity/:id", (req, res) => { 
   let products=[];
   var pro2=[];
@@ -925,48 +926,50 @@ router.get("/productsByCity/:id", (req, res) => {
         res.send({ error: err });
       }
       products.forEach((products,i,ele) => {
-        sql.query(
-          `CALL get_ProductSpecById(${products.product_id})`,
-          (err1, rows1, fields) => {
-            if (!err1) {  
-              sql.query(
-                `CALL get_DefaultTenurePrice(${products.priority}, ${products.tenure_base_price})`,
-                (err2, rows2) => {
-                  if (!err2) {                      
-                    len++;
-                    let disPrice = rows2[0][0].discountPrice;
-                    let specObj={};
-                    for(let i=0;i<rows1[0].length;i++){
-                      // products[rows1[0][i].spec_name ] = rows1[0][i].spec_value;
-                      Object.assign(specObj, {[rows1[0][i].spec_name]:rows1[0][i].spec_value});
-                      // products.specs = specObj;
-                    }
-                    products.specs = specObj;
-                    if(disPrice){
-                      products.defaultTenurePrice = disPrice;
-                    } else{
-                      products.defaultTenurePrice = 0;
-                    }
-                    // products.specs = rows1[0];  
-                    pro2.push(products); 
-                    if(len===ele.length){
-                      res.send(pro2);
+        if(products.priority){
+          sql.query(
+            `CALL get_ProductSpecById(${products.product_id})`,
+            (err1, rows1, fields) => {
+              if (!err1) {  
+                sql.query(
+                  `CALL get_DefaultTenurePrice(${products.priority}, ${products.tenure_base_price})`,
+                  (err2, rows2) => {
+                    if (!err2) {                      
+                      len++;
+                      let disPrice = rows2[0][0].discountPrice;                      
+                      let specObj={};
+                      for(let i=0;i<rows1[0].length;i++){
+                        // products[rows1[0][i].spec_name ] = rows1[0][i].spec_value;
+                        Object.assign(specObj, {[rows1[0][i].spec_name]:rows1[0][i].spec_value});
+                        // products.specs = specObj;
+                      }
+                      products.specs = specObj;
+                      if(disPrice){
+                        products.defaultTenurePrice = disPrice;
+                      } else{
+                        products.defaultTenurePrice = 0;
+                      }
+                      // products.specs = rows1[0];  
+                      pro2.push(products); 
+                      if(len===ele.length){
+                        res.send(pro2);
+                      }
                     }
                   }
-                }
-              );
-              // rows1[0].forEach((specs,i,el)=>{
-              //   let specifics=[];
-              //   len2++;
-              //   specifics.push(specs.spec_value);
-              //   if(len2===el.length){
-              //     products.specs=specifics;
-              //   }                
-              // });
-              
+                );
+                // rows1[0].forEach((specs,i,el)=>{
+                //   let specifics=[];
+                //   len2++;
+                //   specifics.push(specs.spec_value);
+                //   if(len2===el.length){
+                //     products.specs=specifics;
+                //   }                
+                // });
+                
+              }
             }
-          }
-        ); 
+          ); 
+        }
         
       });
       
@@ -976,6 +979,176 @@ router.get("/productsByCity/:id", (req, res) => {
   );
 });
 
+//getProductsByCityAndCatId
+router.get("/productsByCityAndCatId/:id/:catslug", (req, res) => { 
+  let products=[];
+  var pro2=[];
+  var len=0;
+  var len2=0;
+  logger.info({
+    message: '/productsByCity/:id api started',
+    dateTime: new Date()
+  });
+  console.log(req.params);
+  sql.query(
+    `CALL getProductByCityAndCatId(${req.params.id},${JSON.stringify(req.params.catslug)} )`,
+    (err, rows, fields) => {
+      if (!err) {
+        rows[0].forEach((res)=>{
+          products.push(res);
+          
+        });
+        logger.info({
+          message: '/productsByCity/:id fetched successfully',
+          dateTime: new Date()
+        });
+      } else {
+        logger.info({
+          message: '/productsByCity/:id failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+      if(products.length>0){
+        products.forEach((products,i,ele) => {
+          if(products.priority){
+            sql.query(
+              `CALL get_ProductSpecById(${products.product_id})`,
+              (err1, rows1, fields) => {
+                if (!err1) {  
+                  sql.query(
+                    `CALL get_DefaultTenurePrice(${products.priority}, ${products.tenure_base_price})`,
+                    (err2, rows2) => {
+                      if (!err2) {                      
+                        len++;
+                        let disPrice = rows2[0][0].discountPrice;                      
+                        let specObj={};
+                        for(let i=0;i<rows1[0].length;i++){
+                          // products[rows1[0][i].spec_name ] = rows1[0][i].spec_value;
+                          Object.assign(specObj, {[rows1[0][i].spec_name]:rows1[0][i].spec_value});
+                          // products.specs = specObj;
+                        }
+                        products.specs = specObj;
+                        if(disPrice){
+                          products.defaultTenurePrice = disPrice;
+                        } else{
+                          products.defaultTenurePrice = 0;
+                        }
+                        // products.specs = rows1[0];  
+                        pro2.push(products); 
+                        if(len===ele.length){
+                          res.send(pro2);
+                        }
+                      }
+                    }
+                  );
+                  // rows1[0].forEach((specs,i,el)=>{
+                  //   let specifics=[];
+                  //   len2++;
+                  //   specifics.push(specs.spec_value);
+                  //   if(len2===el.length){
+                  //     products.specs=specifics;
+                  //   }                
+                  // });
+                  
+                }
+              }
+            ); 
+          }
+          
+        });
+      } else{
+        res.send(pro2);
+      }
+      
+        
+      
+    }
+  );
+});
+
+//getProductsByCityId
+router.get("/productsDetailsByCityIdAndSlug/:id/:slug", (req, res) => { 
+  let products=[];
+  var pro2=[];
+  var len=0;
+  var len2=0;
+  logger.info({
+    message: '/productsDetailsByCityIdAndSlug/:id/:slug api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_ProductDetailsByCityIdAndSlug(${req.params.id}, ${JSON.stringify(req.params.slug)})`,
+    (err, rows, fields) => {
+      if (!err) {
+        rows[0].forEach((res)=>{
+          products.push(res);          
+        });
+        logger.info({
+          message: '/productsDetailsByCityIdAndSlug/:id/:slug fetched successfully',
+          dateTime: new Date()
+        });
+      } else {
+        logger.info({
+          message: '/productsDetailsByCityIdAndSlug/:id/:slug failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+      products.forEach((products,i,ele) => {
+        if(products.priority){
+          sql.query(
+            `CALL get_ProductSpecById(${products.product_id})`,
+            (err1, rows1, fields) => {
+              if (!err1) {  
+                sql.query(
+                  `CALL get_DefaultTenurePrice(${products.priority}, ${products.tenure_base_price})`,
+                  (err2, rows2) => {
+                    if (!err2) {                                            
+                      sql.query(
+                        `CALL get_tenure_by_priority(${products.priority})`,
+                        (err3, rows3) => {
+                          if (!err3) {                      
+                            len++;
+                            let disPrice = rows2[0][0].discountPrice;                      
+                            let specObj={};
+                            for(let i=0;i<rows1[0].length;i++){
+                              // products[rows1[0][i].spec_name ] = rows1[0][i].spec_value;
+                              Object.assign(specObj, {[rows1[0][i].spec_name]:rows1[0][i].spec_value});
+                              // products.specs = specObj;
+                            }
+
+                            products.tenures = rows3[0];
+                            products.specs = specObj;
+                            if(disPrice){
+                              products.defaultTenurePrice = disPrice;
+                            } else{
+                              products.defaultTenurePrice = 0;
+                            }
+                            // products.specs = rows1[0];  
+                            pro2.push(products); 
+                            if(len===ele.length){
+                              res.send(pro2);
+                            }
+                          }
+                        }
+                      );
+                    }
+                  }
+                );
+                
+              }
+            }
+          ); 
+        }
+        
+      });
+      
+        
+      
+    }
+  );
+});
 
 
 // Update users name
@@ -1112,8 +1285,11 @@ router.get("/promos/promoNames", (req, res) => {
 
 // Get all products tenures
 router.get("/promos/promotions", (req, res) => { 
+  var products=[];
+  var pro2=[];
+  var len=0;
   logger.info({
-    message: '/promotions/:id api started',
+    message: '/promos/promotions api started',
     dateTime: new Date()
   });
   sql.query(
@@ -1121,23 +1297,77 @@ router.get("/promos/promotions", (req, res) => {
     (err, rows, fields) => {
       if (!err) {
         logger.info({
-          message: '/promotions/:id fetched successfully',
+          message: '/promos/promotions fetched successfully',
           dateTime: new Date()
         });
-        res.json(rows[0]);
+        // res.json(rows[0]);
+        rows[0].forEach((res)=>{
+          products.push(res);
+          
+        });
       } else {
         logger.info({
-          message: '/promotions/:id failed to load',
+          message: '/promos/promotions failed to load',
           dateTime: new Date()
         });
         res.send({ error: err });
       }
+      products.forEach((products,i,ele) => {
+        if(products.priority){
+          sql.query(
+            `CALL get_ProductSpecById(${products.product_id})`,
+            (err1, rows1, fields) => {
+              if (!err1) {  
+                sql.query(
+                  `CALL get_DefaultTenurePrice(${products.priority}, ${products.tenure_base_price})`,
+                  (err2, rows2) => {
+                    if (!err2) {                      
+                      len++;
+                      let disPrice = rows2[0][0].discountPrice;                      
+                      let specObj={};
+                      for(let i=0;i<rows1[0].length;i++){
+                        // products[rows1[0][i].spec_name ] = rows1[0][i].spec_value;
+                        Object.assign(specObj, {[rows1[0][i].spec_name]:rows1[0][i].spec_value});
+                        // products.specs = specObj;
+                      }
+                      products.specs = specObj;
+                      if(disPrice){
+                        products.defaultTenurePrice = disPrice;
+                      } else{
+                        products.defaultTenurePrice = 0;
+                      }
+                      // products.specs = rows1[0];  
+                      pro2.push(products); 
+                      if(len===ele.length){
+                        res.send(pro2);
+                      }
+                    }
+                  }
+                );
+                // rows1[0].forEach((specs,i,el)=>{
+                //   let specifics=[];
+                //   len2++;
+                //   specifics.push(specs.spec_value);
+                //   if(len2===el.length){
+                //     products.specs=specifics;
+                //   }                
+                // });
+                
+              }
+            }
+          ); 
+        }
+        
+      });
     }
   );
 });
 
 // Get all products tenures
 router.get("/promosScroll/:id", (req, res) => { 
+  var products=[];
+  var pro2=[];
+  var len=0;
   logger.info({
     message: '/promotions/:id api started',
     dateTime: new Date()
@@ -1150,7 +1380,11 @@ router.get("/promosScroll/:id", (req, res) => {
           message: '/promotions/:id fetched successfully',
           dateTime: new Date()
         });
-        res.json(rows[0]);
+        // res.json(rows[0]);
+        rows[0].forEach((res)=>{
+          products.push(res);
+          
+        });
       } else {
         logger.info({
           message: '/promotions/:id failed to load',
@@ -1158,6 +1392,53 @@ router.get("/promosScroll/:id", (req, res) => {
         });
         res.send({ error: err });
       }
+      products.forEach((products,i,ele) => {
+        if(products.priority){
+          sql.query(
+            `CALL get_ProductSpecById(${products.product_id})`,
+            (err1, rows1, fields) => {
+              if (!err1) {  
+                sql.query(
+                  `CALL get_DefaultTenurePrice(${products.priority}, ${products.tenure_base_price})`,
+                  (err2, rows2) => {
+                    if (!err2) {                      
+                      len++;
+                      let disPrice = rows2[0][0].discountPrice;                      
+                      let specObj={};
+                      for(let i=0;i<rows1[0].length;i++){
+                        // products[rows1[0][i].spec_name ] = rows1[0][i].spec_value;
+                        Object.assign(specObj, {[rows1[0][i].spec_name]:rows1[0][i].spec_value});
+                        // products.specs = specObj;
+                      }
+                      products.specs = specObj;
+                      if(disPrice){
+                        products.defaultTenurePrice = disPrice;
+                      } else{
+                        products.defaultTenurePrice = 0;
+                      }
+                      // products.specs = rows1[0];  
+                      pro2.push(products); 
+                      if(len===ele.length){
+                        res.send(pro2);
+                      }
+                    }
+                  }
+                );
+                // rows1[0].forEach((specs,i,el)=>{
+                //   let specifics=[];
+                //   len2++;
+                //   specifics.push(specs.spec_value);
+                //   if(len2===el.length){
+                //     products.specs=specifics;
+                //   }                
+                // });
+                
+              }
+            }
+          ); 
+        }
+        
+      });
     }
   );
 });
@@ -1269,7 +1550,7 @@ router.put("/:id", (req, res) => {
   var prodUpdate =
   `UPDATE products SET cat_id=? WHERE product_id=?`;
   var prodDetailsUpdate =
-    `UPDATE prod_details SET prod_name=?,metaTitle=?,slug=?,prod_description=?, prod_image=?, securityDeposit=?,tenure_base_price=?,prod_status=?,priority=? WHERE id=?`;
+    `UPDATE prod_details SET prod_name=?,metaTitle=?,metaDescription=?,metaKeywords=?,slug=?,prod_description=?, prod_image=?, securityDeposit=?,tenure_base_price=?,prod_status=?,priority=? WHERE id=?`;
   var prodSpecsDelete = `DELETE FROM product_specs WHERE product_id=?`;
   var prodSpecsInsert = "INSERT INTO `product_specs`(`product_id`, `spec_id`, `status`, `Spec_Value_id`) values (?, ?, ?, ?)";
   var prodHighlightsDelete =  `DELETE FROM prod_highlights WHERE product_id=?`;
@@ -1281,6 +1562,8 @@ router.put("/:id", (req, res) => {
     [
       req.body.productName,
       req.body.metaTitle,
+      req.body.metaDescription,
+      req.body.metaKeywords,
       req.body.slug,
       req.body.prodDescription,
       req.body.prodImage,
@@ -1416,7 +1699,7 @@ router.post("/",  function (req, res, next) {
   // const prodCode = `IRO${categoryCode}${prodModel}${rand}`;
 
   var prodDetailsInsert =
-    "INSERT INTO `prod_details`(`prod_id`, `offer_id`, `prod_name`, `metaTitle`, `slug`, `prod_image`, `prod_description`, `prod_qty`, `securityDeposit`, `tenure_base_price`, `prod_status`, `publishedAt`, `startsAt`, `endsAt`, `priority`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO `prod_details`(`prod_id`, `offer_id`, `prod_name`, `metaTitle`,`metaDescription`,`metaKeywords`, `slug`, `prod_image`, `prod_description`, `prod_qty`, `securityDeposit`, `tenure_base_price`, `prod_status`, `publishedAt`, `startsAt`, `endsAt`, `priority`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   var updateProdId = 'UPDATE prod_details SET `prod_id`=? WHERE id=?';
   var productsInsert =
     "INSERT INTO `products`( `product_id`, `quantity`, `prod_code`, `cat_id`, `brand_id`, `city_id`, `delivery_timeline`) values (?, ?, ?, ?, ?, ?, ?)";
@@ -1430,6 +1713,8 @@ router.post("/",  function (req, res, next) {
       1,
       req.body.productName,
       req.body.metaTitle,
+      req.body.metaDescription,
+      req.body.metaKeywords,
       req.body.slug,
       req.body.prodImage,
       req.body.prodDescription,
@@ -1456,9 +1741,6 @@ router.post("/",  function (req, res, next) {
         let specsLength = req.body.specs;
         let highlightLength = req.body.highlightType;
         let accessoriesLength = req.body.accessory;
-
-        
-
         
         for(let i=0;i<citiesLength.length;i++){
           sql.query(
