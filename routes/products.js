@@ -232,6 +232,31 @@ router.get("/getAllProducts", (req, res) => {
   );
 });
 
+router.get("/getAllProductsLite", (req, res) => { 
+  logger.info({
+    message: '/products api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_AllProductsLite()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/products fetched successfully',
+          dateTime: new Date()
+        });
+          res.send(rows[0]);
+      } else {
+        logger.info({
+          message: '/products failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 router.get("/prodById/:id", (req, res) => { 
   let products=[];
   var pro2=[];
@@ -1550,7 +1575,7 @@ router.put("/:id", (req, res) => {
   var prodUpdate =
   `UPDATE products SET cat_id=? WHERE product_id=?`;
   var prodDetailsUpdate =
-    `UPDATE prod_details SET prod_name=?,metaTitle=?,metaDescription=?,metaKeywords=?,slug=?,prod_description=?, prod_image=?, securityDeposit=?,tenure_base_price=?,prod_status=?,priority=? WHERE id=?`;
+    `UPDATE prod_details SET prod_name=?,metaTitle=?,metaDescription=?,metaKeywords=?,slug=?,prod_description=?, prod_image=?, securityDeposit=?,tenure_base_price=?,prod_status=?,priority=?, position=? WHERE id=?`;
   var prodSpecsDelete = `DELETE FROM product_specs WHERE product_id=?`;
   var prodSpecsInsert = "INSERT INTO `product_specs`(`product_id`, `spec_id`, `status`, `Spec_Value_id`) values (?, ?, ?, ?)";
   var prodHighlightsDelete =  `DELETE FROM prod_highlights WHERE product_id=?`;
@@ -1571,6 +1596,7 @@ router.put("/:id", (req, res) => {
       req.body.tenureBasePrice,
       req.body.prodStatus,
       req.body.priority,
+      req.body.position,
       id
     ],
     (err) => {
@@ -1699,7 +1725,7 @@ router.post("/",  function (req, res, next) {
   // const prodCode = `IRO${categoryCode}${prodModel}${rand}`;
 
   var prodDetailsInsert =
-    "INSERT INTO `prod_details`(`prod_id`, `offer_id`, `prod_name`, `metaTitle`,`metaDescription`,`metaKeywords`, `slug`, `prod_image`, `prod_description`, `prod_qty`, `securityDeposit`, `tenure_base_price`, `prod_status`, `publishedAt`, `startsAt`, `endsAt`, `priority`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO `prod_details`(`prod_id`, `offer_id`, `prod_name`, `metaTitle`,`metaDescription`,`metaKeywords`, `slug`, `prod_image`, `prod_description`, `prod_qty`, `securityDeposit`, `tenure_base_price`, `prod_status`, `publishedAt`, `startsAt`, `endsAt`, `priority`,`position`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   var updateProdId = 'UPDATE prod_details SET `prod_id`=? WHERE id=?';
   var productsInsert =
     "INSERT INTO `products`( `product_id`, `quantity`, `prod_code`, `cat_id`, `brand_id`, `city_id`, `delivery_timeline`) values (?, ?, ?, ?, ?, ?, ?)";
@@ -1729,6 +1755,7 @@ router.post("/",  function (req, res, next) {
       // req.body.startsAt,
       // req.body.endsAt,
       req.body.priority,
+      req.body.position,
       req.body.createdBy,
       req.body.modifiedBy,
       new Date(),

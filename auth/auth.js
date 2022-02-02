@@ -224,7 +224,7 @@ router.post("/login", (req, res) => {
   adpass += secretkey.final('hex');
 
   sql.query(
-    `SELECT * from customer WHERE firstName = ? and password = ?`,
+    `SELECT * from customer WHERE email = ? and password = ?`,
     [req.body.userName, adpass],
     (err, rows) => {
       if (!err) {
@@ -249,7 +249,7 @@ router.post("/login", (req, res) => {
 
           // token += ' ' + finalCurTime;
           
-          const updateTokenQuery = `UPDATE customer SET token=? where firstName= ? and password = ?`;
+          const updateTokenQuery = `UPDATE customer SET token=? where email= ? and password = ?`;
           sql.query(
             updateTokenQuery,
             [token, req.body.userName, adpass],

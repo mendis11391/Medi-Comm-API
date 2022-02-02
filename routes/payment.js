@@ -987,7 +987,7 @@ router.post('/result',(req, res, next)=>{
             //     message: "transaction was cancelled by user",
             // }});
 			res.redirect(url.format({
-				pathname: `${constants.frontendUrl}/Bangalore/failure`,
+				pathname: `${constants.frontendUrl}/failure`,
 				query: {
 				   "transID": req.body.orderId,
 				 }
@@ -1002,7 +1002,7 @@ router.post('/result',(req, res, next)=>{
             }
 
 			res.redirect(url.format({
-				pathname: `${constants.frontendUrl}/Bangalore/failure`,
+				pathname: `${constants.frontendUrl}/failure`,
 				query: {
 				   "transID": req.body.orderId,
 				 }
@@ -1076,7 +1076,7 @@ router.post('/result',(req, res, next)=>{
 			);
 			
 			res.redirect(url.format({
-				pathname: `${constants.frontendUrl}/Bangalore/order-success`,
+				pathname: `${constants.frontendUrl}/order-success`,
 				query: {
 				   "transID": req.body.orderId,
 				 }
@@ -1232,7 +1232,7 @@ router.post('/renewalsResult',(req, res, next)=>{
 				dateTime: new Date()
 			});
 			res.redirect(url.format({
-				pathname: `${constants.frontendUrl}/Bangalore/failure`,
+				pathname: `${constants.frontendUrl}/failure`,
 				query: {
 				   "transID": req.body.orderId,
 				 }
@@ -1250,7 +1250,7 @@ router.post('/renewalsResult',(req, res, next)=>{
 				dateTime: new Date()
 			});
 			res.redirect(url.format({
-				pathname: `${constants.frontendUrl}/Bangalore/failure`,
+				pathname: `${constants.frontendUrl}/failure`,
 				query: {
 				   "transID": req.body.orderId,
 				 }
@@ -1327,7 +1327,7 @@ router.post('/renewalsResult',(req, res, next)=>{
 				dateTime: new Date()
 			});
 			res.redirect(url.format({
-				pathname: `${constants.frontendUrl}/Bangalore/order-success`,
+				pathname: `${constants.frontendUrl}/order-success`,
 				query: {
 				   "transID": req.body.orderId,
 				 }
@@ -1470,7 +1470,7 @@ router.post('/RRResult',(req, res, next)=>{
 			);
 			
 			res.redirect(url.format({
-				pathname: `${constants.frontendUrl}/Bangalore/failure`,
+				pathname: `${constants.frontendUrl}/failure`,
 				query: {
 				   "transID": req.body.orderId,
 				 }
@@ -1485,7 +1485,7 @@ router.post('/RRResult',(req, res, next)=>{
             }
 
 			res.redirect(url.format({
-				pathname: `${constants.frontendUrl}/Bangalore/failure`,
+				pathname: `${constants.frontendUrl}/failure`,
 				query: {
 				   "transID": req.body.orderId,
 				 }
@@ -1538,7 +1538,7 @@ router.post('/RRResult',(req, res, next)=>{
 			);
 			
 			res.redirect(url.format({
-				pathname: `${constants.frontendUrl}/Bangalore/order-success`,
+				pathname: `${constants.frontendUrl}/order-success`,
 				query: {
 				   "transID": req.body.orderId,
 				 }
@@ -1619,11 +1619,11 @@ router.post('/response', function(req, res){
 	var msg = 'Payment failed for Hash not verified...';
 	if(calchash == resphash){
 		msg = 'Transaction Successful and Hash Verified...';
-		urlRedirect = `${constants.frontendUrl}/Bangalore/order-success`;
+		urlRedirect = `${constants.frontendUrl}/order-success`;
 	}
 	// if(status=='success'){
 	// 	msg = 'Transaction Successful and Hash Verified...';
-	// 	urlRedirect = `${constants.frontendUrl}/Bangalore/order-success`;
+	// 	urlRedirect = `${constants.frontendUrl}/order-success`;
 	// }
 
 	var updateOrder = `UPDATE orders SET payuid = ? where txnid= ?`;
