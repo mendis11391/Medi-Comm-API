@@ -3,6 +3,8 @@ var crypto = require("crypto");
 var router = express.Router();
 const url = require('url');  
 
+// var request = require('request');
+var requestify = require('requestify'); 
 const config = require('../config.json');
 const helpers = require('../helpers/signatureCreation');
 const enums = require('../helpers/enums');
@@ -1074,6 +1076,16 @@ router.post('/result',(req, res, next)=>{
 				}
 				}
 			);
+
+			requestify.get(`http://localhost:3000/orders/getOrderByMyOrderId/${req.body.orderId}`).then(function(response) {
+				// Get the response body
+				let orderDetails = response.getBody()[0];
+				console.log(response.getBody());
+				requestify.post('http://localhost:3000/smsOrder', {
+					customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
+				});
+			});
+			
 			
 			res.redirect(url.format({
 				pathname: `${constants.frontendUrl}/order-success`,
@@ -1593,7 +1605,7 @@ router.post('/', function(req, res){
 });
 
 router.post('/response', function(req, res){
-	var urlRedirect = `${constants.frontendUrl}/${req.body.city}/failure`;
+	var urlRedirect = `${constants.frontendUrl}/failure`;
 	var key = req.body.key;
 	var salt = 'm5sx41HICr';
 	var txnid = req.body.txnid;

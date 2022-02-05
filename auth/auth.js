@@ -62,6 +62,114 @@ router.post('/smsOtp',(req,res)=>{
   res.send({ Mesaage: 'SMS sent'});
 });
 
+//sms for place order
+router.post('/smsOrder',(req,res)=>{
+  var http = require('http');
+
+  var urlencode = require('urlencode');
+  
+  var order = req.body.orderId;
+  var customerName = req.body.customerName;
+  // var msg=urlencode(`Dear ${customerName},%nYour order ${order} has been placed successfully. Complete your eKYC using below link%n%nhttps://irentout.com/eKYC %n%nRegards,%nTeam irentout.com`);
+  var msg =urlencode(`Dear ${customerName},%nYour order ${order} has been placed successfully. Complete your eKYC using below link%n %n https://irentout.com/eKYC%n %nRegards,%nTeam irentout.com`);
+  var number=req.body.mobile;
+  
+  var username='santosh@irentout.com';
+  
+  var hash='de6db89b313d3e12f5d785fd2c05553f9415045cb82610b5fcecbe728c6523d2'; // The hash key could be found under Help->All Documentation->Your hash key. Alternatively you can use your Textlocal password in plain text.
+  
+  var sender='IRENTO';
+  
+  var data='username='+username+'&hash='+hash+'&sender='+sender+'&numbers='+number+'&message='+msg
+  
+  var options = {
+   host: 'api.textlocal.in',
+  
+    path: '/send?'+data
+  
+  };
+  
+   
+  
+  callback = function(response) {
+  
+    var str = '';
+    //another chunk of data has been recieved, so append it to `str`
+    response.on('data', function (chunk) {
+  
+      console.log(chunk)
+    str += chunk;
+  
+    });
+    //the whole response has been recieved, so we just print it out here
+  
+    response.on('end', function () {
+  
+    console.log(str);
+  
+    });
+  
+  }
+  
+  http.request(options, callback).end();
+  res.send({ Mesaage: 'SMS sent'});
+});
+
+
+//sms for delivery order
+router.post('/smsDeliveredOrder',(req,res)=>{
+  var http = require('http');
+
+  var urlencode = require('urlencode');
+  
+  var order = req.body.orderId;
+  var customerName = req.body.customerName;
+  var msg=urlencode(`Dear ${customerName},%nYour order no. ${order} has been delivered successfully.%nTo check you assets: ${assetLink}%n%nWarm Regards,%nTeam irentout.com`);
+  
+  var number=req.body.mobile;
+  
+  var username='santosh@reachfci.com';
+  
+  var hash='afb9b5fa88478754ecf0036bbaf520169e0fabe5614917be930f32512128717b'; // The hash key could be found under Help->All Documentation->Your hash key. Alternatively you can use your Textlocal password in plain text.
+  
+  var sender='IRENTO';
+  
+  var data='username='+username+'&hash='+hash+'&sender='+sender+'&numbers='+number+'&message='+msg
+  
+  var options = {
+   host: 'api.textlocal.in',
+  
+    path: '/send?'+data
+  
+  };
+  
+   
+  
+  callback = function(response) {
+  
+    var str = '';
+    //another chunk of data has been recieved, so append it to `str`
+    response.on('data', function (chunk) {
+  
+      console.log(chunk)
+    str += chunk;
+  
+    });
+    //the whole response has been recieved, so we just print it out here
+  
+    response.on('end', function () {
+  
+    console.log(str);
+  
+    });
+  
+  }
+  
+  http.request(options, callback).end();
+  res.send({ Mesaage: 'SMS sent'});
+});
+
+
 /*****************End of txt local** */
 var sql = require("../db.js");
 

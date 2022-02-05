@@ -1027,6 +1027,21 @@ router.get('/orderDetails/:id', function(req, res) {
     );
 });
 
+router.get('/getOrderByMyOrderId/:id', function(req, res) {
+  
+  sql.query(
+      `CALL get_OrderByMyOrderId(${JSON.stringify(req.params.id)}) `,
+      (err, rows) => {
+        if (!err) {          
+          res.send(rows[0]);
+        } else {
+          res.send({ error: 'Error' });
+        }
+
+      }
+    );
+});
+
 router.get('/:id', function(req, res) {
   
   let orders=[];

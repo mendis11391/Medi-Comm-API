@@ -1175,6 +1175,38 @@ router.get("/productsDetailsByCityIdAndSlug/:id/:slug", (req, res) => {
   );
 });
 
+router.get("/productsMetaDetailsByCityIdAndSlug/:id/:slug", (req, res) => { 
+  let products=[];
+  var pro2=[];
+  var len=0;
+  var len2=0;
+  logger.info({
+    message: '/productsMetaDetailsByCityIdAndSlug/:id/:slug api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_ProductMetaDetailsByCityIdAndSlug(${req.params.id}, ${JSON.stringify(req.params.slug)})`,
+    (err, rows, fields) => {
+      if (!err) {        
+        logger.info({
+          message: '/productsDetailsByCityIdAndSlug/:id/:slug fetched successfully',
+          dateTime: new Date()
+        });
+        res.send(rows[0]);
+      } else {
+        logger.info({
+          message: '/productsDetailsByCityIdAndSlug/:id/:slug failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+      
+        
+      
+    }
+  );
+});
+
 
 // Update users name
 router.put("/updateProductQuantity/:id", (req, res) => {
