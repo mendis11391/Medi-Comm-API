@@ -173,156 +173,156 @@ router.post('/smsDeliveredOrder',(req,res)=>{
 /*****************End of txt local** */
 var sql = require("../db.js");
 
-router.get(constants.facebookOpenUrl, passport.authenticate("facebook"));
+// router.get(constants.facebookOpenUrl, passport.authenticate("facebook"));
 
-router.get(
-  constants.facebookCallback,
-  passport.authenticate("facebook", { failureRedirect: "/failure" }),
-  function (req, res) {
-    // email: req.user._json.email,
-    // firstname: req.user._json.first_name,
-    // lastname: req.user._json.last_name,
-    // id: req.user.id
-    const tokgen = new TokenGenerator(256, TokenGenerator.BASE71);
-    const token = tokgen.generate();
+// router.get(
+//   constants.facebookCallback,
+//   passport.authenticate("facebook", { failureRedirect: "/failure" }),
+//   function (req, res) {
+//     // email: req.user._json.email,
+//     // firstname: req.user._json.first_name,
+//     // lastname: req.user._json.last_name,
+//     // id: req.user.id
+//     const tokgen = new TokenGenerator(256, TokenGenerator.BASE71);
+//     const token = tokgen.generate();
 
-    var secretkey = crypto.createCipher("aes-128-cbc", "i#rent*out-api&key");
-    var fbId = secretkey.update(req.user.id, "utf8", "hex");
-    fbId += secretkey.final("hex");
+//     var secretkey = crypto.createCipher("aes-128-cbc", "i#rent*out-api&key");
+//     var fbId = secretkey.update(req.user.id, "utf8", "hex");
+//     fbId += secretkey.final("hex");
 
-    sql.query(
-      `select * from users where email = ? and logintype = 'Facebook'`,
-      [req.user._json.email],
-      (err, rows) => {
-        if (!err) {
-          if (rows.length <= 0) {
-            sql.query(
-              "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `wishlist`, `cart`, `token`,`address`, `billingaddress`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-              [
-                fbId,
-                `${req.user._json.first_name} ${req.user._json.last_name}`,
-                "",
-                req.user._json.email,
-                "Facebook",
-                "N/A",
-                "[]",
-                "[]",
-                token,
-                "[]",
-                "[]"
-              ],
-              (err, rows) => {
-                if (!err) {
-                  return res.redirect(
-                    `${constants.frontendUrl}/?id=${req.user.id}&token=${token}&login=google&existing=false`
-                  );
-                } else {
-                  res.send({
-                    token: null,
-                    authenticated: false,
-                    newUser: true,
-                  });
-                }
-              }
-            );
-          } else {
-            const updateTokenQuery = `UPDATE users SET token=? where uid= ? and email = ?`;
-            sql.query(
-              updateTokenQuery,
-              [token, req.user.id, req.user._json.email],
-              (err, rows) => {
-                if (!err) {
-                  return res.redirect(
-                    `${constants.frontendUrl}/?id=${req.user.id}&token=${token}&login=google&existing=true`
-                  );
-                }
-              }
-            );
-          }
-        }
-      }
-    );
-  }
-);
+//     sql.query(
+//       `select * from users where email = ? and logintype = 'Facebook'`,
+//       [req.user._json.email],
+//       (err, rows) => {
+//         if (!err) {
+//           if (rows.length <= 0) {
+//             sql.query(
+//               "INSERT INTO `users`(`uid`, `uname`, `upass`, `email`, `logintype`, `phone`, `wishlist`, `cart`, `token`,`address`, `billingaddress`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+//               [
+//                 fbId,
+//                 `${req.user._json.first_name} ${req.user._json.last_name}`,
+//                 "",
+//                 req.user._json.email,
+//                 "Facebook",
+//                 "N/A",
+//                 "[]",
+//                 "[]",
+//                 token,
+//                 "[]",
+//                 "[]"
+//               ],
+//               (err, rows) => {
+//                 if (!err) {
+//                   return res.redirect(
+//                     `${constants.frontendUrl}/?id=${req.user.id}&token=${token}&login=google&existing=false`
+//                   );
+//                 } else {
+//                   res.send({
+//                     token: null,
+//                     authenticated: false,
+//                     newUser: true,
+//                   });
+//                 }
+//               }
+//             );
+//           } else {
+//             const updateTokenQuery = `UPDATE users SET token=? where uid= ? and email = ?`;
+//             sql.query(
+//               updateTokenQuery,
+//               [token, req.user.id, req.user._json.email],
+//               (err, rows) => {
+//                 if (!err) {
+//                   return res.redirect(
+//                     `${constants.frontendUrl}/?id=${req.user.id}&token=${token}&login=google&existing=true`
+//                   );
+//                 }
+//               }
+//             );
+//           }
+//         }
+//       }
+//     );
+//   }
+// );
 
-router.get(
-  "/auth/google",
-  passport.authenticate("google", {
-    scope: [
-      "https://www.googleapis.com/auth/userinfo.profile",
-      "https://www.googleapis.com/auth/userinfo.email",
-    ],
-  })
-);
+// router.get(
+//   "/auth/google",
+//   passport.authenticate("google", {
+//     scope: [
+//       "https://www.googleapis.com/auth/userinfo.profile",
+//       "https://www.googleapis.com/auth/userinfo.email",
+//     ],
+//   })
+// );
 
-router.get(
-  "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/failure" }),
-  function (req, res) {
-    // email: req.user._json.email,
-    // firstname: req.user._json.name,
-    // id: req.user.id
+// router.get(
+//   "/auth/google/callback",
+//   passport.authenticate("google", { failureRedirect: "/failure" }),
+//   function (req, res) {
+//     // email: req.user._json.email,
+//     // firstname: req.user._json.name,
+//     // id: req.user.id
 
-    const tokgen = new TokenGenerator(256, TokenGenerator.BASE71);
-    const token = tokgen.generate();
+//     const tokgen = new TokenGenerator(256, TokenGenerator.BASE71);
+//     const token = tokgen.generate();
 
-    var secretkey = crypto.createCipher("aes-128-cbc", "i#rent*out-api&key");
-    var gpId = secretkey.update(req.user.id, "utf8", "hex");
-    gpId += secretkey.final("hex");
+//     var secretkey = crypto.createCipher("aes-128-cbc", "i#rent*out-api&key");
+//     var gpId = secretkey.update(req.user.id, "utf8", "hex");
+//     gpId += secretkey.final("hex");
 
-    sql.query(
-      `select * from customer where email = ? `,
-      [req.user._json.email],
-      (err, rows) => {
-        if (!err) {
-          if (rows.length <= 0) {
-            sql.query(
-              "INSERT INTO `customer`(firstName, lastName, mobile, email, password, registeredAt, lastLogin, login_type, token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-              [
-                req.user._json.given_name,
-                req.user._json.family_name,
-                "",
-                req.user._json.email,
-                "N/A",
-                new Date(),
-                new Date(),
-                "Google",
-                token
-              ],
-              (err) => {
-                if (!err) {
-                  return res.redirect(
-                    `${constants.frontendUrl}?uid=${rows[0].customer_id}&token=${token}&logintype=google&existinguser=false`
-                  );
-                } else {
-                  res.send({
-                    token: null,
-                    authenticated: false,
-                    newUser: true,
-                    err: err
-                  });
-                }
-              }
-            );
-          } else {
-            const updateTokenQuery = `UPDATE customer SET token=? where customer_id= ? and email = ?`;
-            sql.query(
-              updateTokenQuery,
-              [token, rows[0].customer_id, req.user._json.email],
-              (err) => {
-                if (!err) {
-                  return res.redirect(
-                    `${constants.frontendUrl}/?uid=${rows[0].customer_id}&token=${token}&logintype=google&existinguser=true`
-                  );
-                }
-              }
-            );
-          }
-        }
-      }
-    );
-  }
-);
+//     sql.query(
+//       `select * from customer where email = ? `,
+//       [req.user._json.email],
+//       (err, rows) => {
+//         if (!err) {
+//           if (rows.length <= 0) {
+//             sql.query(
+//               "INSERT INTO `customer`(firstName, lastName, mobile, email, password, registeredAt, lastLogin, login_type, token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+//               [
+//                 req.user._json.given_name,
+//                 req.user._json.family_name,
+//                 "",
+//                 req.user._json.email,
+//                 "N/A",
+//                 new Date(),
+//                 new Date(),
+//                 "Google",
+//                 token
+//               ],
+//               (err) => {
+//                 if (!err) {
+//                   return res.redirect(
+//                     `${constants.frontendUrl}?uid=${rows[0].customer_id}&token=${token}&logintype=google&existinguser=false`
+//                   );
+//                 } else {
+//                   res.send({
+//                     token: null,
+//                     authenticated: false,
+//                     newUser: true,
+//                     err: err
+//                   });
+//                 }
+//               }
+//             );
+//           } else {
+//             const updateTokenQuery = `UPDATE customer SET token=? where customer_id= ? and email = ?`;
+//             sql.query(
+//               updateTokenQuery,
+//               [token, rows[0].customer_id, req.user._json.email],
+//               (err) => {
+//                 if (!err) {
+//                   return res.redirect(
+//                     `${constants.frontendUrl}/?uid=${rows[0].customer_id}&token=${token}&logintype=google&existinguser=true`
+//                   );
+//                 }
+//               }
+//             );
+//           }
+//         }
+//       }
+//     );
+//   }
+// );
 
 // Admin Login
 router.post("/login", (req, res) => {
@@ -608,9 +608,9 @@ router.post("/totp-validate", (request, response, next) => {
     token: request.body.token,
     window: 1});
     console.log(a);
-  response.send({
-      "valid": a
-  });
+    response.send({
+        "valid": a
+    });
 });
 
 router.post('/otpUserdetails', (req, res) => {

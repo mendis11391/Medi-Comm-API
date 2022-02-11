@@ -1077,11 +1077,11 @@ router.post('/result',(req, res, next)=>{
 				}
 			);
 
-			requestify.get(`http://localhost:3000/orders/getOrderByMyOrderId/${req.body.orderId}`).then(function(response) {
+			requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderId/${req.body.orderId}`).then(function(response) {
 				// Get the response body
 				let orderDetails = response.getBody()[0];
 				console.log(response.getBody());
-				requestify.post('http://localhost:3000/smsOrder', {
+				requestify.post(`${constants.apiUrl}smsOrder`, {
 					customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
 				});
 			});

@@ -410,6 +410,33 @@ router.get('/getAllPaymentStatus', function(req, res) {
     );
 });
 
+router.get('/getAllDeliveryStatus', function(req, res) {
+  logger.info({
+    message: 'getAllDeliveryStatus api started',
+    dateTime: new Date()
+  });
+  sql.query(
+      `SELECT * FROM delivery_status;`,
+      (err, rows) => {
+        if (!err) {
+          logger.info({
+            message: 'getAllDeliveryStatus fetched successfully',
+            dateTime: new Date()
+          });
+          res.send(rows);
+        } else {
+          logger.info({
+            message: 'getAllDeliveryStatus failed to load',
+            dateTime: new Date()
+          });
+          res.send({ error: 'Error' });
+        }
+
+          
+      }
+    );
+});
+
 router.put("/updateOrderItemDeliveryDate/:id", (req, res) => {
   var id = req.params.id;
   var sqlUpdate = 'UPDATE order_item SET startDate= ?, endDate= ?, renewals_timline=? WHERE order_item_id= ?';
