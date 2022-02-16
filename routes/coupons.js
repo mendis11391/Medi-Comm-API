@@ -1,7 +1,16 @@
 var express = require('express');
 var router = express.Router();
-
+const constants = require("../constant/constUrl");
 var sql = require("../db.js");
+
+// Verify token 
+function verifyToken(req, res, next) {
+  if(req.headers.origin===`${constants.frontendUrl}`){
+    next();
+  } else{
+    return res.status(401).send("Unauthorized request");
+  }
+}
 
 /* GET all coupons */
 router.get('/', function(req, res) {

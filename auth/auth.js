@@ -7,6 +7,26 @@ const TokenGenerator = require("uuid-token-generator");
 const constants = require("../constant/constUrl");
 const Speakeasy = require("speakeasy");
 
+
+// Verify token 
+function verifyToken(req, res, next) {
+  if(req.headers.origin===`${constants.frontendUrl}`){
+    next();
+  } else{
+    return res.status(401).send("Unauthorized request");
+  }
+}
+
+function ISTTime(){
+  var currentTime = new Date();
+
+  var currentOffset = currentTime.getTimezoneOffset();
+
+  var ISTOffset = 330;   // IST offset UTC +5:30 
+
+  var ISTTime = new Date(currentTime.getTime() + (ISTOffset + currentOffset)*60000);
+  return ISTTime;
+}
 /********************txt local **** */
 router.post('/smsOtp',(req,res)=>{
   var http = require('http');
@@ -325,7 +345,7 @@ var sql = require("../db.js");
 // );
 
 // Admin Login
-router.post("/login", (req, res) => {
+router.post("/login", verifyToken,(req, res) => {
 
   var secretkey = crypto.createCipher('aes-128-cbc', 'i#rent*out-api&key');
   var adpass = secretkey.update(req.body.password, 'utf8', 'hex')
@@ -383,7 +403,7 @@ router.post("/login", (req, res) => {
 @password
 @logintype
 */
-router.post("/userlogin", (req, res) => {
+router.post("/userlogin",verifyToken, (req, res) => {
   // Encrypt Password before comparing
   const encryptedTime = crypto.createCipher('aes-128-cbc', 'irent@key*');
   let cryptPassword = encryptedTime.update(req.body.password, 'utf8', 'hex')
@@ -418,7 +438,7 @@ router.post("/userlogin", (req, res) => {
 });
 
 
-router.post("/otplogin", (req, res) => {
+router.post("/otplogin", verifyToken,(req, res) => {
   // Encrypt Password before comparing
   const encryptedTime = crypto.createCipher('aes-128-cbc', 'irent@key*');
   let cryptPassword = encryptedTime.update(req.body.otp, 'utf8', 'hex')
@@ -460,7 +480,7 @@ password
 email
 phone
 */
-router.post("/register", (req, res) => {
+router.post("/register", verifyToken,(req, res) => {
   const uidtokgen = new TokenGenerator();
   const userToken = `irentout-${uidtokgen.generate()}`;
   const logintokgen = new TokenGenerator(256, TokenGenerator.BASE71);
@@ -514,7 +534,7 @@ router.post("/register", (req, res) => {
   });
 });
 
-router.post("/otpRegister", (req, res) => {
+router.post("/otpRegister",verifyToken, (req, res) => {
   const uidtokgen = new TokenGenerator();
   const userToken = `irentout-${uidtokgen.generate()}`;
   const logintokgen = new TokenGenerator(256, TokenGenerator.BASE71);
@@ -591,7 +611,7 @@ router.post("/totp-secret", (request, response, next) => {
   response.send({ "secret": secret.base32 });
 });
 
-router.post("/totp-generate", (request, response, next) => {
+router.post("/totp-generate", verifyToken,(request, response, next) => {
   response.send({
       "token": Speakeasy.totp({
           secret: request.body.secret,
@@ -601,7 +621,7 @@ router.post("/totp-generate", (request, response, next) => {
   });
 });
 
-router.post("/totp-validate", (request, response, next) => {
+router.post("/totp-validate", verifyToken,(request, response, next) => {
   var a  = Speakeasy.totp.verify({
     secret: request.body.secret,
     encoding: "base32",
@@ -613,7 +633,7 @@ router.post("/totp-validate", (request, response, next) => {
     });
 });
 
-router.post('/otpUserdetails', (req, res) => {
+router.post('/otpUserdetails', verifyToken,(req, res) => {
   let getDetails = "select customer_id, firstName, login_type from customer where mobile = ?";
   sql.query(getDetails, [req.body.mobile], (err, rows) => {
     if (!err) {
@@ -633,7 +653,7 @@ router.get("/failure", (req, res) => {
 });
 
 
-router.post('/userdetails', (req, res) => {
+router.post('/userdetails', verifyToken,(req, res) => {
   let getDetails = "select customer_id, firstName, login_type from customer where token = ?";
   sql.query(getDetails, [req.body.token], (err, rows) => {
     if (!err) {
@@ -646,7 +666,7 @@ router.post('/userdetails', (req, res) => {
   });
 });
 
-router.post('/admindetails', (req, res) => {
+router.post('/admindetails', verifyToken,(req, res) => {
   let getDetails = `SELECT customer_id, firstName FROM customer WHERE token = ? AND login_type= ?`;
   sql.query(getDetails, [req.body.token, 'admin'], (err, rows) => {
     if (!err) {

@@ -1,10 +1,19 @@
 var express = require("express");
 var router = express.Router();
-
+const constants = require("../constant/constUrl");
 var sql = require("../db.js");
 
+// Verify token 
+function verifyToken(req, res, next) {
+  if(req.headers.origin===`${constants.frontendUrl}` || req.headers.origin===`${constants.frontendUrl}/admin`){
+    next();
+  } else{
+    return res.status(401).send("Unauthorized request");
+  }
+}
+
 /* GET all reviews */
-router.get('/', function(req, res) {
+router.get('/', verifyToken,function(req, res) {
     sql.query(
         `SELECT * FROM admin`,
         (err, rows) => {
@@ -17,7 +26,7 @@ router.get('/', function(req, res) {
     );
 });
 
-router.get('/getCustomerRequests', function(req, res) {
+router.get('/getCustomerRequests', verifyToken,function(req, res) {
   let len=0;
   sql.query(
       `CALL get_customerRequests() `,
@@ -38,7 +47,7 @@ router.get('/getCustomerRequests', function(req, res) {
     );
 });
 
-router.get('/:id', function(req, res, next) {
+router.get('/:id', verifyToken,function(req, res, next) {
     sql.query(
       `SELECT user_id, uname, usertype, email FROM admin WHERE user_id = ?`,
       [req.params.id],

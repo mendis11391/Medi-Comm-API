@@ -1,7 +1,7 @@
 var express = require("express");
 var multer = require("multer");
 // const TokenGenerator = require("uuid-token-generator");
-
+const constants = require("../constant/constUrl");
 var productImgArr = [];
 
 var storage = multer.diskStorage({
@@ -40,78 +40,86 @@ var logger = winston.createLogger({
 });
  
 
+// Verify token 
+function verifyToken(req, res, next) {
+  if(req.headers.origin===`${constants.frontendUrl}`){
+    next();
+  } else{
+    return res.status(401).send("Unauthorized request");
+  }
+}
 
 
 
 // Verify token and session valid time
-function verifyToken(req, res, next) {
-  if (!req.headers.authorization) {
-    return res.status(401).send("Unauthorized request");
-  }
-  let token = req.headers.authorization.split(" ")[1];
-  let reqTime = req.headers.authorization.split(" ")[2];
+// function verifyToken(req, res, next) {
+//   if (!req.headers.authorization) {
+//     return res.status(401).send("Unauthorized request");
+//   }
+//   let token = req.headers.authorization.split(" ")[1];
+//   let reqTime = req.headers.authorization.split(" ")[2];
 
-  const refreshToken = `${token} ${reqTime}`;
+//   const refreshToken = `${token} ${reqTime}`;
 
-  const currentTime = new Date();
-  const reqTimeSplit = reqTime.split(",");
-  // const reqCameTime = new Date(
-  //   reqTimeSplit[0],
-  //   reqTimeSplit[1],
-  //   reqTimeSplit[2],
-  //   reqTimeSplit[3],
-  //   reqTimeSplit[4],
-  //   reqTimeSplit[5],
-  //   reqTimeSplit[6]
-  // );
+//   const currentTime = new Date();
+//   const reqTimeSplit = reqTime.split(",");
+//   // const reqCameTime = new Date(
+//   //   reqTimeSplit[0],
+//   //   reqTimeSplit[1],
+//   //   reqTimeSplit[2],
+//   //   reqTimeSplit[3],
+//   //   reqTimeSplit[4],
+//   //   reqTimeSplit[5],
+//   //   reqTimeSplit[6]
+//   // );
 
-  if (token === "null") {
-    return res.status(401).send("Unauthorized request");
-  }
+//   if (token === "null") {
+//     return res.status(401).send("Unauthorized request");
+//   }
 
-  sql.query(
-    "select uname, token from admin where token LIKE CONCAT('%', ?, '%')",
-    [token],
-    (err, rows) => {
-      if (!err) {
-        if (rows.length > 0) {
-          const uname = rows[0].uname;
-          const tkn = rows[0].token;
-          const tkn1 = tkn.split(" ")[1];
-          const reqTimeSplit = tkn1.split(",");
-          const dbTime = new Date(
-            reqTimeSplit[0],
-            reqTimeSplit[1],
-            reqTimeSplit[2],
-            reqTimeSplit[3],
-            reqTimeSplit[4],
-            reqTimeSplit[5],
-            reqTimeSplit[6]
-          );
+//   sql.query(
+//     "select customer_id, token from customer where login_type='admin' AND token LIKE CONCAT('%', ?, '%')",
+//     [token],
+//     (err, rows) => {
+//       if (!err) {
+//         if (rows.length > 0) {
+//           const customer_id = rows[0].customer_id;
+//           const tkn = rows[0].token;
+//           const tkn1 = tkn.split(" ")[1];
+//           const reqTimeSplit = tkn1.split(",");
+//           const dbTime = new Date(
+//             reqTimeSplit[0],
+//             reqTimeSplit[1],
+//             reqTimeSplit[2],
+//             reqTimeSplit[3],
+//             reqTimeSplit[4],
+//             reqTimeSplit[5],
+//             reqTimeSplit[6]
+//           );
 
-          if (isTimeValid(dbTime, currentTime) >= 60) {
-            return res.status(403).send("Session Expired");
-          } else {
-            sql.query(
-              "update admin set token = ? where uname = ? and token LIKE CONCAT('%', ?, '%')",
-              [refreshToken, uname, token],
-              (err, rows) => {
-                if (!err) {
-                  req.userId = rows;
-                  next();
-                }
-              }
-            );
-          }
-        } else {
-          return res.status(401).send("Unauthorized request");
-        }
-      } else {
-        return res.status(401).send("Unauthorized request");
-      }
-    }
-  );
-}
+//           if (isTimeValid(dbTime, currentTime) >= 60) {
+//             return res.status(403).send("Session Expired");
+//           } else {
+//             sql.query(
+//               "update customer set token = ? where customer_id = ? AND login_type = ?  AND token LIKE CONCAT('%', ?, '%')",
+//               [refreshToken, customer_id,'admin', token],
+//               (err, rows) => {
+//                 if (!err) {
+//                   req.userId = rows;
+//                   next();
+//                 }
+//               }
+//             );
+//           }
+//         } else {
+//           return res.status(401).send("Unauthorized request");
+//         }
+//       } else {
+//         return res.status(401).send("Unauthorized request");
+//       }
+//     }
+//   );
+// }
 
 function isTimeValid(dt2, dt1) {
   var diff = (dt2.getTime() - dt1.getTime()) / 1000;
@@ -442,7 +450,7 @@ router.get("/getAllTenures", (req, res) => {
 });
 
 // Add new city
-router.post('/postTenureDiscounts', function(req, res) {
+router.post('/postTenureDiscounts',verifyToken, function(req, res) {
   sql.query(
       `INSERT INTO tenure_discounts(priority, tenure_id, discount, discount_status) VALUES (?, ?, ?, ?)`, [req.body.priority, req.body.tenure_id, 0,1],
       (err) => {
@@ -456,7 +464,7 @@ router.post('/postTenureDiscounts', function(req, res) {
 });
 
 // Update users specValue
-router.put("/productStocksAndTimeline", (req, res) => {
+router.put("/productStocksAndTimeline",verifyToken, (req, res) => {
 
   var sqlUpdate = "UPDATE `products` SET `quantity` = ?, `delivery_timeline` = ? WHERE `id` = ?";
   sql.query(
@@ -477,7 +485,7 @@ router.put("/productStocksAndTimeline", (req, res) => {
 });
 
 // Update users specValue
-router.put("/updateTenureDiscounts", (req, res) => {
+router.put("/updateTenureDiscounts",verifyToken, (req, res) => {
 
   var sqlUpdate = "UPDATE `tenure_discounts` SET `discount`= ?, `default_tenure`=? WHERE `id` = ?";
   sql.query(
@@ -615,7 +623,7 @@ router.get("/tenure/:id", (req, res) => {
   );
 });
 
-router.post("/postAccs", function (req, res) {
+router.post("/postAccs",verifyToken, function (req, res) {
   productImgArr = [];
 
   var sqlInsert =
@@ -637,7 +645,7 @@ router.post("/postAccs", function (req, res) {
   );
 });
 
-router.post("/postSpecs", function (req, res) {
+router.post("/postSpecs",verifyToken, function (req, res) {
   productImgArr = [];
 
   var sqlInsert =
@@ -659,7 +667,7 @@ router.post("/postSpecs", function (req, res) {
   );
 });
 
-router.post("/postScroller", function (req, res) {
+router.post("/postScroller",verifyToken, function (req, res) {
 
   var sqlInsert =
     "INSERT INTO `promotions`( `promotion_name`, `status`) VALUES (?, ?)";
@@ -679,7 +687,7 @@ router.post("/postScroller", function (req, res) {
   );
 });
 
-router.post("/postPromotionalProducts", function (req, res) {
+router.post("/postPromotionalProducts", verifyToken,function (req, res) {
 
   var sqlInsert =
     "INSERT INTO `promotional_products`( `promotion_id`, `product_id`, `position`, `status`) VALUES (?, ?, ?, ?)";
@@ -1209,7 +1217,7 @@ router.get("/productsMetaDetailsByCityIdAndSlug/:id/:slug", (req, res) => {
 
 
 // Update users name
-router.put("/updateProductQuantity/:id", (req, res) => {
+router.put("/updateProductQuantity/:id", verifyToken,(req, res) => {
   logger.info({
     message: '/updateProductQuantity/:id api started',
     dateTime: new Date()
@@ -1599,7 +1607,7 @@ router.delete("/:id", verifyToken, (req, res) => {
 });
 
 // Update a product information
-router.put("/:id", (req, res) => {
+router.put("/:id",verifyToken, (req, res) => {
   var id = req.params.id;
   var specsLength = req.body.specs;
   var highlightLength = req.body.highlightType;
@@ -1725,7 +1733,7 @@ router.put("/:id", (req, res) => {
 });
 
 // Insert product
-router.post("/",  function (req, res, next) {
+router.post("/",  verifyToken,function (req, res, next) {
   // var imgName = productImgArr.join("[--split--]");
   // productImgArr = [];
 

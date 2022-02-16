@@ -1,10 +1,30 @@
 var express = require('express');
 var router = express.Router();
 var crypto = require("crypto");
-
+const constants = require("../constant/constUrl");
 var sql = require("../db.js");
 
-router.get('/:id', function(req, res, next) {
+// Verify token 
+function verifyToken(req, res, next) {
+  if(req.headers.origin===`${constants.frontendUrl}`){
+    next();
+  } else{
+    return res.status(401).send("Unauthorized request");
+  }
+}
+
+function ISTTime(){
+  var currentTime = new Date();
+
+  var currentOffset = currentTime.getTimezoneOffset();
+
+  var ISTOffset = 330;   // IST offset UTC +5:30 
+
+  var ISTTime = new Date(currentTime.getTime() + (ISTOffset + currentOffset)*60000);
+  return ISTTime;
+}
+
+router.get('/:id',verifyToken, function(req, res, next) {
   sql.query(
     `CALL get_customersById(${req.params.id})`,
     (err, rows) => {
@@ -17,7 +37,7 @@ router.get('/:id', function(req, res, next) {
   );
 });
 
-router.get('/getCustomerAddressById/:id', function(req, res) {
+router.get('/getCustomerAddressById/:id',verifyToken, function(req, res) {
   sql.query(
       `CALL get_addressById(${req.params.id}) `,
       (err, rows) => {
@@ -30,8 +50,37 @@ router.get('/getCustomerAddressById/:id', function(req, res) {
     );
 });
 
+router.get('/getCartByCustomerId/:id',verifyToken, function(req, res) {
+  let cart=[];
+  let len=0;
+  sql.query(
+      `CALL get_cartByCustomerId(${req.params.id}) `,
+      (err, rows) => {
+        if (!err) {
+          rows[0].forEach((res)=>{
+            cart.push(res);              
+          });
+          
+          // res.send(cart);
+        } else {
+          res.send({ error: 'Error' });
+        }
+
+        if(cart){
+          cart.forEach((cartRes, i, ele)=>{
+            len++
+            cartRes.products = JSON.parse(cartRes.products);
+            if(len===ele.length){          
+              res.send(cart);
+            }
+          })
+        }
+      }
+    );
+});
+
 //post address
-router.post("/addresses", function (req, res) {
+router.post("/addresses", verifyToken,function (req, res) {
     
   var sqlInsert =
     "INSERT INTO `address`(`customer_id`, `display_name`,`nickName`, `addressMobile`, `address_line1`, `address_line2`,`landmark`, `city`, `state`, `pincode`, `address_type`, `default_address`,`status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?)";
@@ -63,7 +112,7 @@ router.post("/addresses", function (req, res) {
 });
 
 // Update user firstName, lastName, and email
-router.put("/updateBasicUserDetails/:id", (req, res) => {
+router.put("/updateBasicUserDetails/:id", verifyToken,(req, res) => {
   var sqlUpdate = "UPDATE `customer` SET `firstName`= ?, `lastName`=?, `email`=? WHERE `customer_id` = ?";
   sql.query(
     sqlUpdate,
@@ -84,7 +133,7 @@ router.put("/updateBasicUserDetails/:id", (req, res) => {
 });
 
 // Update address
-router.put("/updateAddress/:id", (req, res) => {
+router.put("/updateAddress/:id",verifyToken, (req, res) => {
   var sqlUpdate = "UPDATE `address` SET `nickName`= ?, `address_line1`=?, `address_line2`=?,`landmark`=?, `pincode`=?, `address_type`=? WHERE `address_id` = ?";
   sql.query(
     sqlUpdate,
@@ -108,7 +157,7 @@ router.put("/updateAddress/:id", (req, res) => {
 });
 
 // Delete address
-router.put("/deleteAddressById/:id",  (req, res) => {
+router.put("/deleteAddressById/:id", verifyToken, (req, res) => {
   sql.query(
     "UPDATE `address` SET `status`= ?, `default_address`= ? WHERE address_id = ?",
     [req.body.status,0,req.params.id],
@@ -124,7 +173,7 @@ router.put("/deleteAddressById/:id",  (req, res) => {
 
 
 
-router.get('/getCustomerById/:id', function(req, res) {
+router.get('/getCustomerById/:id',verifyToken, function(req, res) {
   let id =req.params.id
   sql.query(
       `CALL get_customersById(${id}) `,
@@ -138,7 +187,7 @@ router.get('/getCustomerById/:id', function(req, res) {
     );
 });
 
-router.post('/updateorderItem', function(req, res) {
+router.post('/updateorderItem',verifyToken, function(req, res) {
 	var sqlInsert = "INSERT INTO `customer_requests`( `order_item_id`, `order_id`,`renewals_timline`, `request_id`, `requested_date`, `approval_status`, `approval_date`, `request_status`) VALUES (?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
@@ -162,7 +211,7 @@ router.post('/updateorderItem', function(req, res) {
 });
 
 // Update status and damage charges in order item
-router.put("/updatecustomerRequests/:id", (req, res) => {
+router.put("/updatecustomerRequests/:id",verifyToken, (req, res) => {
   var id = req.params.id;
   var sqlUpdate = 'UPDATE customer_requests SET approval_status= ?, approval_date=?, request_status=? WHERE order_item_id= ?';
   sql.query(
@@ -184,7 +233,7 @@ router.put("/updatecustomerRequests/:id", (req, res) => {
 });
 
 
-router.get('/address/:id', function(req, res) {
+router.get('/address/:id', verifyToken,function(req, res) {
   sql.query(
       `CALL get_addressByCustomerID(${req.params.id}) `,
       (err, rows) => {
@@ -199,7 +248,7 @@ router.get('/address/:id', function(req, res) {
 
 
 // Update address
-router.put("/updateDefaultAddress/:auid", (req, res) => {
+router.put("/updateDefaultAddress/:auid", verifyToken,(req, res) => {
   var sqlUpdate = "UPDATE `address` SET `default_address`= ? WHERE `address_id` = ?";
   sql.query(
     sqlUpdate,
@@ -218,7 +267,7 @@ router.put("/updateDefaultAddress/:auid", (req, res) => {
 });
 
 /* GET all users */
-router.get('/', function(req, res) {
+router.get('/', verifyToken,function(req, res) {
   sql.query(
       `CALL get_AllCustomers()`,
       (err, rows) => {
@@ -232,7 +281,7 @@ router.get('/', function(req, res) {
 });
 
 /* GET user details by id*/
-router.get('/getUserAddressInfo/:getid', function(req, res, next) {
+router.get('/getUserAddressInfo/:getid',verifyToken, function(req, res, next) {
   sql.query(
     `CALL 	get_addressByCustomerID(${req.params.getid})`,
     (err, rows) => {
@@ -246,7 +295,7 @@ router.get('/getUserAddressInfo/:getid', function(req, res, next) {
 });
 
 /* GET user details by id*/
-router.get('/getUserInfo/:getid', function(req, res, next) {
+router.get('/getUserInfo/:getid',verifyToken, function(req, res, next) {
   sql.query(
     `SELECT customer_id, firstName, lastName, mobile, email, password, registeredAt, lastLogin, login_type, token FROM customer WHERE customer_id=?`,
     [req.params.getid],
@@ -261,7 +310,7 @@ router.get('/getUserInfo/:getid', function(req, res, next) {
 });
 
 /* GET users by id details */
-router.get('/:id', function(req, res, next) {
+router.get('/:id', verifyToken,function(req, res, next) {
   sql.query(
     `SELECT uid, uname, email, phone, wishlist, cart, address, billingaddress FROM users where uid = ?`,
     [req.params.id],
@@ -275,7 +324,7 @@ router.get('/:id', function(req, res, next) {
   );
 });
 
-router.get('/checkemail/:emailEx', function(req, res) {
+router.get('/checkemail/:emailEx',verifyToken, function(req, res) {
   sql.query(
       `SELECT count(*) AS emailidCount FROM customer where email= ?`,
       [req.params.emailEx],
@@ -294,7 +343,7 @@ router.get('/checkemail/:emailEx', function(req, res) {
 });
 
 
-router.get('/checkmobile/:mobile', function(req, res) {
+router.get('/checkmobile/:mobile', verifyToken,function(req, res) {
   sql.query(
       `SELECT count(*) AS mobileCount, customer_id FROM customer where mobile= ? `,
       [req.params.mobile],
@@ -313,13 +362,14 @@ router.get('/checkmobile/:mobile', function(req, res) {
 });
 
 // Update users name
-router.put("/updateOtp/:cid", (req, res) => {
+router.put("/updateOtp/:cid", verifyToken,(req, res) => {
 
-  var sqlUpdate = "UPDATE `customer` SET `password`= ? WHERE `customer_id` = ?";
+  var sqlUpdate = "UPDATE `customer` SET `password`= ?, `lastLogin`=? WHERE `customer_id` = ?";
   sql.query(
     sqlUpdate,
     [
       req.body.otp,
+      new Date(),
       req.params.cid
     ],
     (err, rows) => {
@@ -332,7 +382,7 @@ router.put("/updateOtp/:cid", (req, res) => {
   );
 });
 /* GET cart details */
-router.get('/cart/:id', function(req, res, next) {
+router.get('/cart/:id',verifyToken, function(req, res, next) {
   sql.query(
     `SELECT customer_id, products FROM cart where customer_id = ?`,
     [req.params.id],
@@ -347,7 +397,7 @@ router.get('/cart/:id', function(req, res, next) {
 });
 
 /* GET cart details */
-router.get('/wishlist/:id', function(req, res, next) {
+router.get('/wishlist/:id', verifyToken,function(req, res, next) {
 
   sql.query(
     `SELECT customer_id, products FROM wishlist where customer_id = ?`,
@@ -363,7 +413,7 @@ router.get('/wishlist/:id', function(req, res, next) {
 });
 
 // Update users name
-router.put("/updateuser", (req, res) => {
+router.put("/updateuser", verifyToken,(req, res) => {
 
   var sqlUpdate = "UPDATE `customer` SET `firstName`= ? , `lastName`= ? WHERE `customer_id` = ?";
   sql.query(
@@ -384,7 +434,7 @@ router.put("/updateuser", (req, res) => {
 });
 
 // Update users email
-router.put("/updateemail", (req, res) => {
+router.put("/updateemail", verifyToken,(req, res) => {
 
   var sqlUpdate = "UPDATE `customer` SET `email`= ? WHERE `customer_id` = ?";
   sql.query(
@@ -404,7 +454,7 @@ router.put("/updateemail", (req, res) => {
 });
 
 // Update users mobile no
-router.put("/updatemobile", (req, res) => {
+router.put("/updatemobile", verifyToken,(req, res) => {
 
   var sqlUpdate = "UPDATE `users` SET `phone`= ? WHERE `uid` = ?";
   sql.query(
@@ -424,7 +474,7 @@ router.put("/updatemobile", (req, res) => {
 });
 
 // Update users password
-router.put("/updatepassword", (req, res) => {
+router.put("/updatepassword", verifyToken,(req, res) => {
 
   const encryptedTime = crypto.createCipher('aes-128-cbc', 'irent@key*');
   let cryptPassword = encryptedTime.update(req.body.upass, 'utf8', 'hex')
@@ -448,7 +498,7 @@ router.put("/updatepassword", (req, res) => {
 });
 
 // Update users password
-router.put("/update", (req, res) => {
+router.put("/update", verifyToken,(req, res) => {
   // Encrypt Password
   const encryptedTime = crypto.createCipher('aes-128-cbc', 'irent@key*');
   let cryptPassword = encryptedTime.update(req.body.upass, 'utf8', 'hex')
@@ -472,7 +522,7 @@ router.put("/update", (req, res) => {
 });
 
 // Update wishlist
-router.put("/wishlist/:id", (req, res) => {
+router.put("/wishlist/:id", verifyToken,(req, res) => {
   var sqlUpdate = "UPDATE `wishlist` SET `products`= ? WHERE `customer_id` = ?";
   sql.query(
     sqlUpdate,
@@ -491,7 +541,7 @@ router.put("/wishlist/:id", (req, res) => {
 });
 
 // Update cart
-router.put("/cart/:id", (req, res) => {
+router.put("/cart/:id", verifyToken,(req, res) => {
   var sqlUpdate = "UPDATE `cart` SET `products`= ? WHERE `customer_id` = ?";
   sql.query(
     sqlUpdate,
@@ -509,7 +559,7 @@ router.put("/cart/:id", (req, res) => {
   );
 });
 
-router.post('/kycSubmit', function(req, res) {
+router.post('/kycSubmit', verifyToken,function(req, res) {
 	var sqlInsert = "INSERT INTO `kyc`( `customer_id`, `first_name`, `last_name`, `mobile_no`, `alernate_mobile_no`, `email`, `aadhar_no`, `facebook_link`, `address_line1`, `address_line2`, `city`, `state`, `pincode`, `r1_first_name`, `r1_last_name`, `r1_mobile_no`, `r2_first_name`, `r2_last_name`, `r2_mobile_no`, `ref_verify`, `company`, `photo`, `id_proof`, `address_proof`, `created_at`, `kyc_status`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
@@ -551,7 +601,7 @@ router.post('/kycSubmit', function(req, res) {
 });
 
 /* GET address details */
-router.get('/address/:usrid', function(req, res, next) {
+router.get('/address/:usrid',verifyToken, function(req, res, next) {
   sql.query(
     `SELECT address FROM users where uid = ?`,
     [req.params.usrid],
@@ -566,7 +616,7 @@ router.get('/address/:usrid', function(req, res, next) {
 });
 
 /* GET billing address details */
-router.get('/billingaddress/:usrid', function(req, res, next) {
+router.get('/billingaddress/:usrid',verifyToken, function(req, res, next) {
   sql.query(
     `SELECT billingaddress FROM users where uid = ?`,
     [req.params.usrid],
@@ -581,7 +631,7 @@ router.get('/billingaddress/:usrid', function(req, res, next) {
 });
 
 // Update address
-router.put("/updateaddress/:auid", (req, res) => {
+router.put("/updateaddress/:auid", verifyToken,(req, res) => {
   var sqlUpdate = "UPDATE `users` SET `address`= ? WHERE `uid` = ?";
   sql.query(
     sqlUpdate,
@@ -600,7 +650,7 @@ router.put("/updateaddress/:auid", (req, res) => {
 });
 
 // Update billing address
-router.put("/updatebilladdress/:bauid", (req, res) => {
+router.put("/updatebilladdress/:bauid", verifyToken,(req, res) => {
   var sqlUpdate = "UPDATE `users` SET `billingaddress`= ? WHERE `uid` = ?";
   sql.query(
     sqlUpdate,

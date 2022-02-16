@@ -1,10 +1,19 @@
 var express = require('express');
 var router = express.Router();
-
+const constants = require("../constant/constUrl");
 var sql = require("../db.js");
 
 const winston = require('winston');
-var currentDate = new Date().toJSON().slice(0,10)
+var currentDate = new Date().toJSON().slice(0,10);
+
+// Verify token 
+function verifyToken(req, res, next) {
+  if(req.headers.origin===`${constants.frontendUrl}`){
+    next();
+  } else{
+    return res.status(401).send("Unauthorized request");
+  }
+}
  
 var logger = winston.createLogger({
   level: 'info',
@@ -85,7 +94,7 @@ router.get('/taxes/:id', function(req, res) {
 });
 
 // Update padding
-router.put('/padding/:id', (req, res) => {
+router.put('/padding/:id', verifyToken,(req, res) => {
   var sqlUpdate = "UPDATE `cities` SET `city_padding`= ? WHERE `city_id` = ?";
   sql.query(
     sqlUpdate,
@@ -104,7 +113,7 @@ router.put('/padding/:id', (req, res) => {
 });
 
 // Update padding
-router.put('/serialNo/:id', (req, res) => {
+router.put('/serialNo/:id',verifyToken, (req, res) => {
   var sqlUpdate = "UPDATE `cities` SET `last_serial_no`= ? WHERE `city_id` = ?";
   sql.query(
     sqlUpdate,
@@ -123,7 +132,7 @@ router.put('/serialNo/:id', (req, res) => {
 });
 
 // Update deliveryDate
-router.put('/', (req, res) => {
+router.put('/', verifyToken,(req, res) => {
   // var sqlUpdate = "UPDATE `cities` SET `tentitiveDeleivery`= ? WHERE `cityname` = 'Bangalore'";
   var sqlUpdate = "UPDATE `cities` SET `tentitiveDeleivery` = (case when `cityid` = 'bangalore' then ? when `cityid` = 'hyderabad' then ? when `cityid` = 'mumbai' then ? when `cityid` = 'pune' then ? end) WHERE `cityid` in ('bangalore', 'hyderabad', 'mumbai', 'pune')";
   sql.query(
@@ -145,7 +154,7 @@ router.put('/', (req, res) => {
 });
 
 // Update Taxes
-router.put('/taxes', (req, res) => {
+router.put('/taxes', verifyToken,(req, res) => {
   // var sqlUpdate = "UPDATE `cities` SET `tentitiveDeleivery`= ? WHERE `cityname` = 'Bangalore'";
   var sqlUpdate = "UPDATE `cities` SET `taxes` = (case when `cityid` = 'bangalore' then ? when `cityid` = 'hyderabad' then ? when `cityid` = 'mumbai' then ? when `cityid` = 'pune' then ? end) WHERE `cityid` in ('bangalore', 'hyderabad', 'mumbai', 'pune')";
   sql.query(
@@ -168,7 +177,7 @@ router.put('/taxes', (req, res) => {
 
 
 // Add new city
-router.post('/', function(req, res) {
+router.post('/', verifyToken,function(req, res) {
     var dte = new Date();
     var rand = Math.floor(Math.random() * 9999 + 1);
     var unqCityId =

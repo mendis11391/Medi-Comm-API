@@ -1,10 +1,27 @@
 var express = require('express');
 var router = express.Router();
-
+const constants = require("../constant/constUrl");
 var sql = require("../db.js");
 
 const winston = require('winston');
-var currentDate = new Date().toJSON().slice(0,10)
+var currentDate = new Date().toJSON().slice(0,10);
+
+// Verify token 
+function verifyToken(req, res, next) {
+  if(req.headers.origin===`${constants.frontendUrl}`){
+    next();
+  } else{
+    return res.status(401).send("Unauthorized request");
+  }
+}
+
+function verifyToken2(req, res, next) {
+  if(req.headers.origin.includes(`${constants.frontendUrl}`)){
+    next();
+  } else{
+    return res.status(401).send("Unauthorized request");
+  }
+}
  
 var logger = winston.createLogger({
   level: 'info',
@@ -62,7 +79,7 @@ function addOneDay(date){
 }
 
 // Get all orders
-router.get("/", (req, res) => {
+router.get("/", verifyToken,(req, res) => {
   logger.info({
     message: '/all orders api started',
     dateTime: new Date()
@@ -148,7 +165,7 @@ router.get("/", (req, res) => {
   );
 });
 
-router.get('/orderItemsByorderId/:id', function(req, res) {
+router.get('/orderItemsByorderId/:id', verifyToken,function(req, res) {
   logger.info({
     message: '/orderItemsByorderId/:id api started',
     dateTime: new Date()
@@ -177,7 +194,7 @@ router.get('/orderItemsByorderId/:id', function(req, res) {
 });
 
 
-router.get('/orderItems/:id', function(req, res) {
+router.get('/orderItems/:id', verifyToken,function(req, res) {
   logger.info({
     message: '/orderItems/:id api started',
     dateTime: new Date()
@@ -220,7 +237,7 @@ router.get('/orderItems/:id', function(req, res) {
 });
 
 // Update assetID in order item
-router.put("/updateOrderItemAsset/:id", (req, res) => {
+router.put("/updateOrderItemAsset/:id", verifyToken,(req, res) => {
   var id = req.params.id;
   var sqlUpdate = 'UPDATE order_item SET asset_id= ?, renewals_timline=? WHERE order_item_id= ?';
   sql.query(
@@ -241,7 +258,7 @@ router.put("/updateOrderItemAsset/:id", (req, res) => {
 });
 
 // Update delivery status in order item
-router.put("/updateRenewTimline/:id", (req, res) => {
+router.put("/updateRenewTimline/:id", verifyToken,(req, res) => {
   
   var delivered=[];
   var shipped=[];
@@ -341,7 +358,7 @@ router.put("/updateRenewTimline/:id", (req, res) => {
   );
 });
 
-router.put("/updateRenewalTimeline/:id", (req, res) => {
+router.put("/updateRenewalTimeline/:id",verifyToken, (req, res) => {
   var id = parseInt(req.params.id);
   var sqlUpdate = 'UPDATE order_item SET asset_id=?, renewals_timline=?, status=? WHERE order_item_id= ?';
   sql.query(
@@ -363,7 +380,7 @@ router.put("/updateRenewalTimeline/:id", (req, res) => {
 });
 
 //update any order field
-router.put("/updateAnyOrderField/:id", (req, res) => {
+router.put("/updateAnyOrderField/:id", verifyToken,(req, res) => {
   var id = req.params.id;
   var sqlUpdate = `UPDATE orders SET ${req.body.orderField}= ? WHERE primary_id= ?`;
   sql.query(
@@ -383,7 +400,7 @@ router.put("/updateAnyOrderField/:id", (req, res) => {
 });
 
 //get all payment status 
-router.get('/getAllPaymentStatus', function(req, res) {
+router.get('/getAllPaymentStatus', verifyToken,function(req, res) {
   logger.info({
     message: 'getAllPaymentStatus api started',
     dateTime: new Date()
@@ -410,7 +427,7 @@ router.get('/getAllPaymentStatus', function(req, res) {
     );
 });
 
-router.get('/getAllDeliveryStatus', function(req, res) {
+router.get('/getAllDeliveryStatus', verifyToken,function(req, res) {
   logger.info({
     message: 'getAllDeliveryStatus api started',
     dateTime: new Date()
@@ -437,7 +454,7 @@ router.get('/getAllDeliveryStatus', function(req, res) {
     );
 });
 
-router.put("/updateOrderItemDeliveryDate/:id", (req, res) => {
+router.put("/updateOrderItemDeliveryDate/:id", verifyToken,(req, res) => {
   var id = req.params.id;
   var sqlUpdate = 'UPDATE order_item SET startDate= ?, endDate= ?, renewals_timline=? WHERE order_item_id= ?';
   sql.query(
@@ -463,7 +480,7 @@ router.put("/updateOrderItemDeliveryDate/:id", (req, res) => {
 });
 
 // Update status and damage charges in order item
-router.put("/updateOrderItemStatus/:id", (req, res) => {
+router.put("/updateOrderItemStatus/:id", verifyToken,(req, res) => {
   var id = req.params.id;
   var sqlUpdate = 'UPDATE order_item SET status= ?, damage_charges=? WHERE order_item_id= ?';
   sql.query(
@@ -483,7 +500,7 @@ router.put("/updateOrderItemStatus/:id", (req, res) => {
   );
 });
 
-router.get('/renewals/:id', function(req, res) {
+router.get('/renewals/:id', verifyToken,function(req, res) {
   let orderItem=[];
   let len=0;
   sql.query(
@@ -693,7 +710,7 @@ router.get('/renewals/:id', function(req, res) {
     );
 });
 
-router.get('/getAllOrderItems', function(req, res) {
+router.get('/getAllOrderItems', verifyToken,function(req, res) {
   sql.query(
     `CALL get_allOrderItems()`,
     (err, rows, fields) => {
@@ -705,7 +722,7 @@ router.get('/getAllOrderItems', function(req, res) {
     });
 });
 
-router.get('/customerRequests/:id', function(req, res) {
+router.get('/customerRequests/:id', verifyToken,function(req, res) {
   sql.query(
     `CALL getCustomerRequestsByOTID(${req.params.id})`,
     (err, rows, fields) => {
@@ -716,7 +733,7 @@ router.get('/customerRequests/:id', function(req, res) {
 });
 
 
-router.get('/orderId/:id', function(req, res) {
+router.get('/orderId/:id', verifyToken,function(req, res) {
   
   let orders=[];
   let orderItem = [];
@@ -806,7 +823,7 @@ router.get('/orderId/:id', function(req, res) {
 //       }
 //     );
 // });
-router.get('/orderDetails2/:id', function(req, res) {
+router.get('/orderDetails2/:id',verifyToken, function(req, res) {
   
   let orders=[];
   let orderAddress=[];
@@ -930,7 +947,7 @@ router.get('/orderDetails2/:id', function(req, res) {
     );
 });
 
-router.get('/orderDetails/:id', function(req, res) {
+router.get('/orderDetails/:id', verifyToken,function(req, res) {
   
   let orders=[];
   let orderAddress=[];
@@ -1054,7 +1071,7 @@ router.get('/orderDetails/:id', function(req, res) {
     );
 });
 
-router.get('/getOrderByMyOrderId/:id', function(req, res) {
+router.get('/getOrderByMyOrderId/:id', verifyToken,function(req, res) {
   
   sql.query(
       `CALL get_OrderByMyOrderId(${JSON.stringify(req.params.id)}) `,
@@ -1069,7 +1086,22 @@ router.get('/getOrderByMyOrderId/:id', function(req, res) {
     );
 });
 
-router.get('/:id', function(req, res) {
+router.get('/getOrderByMyOrderIdAPI/:id', function(req, res) {
+  
+  sql.query(
+      `CALL get_OrderByMyOrderId(${JSON.stringify(req.params.id)}) `,
+      (err, rows) => {
+        if (!err) {          
+          res.send(rows[0]);
+        } else {
+          res.send({ error: 'Error' });
+        }
+
+      }
+    );
+});
+
+router.get('/:id', verifyToken,function(req, res) {
   
   let orders=[];
   let orderAddress=[];
@@ -1555,7 +1587,7 @@ router.get('/:id', function(req, res) {
 // });
 
 // Update orders
-router.put("/update/:id", (req, res) => {
+router.put("/update/:id", verifyToken,(req, res) => {
   var id = req.params.id;
   var sqlUpdate = 'UPDATE orders SET delivery_status= ?, refund_status= ? WHERE txnid= ?';
   sql.query(
@@ -1578,7 +1610,7 @@ router.put("/update/:id", (req, res) => {
 });
 
 //Update delivery Date
-router.put("/updateDelivery/:id", (req, res) => {
+router.put("/updateDelivery/:id", verifyToken,(req, res) => {
   var id = req.params.id;
   var sqlUpdate = 'UPDATE orders SET orderedProducts= ?, checkoutItemData= ? WHERE txnid= ?';
   sql.query(
@@ -1602,7 +1634,7 @@ router.put("/updateDelivery/:id", (req, res) => {
 });
 
 //Update delivery Date
-router.put("/updateOD/:id", (req, res) => {
+router.put("/updateOD/:id", verifyToken,(req, res) => {
   var id = req.params.id;
   var sqlUpdate = 'UPDATE orders SET orderedProducts= ? WHERE txnid= ?';
   sql.query(
@@ -1625,7 +1657,7 @@ router.put("/updateOD/:id", (req, res) => {
 });
 
 //Update delivery Date
-router.put("/updateCID/:id", (req, res) => {
+router.put("/updateCID/:id", verifyToken,(req, res) => {
   var id = req.params.id;
   var sqlUpdate = 'UPDATE orders SET checkoutItemData= ? WHERE txnid= ?';
   sql.query(
@@ -1648,7 +1680,7 @@ router.put("/updateCID/:id", (req, res) => {
 });
 
 
-router.get('/txn/:id', function(req, res, next) {
+router.get('/txn/:id', verifyToken,function(req, res, next) {
   sql.query(
     `SELECT * FROM orders where txnid = ?`,
     [req.params.id],

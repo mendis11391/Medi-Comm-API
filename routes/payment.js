@@ -46,6 +46,15 @@ function getDates(date){
 	return dateObject;
 }
 
+// Verify token 
+function verifyToken(req, res, next) {
+	if(req.headers.origin===`${constants.frontendUrl}`){
+	  next();
+	} else{
+	  return res.status(401).send("Unauthorized request");
+	}
+  }
+
 router.use(function(req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -53,7 +62,7 @@ router.use(function(req, res, next) {
   });
 
 
-router.get('/', function(req, res) {
+router.get('/',verifyToken, function(req, res) {
     var ord = JSON.stringify(Math.random()*1000);
 	var i = ord.indexOf('.');
     ord = 'ORD'+ ord.substr(0,i);	
@@ -61,7 +70,7 @@ router.get('/', function(req, res) {
 });
 
 /************New code************ */
-router.post('/saveNewOrder', function(req, res) {
+router.post('/saveNewOrder',verifyToken, function(req, res) {
 	logger.info({
 		message: '/saveNewOrder post orders api started',
 		dateTime: new Date()
@@ -206,7 +215,7 @@ router.post('/saveNewOrder', function(req, res) {
 
 });
 
-router.post('/newRenew', function(req, res) {
+router.post('/newRenew', verifyToken,function(req, res) {
 	logger.info({
 		message: '/newRenew api post started',
 		dateTime: new Date()
@@ -347,7 +356,7 @@ router.post('/newRenew', function(req, res) {
 
 });
 
-router.post('/newReturn', function(req, res) {
+router.post('/newReturn', verifyToken,function(req, res) {
 	logger.info({
 		message: '/newReturn api post started',
 		dateTime: new Date()
@@ -443,7 +452,7 @@ router.post('/newReturn', function(req, res) {
   );
 });
 
-router.post('/newReplace', function(req, res) {
+router.post('/newReplace',verifyToken, function(req, res) {
 	logger.info({
 		message: '/newReplace post api started',
 		dateTime: new Date()
@@ -538,7 +547,7 @@ router.post('/newReplace', function(req, res) {
   );
 });
 
-router.post('/updateNewRenewOrder', function(req, res) {
+router.post('/updateNewRenewOrder', verifyToken,function(req, res) {
 	var updateOrder = `UPDATE order_item SET renewals_timline = ? where order_item_id = ?`;
 	sql.query(updateOrder,
     [
@@ -555,7 +564,7 @@ router.post('/updateNewRenewOrder', function(req, res) {
   );
 });
 
-router.post('/updateorderItem', function(req, res) {
+router.post('/updateorderItem',verifyToken, function(req, res) {
 	var sqlInsert = "INSERT INTO `customer_requests`( `order_item_id`, `order_id`, `request_id`, `requested_date`, `approval_status`, `approval_date`, `request_status`) VALUES (?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
@@ -735,7 +744,7 @@ router.post('/updateRenewOrder', function(req, res) {
 /************End of renewals part**********/
 
 /************Replacement part**************/
-router.post('/replace', function(req, res) {
+router.post('/replace', verifyToken,function(req, res) {
 	datetime = new Date();
 	orderDate = (this.datetime.getMonth()+1)+'/'+this.datetime.getDate()+'/'+this.datetime.getFullYear();
 	orderTime = this.datetime.getHours()+':'+this.datetime.getMinutes()+':'+this.datetime.getSeconds();
@@ -786,7 +795,7 @@ router.post('/replace', function(req, res) {
 /************End of replacement part******/
 
 /************Return part**************/
-router.post('/return', function(req, res) {
+router.post('/return', verifyToken,function(req, res) {
 	datetime = new Date();
 	orderDate = (this.datetime.getMonth()+1)+'/'+this.datetime.getDate()+'/'+this.datetime.getFullYear();
 	orderTime = this.datetime.getHours()+':'+this.datetime.getMinutes()+':'+this.datetime.getSeconds();
@@ -922,7 +931,7 @@ router.post('/calculateSecretKey', (req, res, next)=>{
 });
 
 //below will not be hit as server is not on https://
-router.post('/notify', (req, res, next)=>{
+router.post('/notify', verifyToken,(req, res, next)=>{
     console.log("notify hit");
     console.log(req.body);
     return res.status(200).send({
@@ -1077,7 +1086,7 @@ router.post('/result',(req, res, next)=>{
 				}
 			);
 
-			requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderId/${req.body.orderId}`).then(function(response) {
+			requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${req.body.orderId}`).then(function(response) {
 				// Get the response body
 				let orderDetails = response.getBody()[0];
 				console.log(response.getBody());

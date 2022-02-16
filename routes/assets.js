@@ -1,10 +1,19 @@
 var express = require('express');
 var router = express.Router();
-
+const constants = require("../constant/constUrl");
 var sql = require("../db.js");
 
 const winston = require('winston');
-var currentDate = new Date().toJSON().slice(0,10)
+var currentDate = new Date().toJSON().slice(0,10);
+
+// Verify token 
+function verifyToken(req, res, next) {
+  if(req.headers.origin===`${constants.frontendUrl}` || req.headers.origin===`${constants.frontendUrl}/admin`){
+    next();
+  } else{
+    return res.status(401).send("Unauthorized request");
+  }
+}
  
 var logger = winston.createLogger({
   level: 'info',
@@ -60,7 +69,7 @@ router.get('/:id', function(req, res) {
     );
 });
 
-router.post("/createAsset", function (req, res) {
+router.post("/createAsset", verifyToken,function (req, res) {
   productImgArr = [];
   var sqlInsert =
     "INSERT INTO `assets`(`assetId`, `availability`) VALUES (?, ?)";
@@ -81,7 +90,7 @@ router.post("/createAsset", function (req, res) {
 });
 
   // Update orders
-router.put("/update/:id", (req, res) => {
+router.put("/update/:id", verifyToken,(req, res) => {
     var id = req.params.id;
     var sqlUpdate = 'UPDATE assets SET availability= ?, startDate=?, EndDate=?, nextStartDate=? WHERE asset_no= ?';
     sql.query(

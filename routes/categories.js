@@ -1,6 +1,6 @@
 var express = require("express");
 var multer = require("multer");
-
+const constants = require("../constant/constUrl");
 var productImgArr = [];
 
 var storage = multer.diskStorage({
@@ -64,72 +64,11 @@ var logger = winston.createLogger({
 
 // Verify token and session valid time
 function verifyToken(req, res, next) {
-  if (!req.headers.authorization) {
+  if(req.headers.origin===`${constants.frontendUrl}` || req.headers.origin===`${constants.frontendUrl}/admin`){
+    next();
+  } else{
     return res.status(401).send("Unauthorized request");
   }
-  let token = req.headers.authorization.split(" ")[1];
-  let reqTime = req.headers.authorization.split(" ")[2];
-
-  const refreshToken = `${token} ${reqTime}`;
-
-  const currentTime = new Date();
-  const reqTimeSplit = reqTime.split(",");
-  const reqCameTime = new Date(
-    reqTimeSplit[0],
-    reqTimeSplit[1],
-    reqTimeSplit[2],
-    reqTimeSplit[3],
-    reqTimeSplit[4],
-    reqTimeSplit[5],
-    reqTimeSplit[6]
-  );
-
-  if (token === "null") {
-    return res.status(401).send("Unauthorized request");
-  }
-
-  sql.query(
-    "select uname, token from admin where token LIKE CONCAT('%', ?, '%')",
-    [token],
-    (err, rows) => {
-      if (!err) {
-        if (rows.length > 0) {
-          const uname = rows[0].uname;
-          const tkn = rows[0].token;
-          const tkn1 = tkn.split(" ")[1];
-          const reqTimeSplit = tkn1.split(",");
-          const dbTime = new Date(
-            reqTimeSplit[0],
-            reqTimeSplit[1],
-            reqTimeSplit[2],
-            reqTimeSplit[3],
-            reqTimeSplit[4],
-            reqTimeSplit[5],
-            reqTimeSplit[6]
-          );
-
-          if (isTimeValid(dbTime, currentTime) >= 60) {
-            return res.status(401).send("Session Expired");
-          } else {
-            sql.query(
-              "update admin set token = ? where uname = ? and token LIKE CONCAT('%', ?, '%')",
-              [refreshToken, uname, token],
-              (err, rows) => {
-                if (!err) {
-                  req.userId = rows;
-                  next();
-                }
-              }
-            );
-          }
-        } else {
-          return res.status(401).send("Unauthorized request");
-        }
-      } else {
-        return res.status(401).send("Unauthorized request");
-      }
-    }
-  );
 }
 
 function isTimeValid(dt2, dt1) {
@@ -414,7 +353,7 @@ router.get("/getAllScrollersNames", (req, res) => {
 });
 
 // Add new city
-router.post('/postCategorySpecs', function(req, res) {
+router.post('/postCategorySpecs',verifyToken, function(req, res) {
   sql.query(
       `INSERT INTO category_specs(cat_id, spec_id, status) VALUES (?, ?, ?)`, [req.body.cat_id, req.body.spec_id, 1],
       (err) => {
@@ -428,7 +367,7 @@ router.post('/postCategorySpecs', function(req, res) {
 });
 
 // Delete a tenure discounts by id
-router.delete('/deleteCategorySpecs/:id', (req, res) => {
+router.delete('/deleteCategorySpecs/:id', verifyToken,(req, res) => {
   sql.query('DELETE FROM category_specs where cs_id = ?', [req.params.id], (err) => {
     if (!err) {
         res.send('Deleted succesfully');
@@ -455,7 +394,7 @@ router.get("/getCategorySpecs", (req, res) => {
 });
 
 // Get all specs by cat id
-router.get("/getSpecsByCatId/:id", (req, res) => {
+router.get("/getSpecsByCatId/:id",verifyToken, (req, res) => {
   sql.query(
     `CALL get_CategorySpecsByCatId(${req.params.id})`,
     (err, rows, fields) => {
@@ -469,7 +408,7 @@ router.get("/getSpecsByCatId/:id", (req, res) => {
 });
 
 // Get all pricing schemes
-router.get("/getAllPricingSchemes", (req, res) => {
+router.get("/getAllPricingSchemes",verifyToken, (req, res) => {
   sql.query(
     `CALL get_allPricingSchemes()`,
     (err, rows, fields) => {
@@ -483,7 +422,7 @@ router.get("/getAllPricingSchemes", (req, res) => {
 });
 
 // Update spec name and image
-router.put("/updateSpecNameAndImage", (req, res) => {
+router.put("/updateSpecNameAndImage",verifyToken,(req, res) => {
 
   var sqlUpdate = "UPDATE `specifications` SET `spec_image`= ? WHERE `spec_id` = ?";
   sql.query(
@@ -503,7 +442,7 @@ router.put("/updateSpecNameAndImage", (req, res) => {
 });
 
 // Update spec name and image
-router.put("/updateAccsImage", (req, res) => {
+router.put("/updateAccsImage",verifyToken, (req, res) => {
 
   var sqlUpdate = "UPDATE `accessories` SET `accessory_image`= ? WHERE `id` = ?";
   sql.query(
@@ -524,7 +463,7 @@ router.put("/updateAccsImage", (req, res) => {
 
 
 // Update specValue
-router.put("/updateSpecValue", (req, res) => {
+router.put("/updateSpecValue", verifyToken,(req, res) => {
 
   var sqlUpdate = "UPDATE `specification_value` SET `spec_value`= ? WHERE `id` = ?";
   sql.query(
@@ -544,7 +483,7 @@ router.put("/updateSpecValue", (req, res) => {
 });
 
 // Update users specValue
-router.put("/updateAccsValue", (req, res) => {
+router.put("/updateAccsValue",verifyToken, (req, res) => {
 
   var sqlUpdate = "UPDATE `accessories` SET `acceesory_name`= ? WHERE `id` = ?";
   sql.query(
@@ -591,7 +530,7 @@ router.delete('/:id', verifyToken, (req, res) => {
 });
 
 // Update a category information
-router.put(":id", (req, res) => {
+router.put(":id", verifyToken,(req, res) => {
   var emp = req.body;
   var id = req.params.id;
 
@@ -621,7 +560,7 @@ router.put(":id", (req, res) => {
   );
 });
 
-router.post("/", function (req, res) {
+router.post("/", verifyToken, function (req, res) {
   var sqlInsert =
     "INSERT INTO `category`(`cat_group`, `cat_name`,`cat_image`,`slug`,`metaTitle`,`metaDescription`, `createdBy`,`modifiedBy`,`createdAt`, `modifiedAt`, `cat_status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   sql.query(
@@ -662,7 +601,7 @@ router.post("/", function (req, res) {
   );
 });
 
-router.post("/addSpecValue", function (req, res) {
+router.post("/addSpecValue", verifyToken,function (req, res) {
   var sqlInsert =
     "INSERT INTO `specification_value`(`spec_id`, `spec_value`, `status`) VALUES (?, ?, ?)";
   sql.query(
