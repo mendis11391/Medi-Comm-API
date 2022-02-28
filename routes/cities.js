@@ -68,6 +68,31 @@ router.get('/:id', function(req, res) {
     );
 });
 
+router.get('/getAllDeliveryPincodes/:id', function(req, res) {
+  logger.info({
+    message: '/getAllDeliveryPincodes by id api started',
+    dateTime: new Date()
+  });
+  sql.query(
+      `CALL get_DeliveryPicodesById(${req.params.id}) `,
+      (err, rows) => {
+        if (!err) {
+          logger.info({
+            message: '/getAllDeliveryPincodes by id fetched successfully',
+            dateTime: new Date()
+          });
+          res.send(rows[0]);
+        } else {
+          logger.info({
+            message: '/getAllDeliveryPincodes by id failed to load',
+            dateTime: new Date()
+          });
+          res.send({ error: 'Error' });
+        }
+      }
+    );
+});
+
 router.get('/taxes/:id', function(req, res) {
   logger.info({
     message: '/taxes/:id api started',

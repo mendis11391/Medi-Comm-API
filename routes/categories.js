@@ -562,7 +562,7 @@ router.put(":id", verifyToken,(req, res) => {
 
 router.post("/", verifyToken, function (req, res) {
   var sqlInsert =
-    "INSERT INTO `category`(`cat_group`, `cat_name`,`cat_image`,`slug`,`metaTitle`,`metaDescription`, `createdBy`,`modifiedBy`,`createdAt`, `modifiedAt`, `cat_status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO `category`(`cat_group`, `cat_name`,`cat_image`,`slug`,`metaTitle`,`metaDescription`, `cat_schema`, `createdBy`,`modifiedBy`,`createdAt`, `modifiedAt`, `cat_status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   sql.query(
     sqlInsert,
     [
@@ -572,6 +572,7 @@ router.post("/", verifyToken, function (req, res) {
       req.body.subCatSlug,
       req.body.subCatMetaTitle,
       req.body.subCatMetaDescription,
+      '',
       1,
       1,
       new Date(),

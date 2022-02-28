@@ -26,11 +26,11 @@ router.get('/', verifyToken,function(req, res) {
       );
 });
 
-// Add new city
+// post user activity
 router.post('/postUserActivity',verifyToken, function(req, res) {
   sql.query(
       `INSERT INTO transactionlog(eventTypeId, sourceIP, customerId, transactionDate, transactionDescription, categoryId, productId, orderId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-       [req.body.eventTypeId, req.body.sourceIP, req.body.customerId, req.body.transactionDate, req.body.transactionDescription, req.body.categoryId,req.body.productId,req.body.orderId],
+       [req.body.eventTypeId, req.body.sourceIP, req.body.customerId, new Date(), req.body.transactionDescription, req.body.categoryId,req.body.productId,req.body.orderId],
       (err) => {
         if (!err) {
           res.send({message: 'User activity Inserted Successfully'});

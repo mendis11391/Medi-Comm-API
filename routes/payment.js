@@ -391,7 +391,7 @@ router.post('/newReturn', verifyToken,function(req, res) {
 	  req.body.shippingAddress,
 	  req.body.orderType,
 	  '1',
-	  req.body.orderStatus,
+	  req.body.paymentStatus,
 	  req.body.deliveryStatus,
 	  req.body.refundStatus,
 	  req.body.createdBy,

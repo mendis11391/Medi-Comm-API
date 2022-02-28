@@ -460,8 +460,8 @@ router.put("/updateOrderItemDeliveryDate/:id", verifyToken,(req, res) => {
   sql.query(
     sqlUpdate,
     [
-      req.body.deliveryDate,
-      req.body.expiryDate,
+      new Date(req.body.deliveryDate),
+      new Date(req.body.expiryDate),
       req.body.renewalTimeline,
       id
     ],
@@ -500,7 +500,7 @@ router.put("/updateOrderItemStatus/:id", verifyToken,(req, res) => {
   );
 });
 
-router.get('/renewals/:id', verifyToken,function(req, res) {
+router.get('/renewals/:id', function(req, res) {
   let orderItem=[];
   let len=0;
   sql.query(
@@ -947,7 +947,7 @@ router.get('/orderDetails2/:id',verifyToken, function(req, res) {
     );
 });
 
-router.get('/orderDetails/:id', verifyToken,function(req, res) {
+router.get('/orderDetails/:id', function(req, res) {
   
   let orders=[];
   let orderAddress=[];
@@ -999,38 +999,38 @@ router.get('/orderDetails/:id', verifyToken,function(req, res) {
                                       }
                                     })
 
-                                  if(forOT[i].delivery_status.includes(4) ){
-                                    delivered.push(1);              
-                                  } else {
-                                    delivered.push(0);
-                                  }
-                                  if(forOT[i].delivery_status.includes(3) ){
-                                    shipped.push(1);              
-                                  } else {
-                                    shipped.push(0);
-                                  }
-                                  if(forOT[i].delivery_status.includes(1) || forOT[i].delivery_status.includes(2) ){
-                                    others.push(1);              
-                                  } else {
-                                    others.push(0);
-                                  }
+                                  // if(forOT[i].delivery_status.includes(4) ){
+                                  //   delivered.push(1);              
+                                  // } else {
+                                  //   delivered.push(0);
+                                  // }
+                                  // if(forOT[i].delivery_status.includes(3) ){
+                                  //   shipped.push(1);              
+                                  // } else {
+                                  //   shipped.push(0);
+                                  // }
+                                  // if(forOT[i].delivery_status.includes(1) || forOT[i].delivery_status.includes(2) ){
+                                  //   others.push(1);              
+                                  // } else {
+                                  //   others.push(0);
+                                  // }
                                 }
 
-                                if(shipped.includes(1) && (others.includes(1) && !delivered.includes(1))){
-                                  ot['deliveryStatus'] = 5;
-                                } else if(shipped.includes(1) && !others.includes(1) && !delivered.includes(1)){
-                                  ot['deliveryStatus'] = 3;
-                                } else if(!shipped.includes(1) && delivered.includes(1) && !others.includes(1) ){
-                                  ot['deliveryStatus'] = 4;
-                                } else if(!shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
-                                  ot['deliveryStatus'] = 5;
-                                } else if(shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
-                                  ot['deliveryStatus'] = 5;
-                                }  else if(shipped.includes(1) && delivered.includes(1) && others.includes(0) ){
-                                  ot['deliveryStatus'] = 5;
-                                } else if(shipped.includes(0) && delivered.includes(1) && others.includes(0)){
-                                  ot['deliveryStatus'] = 4;
-                                }
+                                // if(shipped.includes(1) && (others.includes(1) && !delivered.includes(1))){
+                                //   ot['deliveryStatus'] = 5;
+                                // } else if(shipped.includes(1) && !others.includes(1) && !delivered.includes(1)){
+                                //   ot['deliveryStatus'] = 3;
+                                // } else if(!shipped.includes(1) && delivered.includes(1) && !others.includes(1) ){
+                                //   ot['deliveryStatus'] = 4;
+                                // } else if(!shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
+                                //   ot['deliveryStatus'] = 5;
+                                // } else if(shipped.includes(1) && delivered.includes(1) && others.includes(1) ){
+                                //   ot['deliveryStatus'] = 5;
+                                // }  else if(shipped.includes(1) && delivered.includes(1) && others.includes(0) ){
+                                //   ot['deliveryStatus'] = 5;
+                                // } else if(shipped.includes(0) && delivered.includes(1) && others.includes(0)){
+                                //   ot['deliveryStatus'] = 4;
+                                // }
                                 // var sqlUpdate = 'UPDATE orders SET deliveryStatus= ? WHERE id= ?';
                                 // sql.query(
                                 //   sqlUpdate,
@@ -1101,8 +1101,7 @@ router.get('/getOrderByMyOrderIdAPI/:id', function(req, res) {
     );
 });
 
-router.get('/:id', verifyToken,function(req, res) {
-  
+router.get('/:id', verifyToken,function(req, res) {  
   let orders=[];
   let orderAddress=[];
   let orderItem = [];
