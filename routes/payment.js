@@ -954,6 +954,8 @@ router.post('/result',(req, res, next)=>{
     console.log("merchantHosted result hit");
     console.log(req.body);
 
+	// let cDate=new Date(req.body.txTime).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+	// console.log(cDate);
     const txnTypes = enums.transactionStatusEnum;
     try{
     switch(req.body.txStatus){
@@ -968,7 +970,7 @@ router.post('/result',(req, res, next)=>{
 				req.body.paymentMode,
 				'Cashfree',
 				req.body.txMsg,
-				req.body.txTime
+				new Date()
 				],
 				(err) => {
 				if (!err) {
@@ -1047,7 +1049,7 @@ router.post('/result',(req, res, next)=>{
 				req.body.paymentMode,
 				'Cashfree',
 				req.body.txMsg,
-				req.body.txTime
+				new Date()
 				],
 				(err1) => {
 				if (!err1) {
@@ -1232,7 +1234,7 @@ router.post('/renewalsResult',(req, res, next)=>{
 				req.body.paymentMode,
 				'Cashfree',
 				req.body.txMsg,
-				req.body.txTime
+				new Date()
 				],
 				(err) => {
 				if (!err) {
@@ -1305,7 +1307,7 @@ router.post('/renewalsResult',(req, res, next)=>{
 				req.body.paymentMode,
 				'Cashfree',
 				req.body.txMsg,
-				req.body.txTime
+				new Date()
 				],
 				(err1) => {
 				if (!err1) {
@@ -1473,7 +1475,7 @@ router.post('/RRResult',(req, res, next)=>{
 				req.body.paymentMode,
 				'Cashfree',
 				req.body.txMsg,
-				req.body.txTime
+				new Date()
 				],
 				(err) => {
 				if (!err) {
@@ -1539,7 +1541,7 @@ router.post('/RRResult',(req, res, next)=>{
 				req.body.paymentMode,
 				'Cashfree',
 				req.body.txMsg,
-				req.body.txTime
+				new Date()
 				],
 				(err1) => {
 				if (!err1) {
@@ -1599,7 +1601,16 @@ router.post('/RRResult',(req, res, next)=>{
 });
 
 /*********** End of Cashfree PG for RR *************/
-	
+
+
+router.put("/updateOrderId", verifyToken,(req, res) => {
+    var updateOrder = `UPDATE orders SET order_id = ? where id= ?`;
+	sql.query(updateOrder,
+	[
+		req.body.txnid,
+		req.body.oid,
+	]);
+});
 
 router.post('/', function(req, res){
 	var strdat = '';
