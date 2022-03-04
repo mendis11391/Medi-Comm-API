@@ -1822,4 +1822,36 @@ router.post('/deleteorder', function(req, res) {
   );
 });
 
+router.post('/postManualOrderTransaction', function(req, res) {
+    var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
+	sql.query(sqlInsert,
+		[
+		req.body.transactionNo,
+		req.body.orderId,
+		req.body.orderAmount,
+		2,
+		req.body.paymentMode,
+		'Manual',
+		req.body.txMsg,
+		req.body.tDate
+		],
+		(err) => {
+		if (!err) {
+			logger.info({
+				message: '/postManualOrderTransaction cashfree posted successfully to transaction table',
+				dateTime: new Date()
+			});		
+			res.send({message: 'postManualOrderTransaction Successfully'});	
+		} else {
+			logger.info({
+				message: '/postManualOrderTransaction cashfree failed to post in transaction table',
+				dateTime: new Date()
+			});
+			res.send({message: err});
+		}
+		}
+	);
+});
+
+
 module.exports = router

@@ -427,6 +427,34 @@ router.get('/getAllPaymentStatus', verifyToken,function(req, res) {
     );
 });
 
+//get all payment status 
+router.get('/getAllPaymenttypes', verifyToken,function(req, res) {
+  logger.info({
+    message: 'getAllPaymentStatus api started',
+    dateTime: new Date()
+  });
+  sql.query(
+      `SELECT * FROM payment_type;`,
+      (err, rows) => {
+        if (!err) {
+          logger.info({
+            message: 'getAllPaymentStatus fetched successfully',
+            dateTime: new Date()
+          });
+          res.send(rows);
+        } else {
+          logger.info({
+            message: 'getAllPaymentStatus failed to load',
+            dateTime: new Date()
+          });
+          res.send({ error: 'Error' });
+        }
+
+          
+      }
+    );
+});
+
 router.get('/getAllDeliveryStatus', verifyToken,function(req, res) {
   logger.info({
     message: 'getAllDeliveryStatus api started',

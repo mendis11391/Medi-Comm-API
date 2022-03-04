@@ -4,8 +4,9 @@ const constants = require("../constant/constUrl");
 var sql = require("../db.js");
 
 // Verify token 
+// Verify token 
 function verifyToken(req, res, next) {
-  if(req.headers.origin===`${constants.frontendUrl}` || req.headers.origin===`${constants.frontendUrl}/admin`){
+  if(req.headers.origin.includes(`${constants.frontendUrl}`)){
     next();
   } else{
     return res.status(401).send("Unauthorized request");
