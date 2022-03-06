@@ -1853,5 +1853,66 @@ router.post('/postManualOrderTransaction', function(req, res) {
 	);
 });
 
+router.post('/postManualRenewalOrderTransaction',(req, res, next)=>{
+    console.log("merchantHosted result hit");
+    console.log(req.body);
+	logger.info({
+		message: '/postManualRenewalOrderTransaction api post started',
+		dateTime: new Date()
+	});
+    var invoiceInsert = "INSERT INTO `invoice`(`invoice_id`, `order_id`, `invoice_description`, `status`) VALUES (?,?,?,?)";
+	var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
+	sql.query(sqlInsert,
+		[
+			req.body.transactionNo,
+			req.body.orderId,
+			req.body.orderAmount,
+			2,
+			req.body.paymentMode,
+			'Manual',
+			req.body.txMsg,
+			req.body.tDate
+		],
+		(err1) => {
+		if (!err1) {
+			var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+			sql.query(updateOrder,
+			[
+				req.body.paymentStatus,
+				req.body.orderId,
+			]);
+			
+		} else {
+			res.send({message: err});
+		}
+		}
+	);
+
+	sql.query(invoiceInsert,
+		[
+		'N/A',
+		req.body.orderId,
+		'N/A',
+		1
+		],
+		(err1, results) => {
+			if (!err1) {
+				var invoiceNo = 'IRO/21-22/'+results.insertId;
+				var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
+				sql.query(updateInvoice,
+				[
+					invoiceNo,
+					results.insertId,
+				]);
+				res.send({message: 'Updated Successfully'});
+			} else {
+				res.send({message: err});
+			}
+		}
+	);
+
+    
+});
+
 
 module.exports = router
