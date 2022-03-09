@@ -426,7 +426,7 @@ router.post('/newReturn', verifyToken,function(req, res) {
 			  resProduct.earlyReturnCharges,
 			  JSON.stringify(renewalProduct),
 			  0,
-			  'Delivery awaited',
+			  6,
 			  startDate,
 			  expiryDate,
 			  0,
@@ -1608,8 +1608,15 @@ router.put("/updateOrderId", verifyToken,(req, res) => {
 	sql.query(updateOrder,
 	[
 		req.body.txnid,
-		req.body.oid,
-	]);
+		req.body.oid
+	],
+    (err) => {
+      if (!err) {
+        res.send({message: 'Inserted Successfully'});
+      } else {
+        res.send({message: err});
+      }
+    });
 });
 
 router.post('/', function(req, res){

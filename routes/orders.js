@@ -165,7 +165,7 @@ router.get("/", verifyToken,(req, res) => {
   );
 });
 
-router.get('/orderItemsByorderId/:id', verifyToken,function(req, res) {
+router.get('/orderItemsByorderId/:id', function(req, res) {
   logger.info({
     message: '/orderItemsByorderId/:id api started',
     dateTime: new Date()
@@ -187,8 +187,6 @@ router.get('/orderItemsByorderId/:id', verifyToken,function(req, res) {
           });
           res.send({ error: 'Error' });
         }
-
-        
       }
     );
 });
@@ -377,6 +375,24 @@ router.put("/updateRenewalTimeline/:id",verifyToken, (req, res) => {
       }
     }
   );
+});
+
+router.put("/updateRenewalTimelineByorderItemId/:id",verifyToken, (req, res) => {
+    var sqlUpdate = 'UPDATE order_item SET renewals_timline= ? WHERE order_item_id= ?';
+    sql.query(
+      sqlUpdate,
+      [
+        req.body.renewals_timline,
+        req.params.id
+      ],
+      (err, rows) => {
+        if (!err) {
+          res.send({'message': 'Renewals timline updated for order item'});
+        } else {
+          res.send({ error: err });
+        }
+      }
+    );
 });
 
 //update any order field
@@ -975,7 +991,7 @@ router.get('/orderDetails2/:id',verifyToken, function(req, res) {
     );
 });
 
-router.get('/orderDetails/:id', function(req, res) {
+router.get('/orderDetails/:id', verifyToken,function(req, res) {
   
   let orders=[];
   let orderAddress=[];

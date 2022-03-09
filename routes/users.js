@@ -50,7 +50,7 @@ router.get('/getCustomerAddressById/:id',verifyToken, function(req, res) {
     );
 });
 
-router.get('/getCartByCustomerId/:id',verifyToken, function(req, res) {
+router.get('/getCartByCustomerId/:id', verifyToken,function(req, res) {
   let cart=[];
   let len=0;
   sql.query(
@@ -132,6 +132,44 @@ router.put("/updateBasicUserDetails/:id", verifyToken,(req, res) => {
   );
 });
 
+// Update user firstName, lastName, and email
+router.put("/updateUserDetail/:id", verifyToken,(req, res) => {
+  var sqlUpdate = `UPDATE customer SET ${req.body.fieldName}= ? WHERE customer_id = ?`;
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.value,
+      req.params.id
+    ],
+    (err) => {
+      if (!err) {
+        res.send({'message': 'user details updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update user firstName, lastName, and email
+router.put("/updateUserAddressFeild/:id", verifyToken,(req, res) => {
+  var sqlUpdate = `UPDATE address SET ${req.body.fieldName}= ? WHERE address_id = ?`;
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.value,
+      req.params.id
+    ],
+    (err) => {
+      if (!err) {
+        res.send({'message': 'user details updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 // Update address
 router.put("/updateAddress/:id",verifyToken, (req, res) => {
   var sqlUpdate = "UPDATE `address` SET `nickName`= ?, `address_line1`=?, `address_line2`=?,`landmark`=?, `pincode`=?, `address_type`=? WHERE `address_id` = ?";
@@ -188,7 +226,7 @@ router.get('/getCustomerById/:id',verifyToken, function(req, res) {
 });
 
 router.post('/updateorderItem',verifyToken, function(req, res) {
-	var sqlInsert = "INSERT INTO `customer_requests`( `order_item_id`, `order_id`,`renewals_timline`, `request_id`, `requested_date`, `approval_status`, `approval_date`, `request_status`) VALUES (?,?,?,?,?,?,?,?)";  
+	var sqlInsert = "INSERT INTO `customer_requests`( `order_item_id`, `order_id`,`renewals_timline`, `request_id`, `requested_date`, `request_reason`,`request_message`,`approval_status`, `approval_date`, `request_status`) VALUES (?, ?, ?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
       req.body.order_item_id,
@@ -196,6 +234,8 @@ router.post('/updateorderItem',verifyToken, function(req, res) {
       req.body.renewals,
       req.body.request_id,
       req.body.requested_date,
+      req.body.request_reason,
+      req.body.request_message,
       req.body.approval_status,
       req.body.approval_date,
       req.body.request_status,
@@ -267,7 +307,7 @@ router.put("/updateDefaultAddress/:auid", verifyToken,(req, res) => {
 });
 
 /* GET all users */
-router.get('/', verifyToken,function(req, res) {
+router.get('/', function(req, res) {
   sql.query(
       `CALL get_AllCustomers()`,
       (err, rows) => {
