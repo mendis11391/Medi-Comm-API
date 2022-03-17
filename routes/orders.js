@@ -79,7 +79,7 @@ function addOneDay(date){
 }
 
 // Get all orders
-router.get("/", verifyToken,(req, res) => {
+router.get("/", (req, res) => {
   logger.info({
     message: '/all orders api started',
     dateTime: new Date()
@@ -416,7 +416,7 @@ router.put("/updateAnyOrderField/:id", verifyToken,(req, res) => {
 });
 
 //get all payment status 
-router.get('/getAllPaymentStatus', verifyToken,function(req, res) {
+router.get('/getAllPaymentStatus', function(req, res) {
   logger.info({
     message: 'getAllPaymentStatus api started',
     dateTime: new Date()
@@ -444,7 +444,7 @@ router.get('/getAllPaymentStatus', verifyToken,function(req, res) {
 });
 
 //get all payment status 
-router.get('/getAllPaymenttypes', verifyToken,function(req, res) {
+router.get('/getAllPaymenttypes', function(req, res) {
   logger.info({
     message: 'getAllPaymentStatus api started',
     dateTime: new Date()
@@ -754,6 +754,49 @@ router.get('/renewals/:id', function(req, res) {
     );
 });
 
+router.get('/renewals2/:id', function(req, res) {
+  let orderItem=[];
+  let len=0;
+  sql.query(
+      `CALL get_renewalsByCustomerId(${req.params.id}) `,
+      (err, rows) => {
+        if (!err) {
+          if(rows[0].length>0){
+            rows[0].forEach((res)=>{
+              orderItem.push(res);              
+            });
+          } else{
+            res.send(rows[0]);
+          }
+          
+        } else {
+          res.send({ error: err });
+        }
+
+          if(orderItem){
+            orderItem.forEach((ot, i, ele)=>{
+              len++;
+              let forOT = ot;
+              let delivered=[];
+              let shipped=[];
+              let others=[];
+              let currDate=new Date();
+                
+              forOT['renewals_timline'] = JSON.parse(forOT.renewals_timline);          
+              
+              
+  
+  
+              if(len===ele.length){          
+                res.send(orderItem);
+              }
+            });
+          }
+          
+      }
+    );
+});
+
 router.get('/getAllOrderItems', verifyToken,function(req, res) {
   sql.query(
     `CALL get_allOrderItems()`,
@@ -777,7 +820,7 @@ router.get('/customerRequests/:id', verifyToken,function(req, res) {
 });
 
 
-router.get('/orderId/:id', verifyToken,function(req, res) {
+router.get('/orderId/:id', function(req, res) {
   
   let orders=[];
   let orderItem = [];
