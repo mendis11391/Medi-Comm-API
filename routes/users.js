@@ -237,7 +237,7 @@ router.post('/updateorderItem',verifyToken, function(req, res) {
       req.body.request_reason,
       req.body.request_message,
       req.body.approval_status,
-      req.body.approval_date,
+      new Date(),
       req.body.request_status,
     ],
     (err) => {
