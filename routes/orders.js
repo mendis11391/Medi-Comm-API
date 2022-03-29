@@ -797,7 +797,7 @@ router.get('/renewals2/:id', function(req, res) {
     );
 });
 
-router.get('/getAllOrderItems', verifyToken,function(req, res) {
+router.get('/getAllOrderItems', function(req, res) {
   sql.query(
     `CALL get_allOrderItems()`,
     (err, rows, fields) => {

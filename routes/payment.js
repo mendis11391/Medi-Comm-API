@@ -1182,10 +1182,12 @@ router.post('/result',(req, res, next)=>{
 			requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${req.body.orderId}`).then(function(response) {
 				// Get the response body
 				let orderDetails = response.getBody()[0];
-				console.log(response.getBody());
 				requestify.post(`${constants.apiUrl}smsOrder`, {
 					customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
 				});
+				// requestify.post(`${constants.apiUrl}forgotpassword/send`, {
+				// 	email: orderDetails.email
+				// });
 			});
 			
 			
@@ -1215,9 +1217,9 @@ router.post('/result',(req, res, next)=>{
     const derivedSignature = helpers.signatureResponse1(req.body, config.secretKey);
     if(derivedSignature === signature){
         console.log("works");
-        return res.status(200).send({
-            status:req.body.txStatus,
-        })
+        // return res.status(200).send({
+        //     status:req.body.txStatus,
+        // })
     }
     else{
         console.log("signature gotten: ", signature);
