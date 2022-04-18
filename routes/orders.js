@@ -415,6 +415,33 @@ router.put("/updateAnyOrderField/:id", verifyToken,(req, res) => {
   );
 });
 
+router.get('/getAllOrderStatus', function(req, res) {
+  logger.info({
+    message: 'getAllOrderStatus api started',
+    dateTime: new Date()
+  });
+  sql.query(
+      `SELECT * FROM order_status;`,
+      (err, rows) => {
+        if (!err) {
+          logger.info({
+            message: 'getAllOrderStatus fetched successfully',
+            dateTime: new Date()
+          });
+          res.send(rows);
+        } else {
+          logger.info({
+            message: 'getAllOrderStatus failed to load',
+            dateTime: new Date()
+          });
+          res.send({ error: 'Error' });
+        }
+
+          
+      }
+    );
+});
+
 //get all payment status 
 router.get('/getAllPaymentStatus', function(req, res) {
   logger.info({

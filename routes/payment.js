@@ -1096,6 +1096,7 @@ router.post('/result',(req, res, next)=>{
 				   "transID": req.body.orderId,
 				 }
 			}));
+			break;
         }
         case txnTypes.failed: {
             //buisness logic if payment failed
@@ -1115,6 +1116,7 @@ router.post('/result',(req, res, next)=>{
             //     status: "failed",
             //     message: "payment failure",
             // }});
+			break;
         }
         case txnTypes.success: {
             //buisness logic if payments succeed
@@ -1201,6 +1203,7 @@ router.post('/result',(req, res, next)=>{
             //     status: "success",
             //     message: "payment success",
             // }});
+			break;
         }
     }
     }
@@ -1353,6 +1356,7 @@ router.post('/renewalsResult',(req, res, next)=>{
 				   "transID": req.body.orderId,
 				 }
 			}));
+			break;
         }
         case txnTypes.failed: {
             //buisness logic if payment failed
@@ -1371,6 +1375,7 @@ router.post('/renewalsResult',(req, res, next)=>{
 				   "transID": req.body.orderId,
 				 }
 			}));
+			break;
             // return res.status(200).render('result',{data:{
             //     status: "failed",
             //     message: "payment failure",
@@ -1540,6 +1545,7 @@ router.post('/renewalsResult',(req, res, next)=>{
 					"transID": req.body.orderId,
 				}
 			}));
+			break;
             // return res.status(200).render('result',{data:{
             //     status: "success",
             //     message: "payment success",
@@ -1683,6 +1689,7 @@ router.post('/RRResult',(req, res, next)=>{
 				   "transID": req.body.orderId,
 				 }
 			}));
+			break;
         }
         case txnTypes.failed: {
             //buisness logic if payment failed
@@ -1698,6 +1705,7 @@ router.post('/RRResult',(req, res, next)=>{
 				   "transID": req.body.orderId,
 				 }
 			}));
+			break;
             // return res.status(200).render('result',{data:{
             //     status: "failed",
             //     message: "payment failure",
@@ -1755,6 +1763,7 @@ router.post('/RRResult',(req, res, next)=>{
             //     status: "success",
             //     message: "payment success",
             // }});
+			break;
         }
     }
     }
