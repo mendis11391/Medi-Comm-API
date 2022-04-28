@@ -395,6 +395,26 @@ router.put("/updateRenewalTimelineByorderItemId/:id",verifyToken, (req, res) => 
     );
 });
 
+//update any Transaction field
+router.put("/updateAnytransactionField/:id", verifyToken,(req, res) => {
+  var id = req.params.id;
+  var sqlUpdate = `UPDATE transaction SET ${req.body.transactionField}= ? WHERE transaction_id= ?`;
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.transactionValue,
+      id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'Transaction field updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 //update any order field
 router.put("/updateAnyOrderField/:id", verifyToken,(req, res) => {
   var id = req.params.id;
@@ -857,8 +877,7 @@ router.get('/orderId/:id', function(req, res) {
       (err, rows) => {
         if (!err) {
           rows[0].forEach((res)=>{
-            orders.push(res);
-            
+            orders.push(res);            
           });
         } else {
           res.send({ error: err });

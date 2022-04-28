@@ -4,6 +4,23 @@ var crypto = require("crypto");
 const constants = require("../constant/constUrl");
 var sql = require("../db.js");
 
+const winston = require('winston');
+var currentDate = new Date().toJSON().slice(0,10);
+
+var logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'products.js' },
+  transports: [
+    //
+    // - Write all logs with level `error` and below to `error.log`
+    // - Write all logs with level `info` and below to `combined.log`
+    //
+    // new winston.transports.File({ filename: `./bin/logs/error-${currentDate}.log`, level: 'error' }),
+    new winston.transports.File({ filename: `./bin/logs/all-${currentDate}.log` }),
+  ],
+});
+
 // Verify token 
 function verifyToken(req, res, next) {
   if(req.headers.origin===`${constants.frontendUrl}`){
@@ -244,6 +261,10 @@ router.post('/updateorderItem',verifyToken, function(req, res) {
       if (!err) {
         res.send({message: 'Inserted Successfully'});
       } else {
+        logger.info({
+          message: `return or replace request error:${err}`,
+          dateTime: new Date()
+        });
         res.send({message: err});
       }
     }
@@ -709,7 +730,7 @@ router.put("/updatebilladdress/:bauid", verifyToken,(req, res) => {
 });
 
 
-router.post('/kycDetailsSubmit', verifyToken,function(req, res) {
+router.post('/kycDetailsSubmit', function(req, res) {
   
   var aadharImage = req.body.aadharImage;
   var selfieImage = req.body.selfieImage;
@@ -720,25 +741,46 @@ router.post('/kycDetailsSubmit', verifyToken,function(req, res) {
   var rentedEletricityBill = req.body.rentedEletricityBill;
   var retalAgreement = req.body.retalAgreement;
   var anyBill = req.body.anyBill;
+
+  logger.info({
+    message: `aadhaar image. error:${req.body.aadharImage}`,
+    dateTime: new Date()
+  });
+
+  logger.info({
+    message: `Selfie image. error:${req.body.selfieImage}`,
+    dateTime: new Date()
+  });
+
+  logger.info({
+    message: `Electricity bill. error:${req.body.ownElectricitybill}`,
+    dateTime: new Date()
+  });
   
-	var kycMain = "INSERT INTO `kyc_main_table`( `customer_id`, `customer_type`, `comments`, `kyc_status`, `created_at`, `modified_at`, `status`) VALUES (?,?,?,?,?,?,?)";  
+	var kycMain = "INSERT INTO `kyc_main_table`( `customer_id`, `customer_type`, `comments`, `kyc_status`, `editable`, `approved_date`,`expiry_date`,`created_at`, `modified_at`, `status`) VALUES (?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(kycMain,
     [
       req.body.customer_id,
       req.body.customerType,
       '',
-      'Awaiting KYC',
+      'eKYC submitted',
+      0,
+      new Date(),
+      new Date(),
       new Date(),
       new Date(),
       1
     ],
     (err,result) => {
       if (!err) {
-        var kycIndividual = "INSERT INTO `kyc_individual`( `kyc_id`, `alternate_mobile`, `social_link`, `aadhar_no`, `address_type`, `ref1_name`, `ref1_relation`, `ref1_ph`, `ref2_name`, `ref2_relation`, `ref2_ph`, `created_at`, `modified_at`, `status`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+        
+        var kycIndividual = "INSERT INTO `kyc_individual`( `kyc_id`, `alternate_mobile`, `company`, `occupation`, `social_link`, `aadhar_no`, `address_type`, `ref1_name`, `ref1_relation`, `ref1_ph`, `ref2_name`, `ref2_relation`, `ref2_ph`, `created_at`, `modified_at`, `status`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
         sql.query(kycIndividual,
           [
             result.insertId,
             req.body.alternateMobileNo,
+            req.body.company,
+            req.body.occupation,
             req.body.socialLink,
             req.body.aadharNo,
             req.body.addressType,
@@ -751,14 +793,7 @@ router.post('/kycDetailsSubmit', verifyToken,function(req, res) {
             new Date(),
             new Date(),
             1
-          ],
-          (err,result) => {
-            if (!err) {
-              // res.send({message: 'Inserted Successfully'});
-            } else {
-              res.send({message: err});
-            }
-          }
+          ]
         );
 
         var kycImage = "INSERT INTO `kyc_image`( `kyc_id`, `proofId`, `Image`, `created_at`, `modified_at`, `status`) VALUES (?,?,?,?,?,?)";  
@@ -898,13 +933,17 @@ router.post('/kycDetailsSubmit', verifyToken,function(req, res) {
         
         res.send({message: 'Success'});
       } else {
+        logger.info({
+          message: `failed to post products load. error:${err}`,
+          dateTime: new Date()
+        });
         res.send({message: err});
       }
     }
   );
 });
 
-router.post('/kycCompanyDetailsSubmit', verifyToken,function(req, res) {
+router.post('/kycCompanyDetailsSubmit', function(req, res) {
   
   var gstCertificate = req.body.gstCertificate;
   var moa = req.body.moa;
@@ -913,13 +952,16 @@ router.post('/kycCompanyDetailsSubmit', verifyToken,function(req, res) {
   var companyId = req.body.companyId;
   var selfie2 = req.body.selfie2;
   
-	var kycMain = "INSERT INTO `kyc_main_table`( `customer_id`, `customer_type`, `comments`, `kyc_status`, `created_at`, `modified_at`, `status`) VALUES (?,?,?,?,?,?,?)";  
+	var kycMain = "INSERT INTO `kyc_main_table`( `customer_id`, `customer_type`, `comments`, `kyc_status`, `editable`, `approved_date`,`expiry_date`,`created_at`, `modified_at`, `status`) VALUES (?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(kycMain,
     [
       req.body.customer_id,
       req.body.customerType,
       '',
-      'Awaiting KYC',
+      'Awaiting eKYC',
+      0,
+      new Date(),
+      new Date(),
       new Date(),
       new Date(),
       1
@@ -1065,7 +1107,25 @@ router.post('/kycCompanyDetailsSubmit', verifyToken,function(req, res) {
 /* GET kyc list */
 router.get('/getAllKYC/kycList', function(req, res, next) {
   sql.query(
-    `SELECT * FROM kyc_main_table`,
+    `SELECT
+    KM.id,
+    KM.customer_id,
+    C.firstName,
+    C.lastName,
+    C.mobile,
+    C.email,
+    KM.customer_type,
+    KM.comments,
+    KM.kyc_status,
+    KM.editable,
+    KM.approved_date,
+    KM.expiry_date,
+    KM.created_at,
+    KM.modified_at,
+    KM.status
+FROM
+    kyc_main_table KM
+    LEFT JOIN customer C ON C.customer_id = KM.customer_id`,
     (err, rows) => {
       if (!err) {
         res.send(rows);
@@ -1091,7 +1151,26 @@ router.get('/getAllKYC/kycMainTable/:id', function(req, res, next) {
 
 router.get('/getAllKYC/kycBycustomerId/:id', function(req, res, next) {
   sql.query(
-    `SELECT * FROM kyc_main_table WHERE customer_id=${req.params.id}`,
+    `SELECT
+    KMT.id,
+    C.firstName,
+    C.lastName,
+    C.mobile,
+    C.email,
+    KMT.customer_id,
+    KMT.customer_type,
+    KMT.comments,
+    KMT.kyc_status,
+    KMT.editable,
+    KMT.approved_date,
+    KMT.expiry_date,
+    KMT.created_at,
+    KMT.modified_at,
+    KMT.status
+FROM
+    kyc_main_table KMT
+    LEFT JOIN customer C ON C.customer_id = KMT.customer_id
+    where KMT.customer_id =${req.params.id}`,
     (err, rows) => {
       if (!err) {
         res.send(rows);
@@ -1154,14 +1233,47 @@ router.get('/getAllKYC/kycCompanyDetails/:id', function(req, res, next) {
   );
 });
 
+/* GET kyc details for admin*/
+router.get('/getAllKYC/getKycBycustomerId/:id', function(req, res, next) {
+  sql.query(
+    `CALL getKycByCustomerID(${req.params.id})`,
+    (err, rows) => {
+      if (!err) {
+        res.send(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 // Update KYC status and comments
-router.put("/getAllKYC/updateStatus/:id", verifyToken,(req, res) => {
-  var sqlUpdate = "UPDATE `kyc_main_table` SET `comments`= ?, `kyc_status`=? WHERE `id` = ?";
+router.put("/getAllKYC/updateKYCMaintablefield/:id", verifyToken,(req, res) => {
+  var sqlUpdate = `UPDATE kyc_main_table SET ${req.body.field}= ? WHERE id = ?`;
   sql.query(
     sqlUpdate,
     [
-      req.body.comments,
-      req.body.kyc_status,
+      req.body.value,
+      req.params.id
+    ],
+    (err) => {
+      if (!err) {
+        res.send({'message': 'KYC status updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+router.put("/getAllKYC/updateKYCMaintableexpiryDatefield/:id", (req, res) => {
+  var currentDateTime = new Date();
+  let expiryDate = currentDateTime.setFullYear(currentDateTime.getFullYear() + 1);
+  var sqlUpdate = `UPDATE kyc_main_table SET expiry_date= ? WHERE id = ?`;
+  sql.query(
+    sqlUpdate,
+    [
+      new Date(expiryDate),
       req.params.id
     ],
     (err) => {
@@ -1175,12 +1287,14 @@ router.put("/getAllKYC/updateStatus/:id", verifyToken,(req, res) => {
 });
 
 // Update KYC fields
-router.put("/getAllKYC/kycFields/:id", verifyToken,(req, res) => {
-  var sqlUpdate = "UPDATE kyc_individual SET alternate_mobile= ?, social_link=?, aadhar_no=?, address_type=?, ref1_name=?, ref1_relation=?, ref1_ph=?, ref2_name=?, ref2_relation=?, ref2_ph=? WHERE `id` = ?";
+router.put("/getAllKYC/kycFields/:id", (req, res) => {
+  var sqlUpdate = "UPDATE kyc_individual SET alternate_mobile= ?, company = ?, occupation = ?, social_link=?, aadhar_no=?, address_type=?, ref1_name=?, ref1_relation=?, ref1_ph=?, ref2_name=?, ref2_relation=?, ref2_ph=? WHERE `id` = ?";
   sql.query(
     sqlUpdate,
     [
       req.body.alternateMobileNo,
+      req.body.company,
+      req.body.occupation,
       req.body.socialLink,
       req.body.aadharNo,
       req.body.addressType,
@@ -1203,16 +1317,26 @@ router.put("/getAllKYC/kycFields/:id", verifyToken,(req, res) => {
 });
 
 router.put("/getAllKYC/updatekycDetailsTab/:id", (req, res) => {
-  var sqlUpdate = "UPDATE kyc_individual SET alternate_mobile= ?, social_link=? WHERE kyc_id = ? AND status = 1";
+  var sqlUpdate = "UPDATE kyc_individual SET alternate_mobile= ?, company = ?, occupation = ?, social_link=? WHERE kyc_id = ? AND status = 1";
   sql.query(
     sqlUpdate,
     [
       req.body.alternateMobileNo,
+      req.body.company,
+      req.body.occupation,
       req.body.socialLink,
       req.params.id
     ],
     (err) => {
       if (!err) {
+        var sqlUpdateMainTable = `UPDATE kyc_main_table SET kyc_status= ? WHERE id = ?`;
+        sql.query(
+          sqlUpdateMainTable,
+          [
+            'eKYC submitted',
+            req.params.id
+          ]
+        );
         res.send({'message': 'KYC status updated'});
       } else {
         res.send({ error: err });

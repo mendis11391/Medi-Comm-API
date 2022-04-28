@@ -126,7 +126,7 @@ cron.schedule('0 0 */1 * * *', () => {
   console.log('1 hr');
 });
 
-cron.schedule('* * * * *', () => {  
+cron.schedule('0 0 */1 * *', () => {  
   sql.query(
     `SELECT * FROM orders WHERE orderType_id=2 AND paymentStatus=8;`,
     (err, rows) => {
@@ -315,13 +315,11 @@ cron.schedule('* * * * *', () => {
             
           });
         });        
-      }else {
-        res.send({ error: 'Error' });
       }
   });
 });
 
-cron.schedule('* * * * *', () => {
+cron.schedule('0 0 */1 * *', () => {
   sql.query(
     `SELECT * FROM orders WHERE orderType_id=1 AND paymentStatus=8;`,
     (err, rows) => {
@@ -438,9 +436,7 @@ cron.schedule('* * * * *', () => {
 
           });
         });
-      } else {
-        res.send({ error: 'Error' });
-      }
+      } 
     }
 );
 });
