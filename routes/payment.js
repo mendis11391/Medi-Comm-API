@@ -1187,9 +1187,21 @@ router.post('/result',(req, res, next)=>{
 				requestify.post(`${constants.apiUrl}smsOrder`, {
 					customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
 				});
-				// requestify.post(`${constants.apiUrl}forgotpassword/send`, {
-				// 	email: orderDetails.email
-				// });
+
+				requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/1`).then(function(templateRsponse) {
+					
+					let template = templateRsponse.getBody()[0]
+					requestify.post(`${constants.apiUrl}forgotpassword/send`, {
+						email: orderDetails.email,
+						template: template,
+						orderNo: req.body.orderId,
+						orderDate: orderDetails.createdAt,
+						orderValue: orderDetails.grandTotal,
+						paymentStatus: 'Success',
+						orderType:orderDetails.orderType_id
+					});
+				});
+
 			});
 			
 			
@@ -1451,6 +1463,9 @@ router.post('/renewalsResult',(req, res, next)=>{
 				requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${req.body.orderId}`).then(async function(response) {
 					// Get the response body
 					orderDetails = await response.getBody()[0];	
+					requestify.post(`${constants.apiUrl}smsOrder`, {
+						customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
+					});
 					requestify.get(`${constants.apiUrl}orders/renewals2/${orderDetails.customer_id}`).then(async function(response2) {
 						// Get the response body
 						let renewalDetails = await response2.getBody();
@@ -1520,6 +1535,20 @@ router.post('/renewalsResult',(req, res, next)=>{
 							updateFields(productsArr, prodAll,oid);
 							resolve('cid success');
 							
+						});
+
+						requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/2`).then(function(templateRsponse) {
+					
+							let template = templateRsponse.getBody()[0]
+							requestify.post(`${constants.apiUrl}forgotpassword/send`, {
+								email: orderDetails.email,
+								template: template,
+								orderNo: req.body.orderId,
+								orderDate: orderDetails.createdAt,
+								orderValue: orderDetails.grandTotal,
+								paymentStatus: 'Success',
+								orderType:orderDetails.orderType_id
+							});
 						});
 						
 					});			

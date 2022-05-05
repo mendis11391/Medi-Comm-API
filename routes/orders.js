@@ -418,7 +418,7 @@ router.put("/updateAnytransactionField/:id", verifyToken,(req, res) => {
 //update any order field
 router.put("/updateAnyOrderField/:id", verifyToken,(req, res) => {
   var id = req.params.id;
-  var sqlUpdate = `UPDATE orders SET ${req.body.orderField}= ? WHERE primary_id= ?`;
+  var sqlUpdate = `UPDATE orders SET ${req.body.orderField}= ? WHERE order_id= ?`;
   sql.query(
     sqlUpdate,
     [

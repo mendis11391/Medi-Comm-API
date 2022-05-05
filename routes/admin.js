@@ -122,9 +122,10 @@ router.get('/cashfree/:id',function(req, res) {
       res.send(arr);
     });
 });
-cron.schedule('0 0 */1 * * *', () => {
-  console.log('1 hr');
-});
+
+// cron.schedule('0 0 */3 * * *', () => {
+//   console.log('3 hr');
+// });
 
 cron.schedule('0 0 */1 * *', () => {  
   sql.query(
@@ -465,13 +466,12 @@ function verifyToken(req, res, next) {
   }
 }
 
-function testJob(){
+function renewalReminderJob(){
   var filteredOrders=[];
   var filteredOrderItems=[];
   var order;
   requestify.get(`${constants.apiUrl}orders/getAllOrderItems`).then(function(orderItems) {
     // Get the response body
-    console.log(orderItems.body);
     let orderItemsParse = JSON.parse(orderItems.body);
     order = orderItemsParse.filter(item => item.status==true && item.delivery_status==4 );
     for(let o=0;o<order.length;o++){
@@ -484,19 +484,28 @@ function testJob(){
         if(otParse[p].order_item_id==order[o].order_item_id){
           otParse[p].firstName=order[o].firstName;
           otParse[p].mobile=order[o].mobile;
+          otParse[p].email = order[o].email;
           otParse[p].customer_id = order[o].customer_id;
           otParse[p].order_id=order[o].order_id;
         }          
         filteredOrders.push(otParse[p]);
-        filteredOrderItems = filteredOrders.filter(item=>item.renewed==0);
+        // filteredOrderItems = filteredOrders.filter(item=>item.renewed==0);
       }
-      filteredOrderItems = filteredOrders.filter(item=>item.renewed==0);
+      
+      filteredOrderItems = filteredOrders.filter(item=>item.renewed==0); 
+      filteredOrderItems=filteredOrderItems.filter((v,i,a)=>a.findIndex(v2=>(v2.mobile==v.mobile))==i);  
       let myFromDate = addDays(new Date(), 5);
       filteredOrderItems = filteredOrderItems.filter(
-      m => parseDate(m.startDate) <= new Date(myFromDate)
+        m => parseDate(m.startDate) <= new Date(myFromDate)
       );
-      console.log(filteredOrderItems);
+      
     }
+
+    filteredOrderItems.forEach((mailLoop)=>{
+      requestify.post(`${constants.apiUrl}forgotpassword/renewalReminder`, mailLoop);
+    })
+    
+    console.log(filteredOrderItems);
   });
 }
 
@@ -512,6 +521,10 @@ function parseDate(dateStr) {
   return new Date(year, month, day); 
 }
 
+// cron.schedule('* * * * *', () => {
+//   renewalReminderJob(); 
+// });
+
 
 /* GET all reviews */
 router.get('/', verifyToken,function(req, res) {
@@ -525,6 +538,441 @@ router.get('/', verifyToken,function(req, res) {
           }
         }
     );
+});
+
+// Get all new orders
+router.get("/newOrders", (req, res) => {
+  logger.info({
+    message: '/all orders api started',
+    dateTime: new Date()
+  });
+  let orders=[];
+  let orderAddress=[];
+  let orderItem = [];
+  let len=0;
+  let delivered=[];
+  let shipped=[];
+  let others=[];
+  sql.query(
+    `CALL get_allNewOrders()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/all orders fetched successfully',
+          dateTime: new Date()
+        });
+        rows[0].forEach((resp)=>{
+          orders.push(resp);
+          
+        });
+      } else {
+        logger.info({
+          message: '/all orders failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+      orders.forEach((orders,i,ele) => {
+        sql.query(
+          `CALL get_addressById(${orders.billingAddress})`,
+          (err1, rows1, fields) => {
+            if (!err1) { 
+              sql.query(
+                `CALL get_orderItemByorder(${orders.id})`,
+                (err2, rows2, fields) => {
+                  if (!err2) { 
+                    sql.query(
+                      `CALL get_addressById(${orders.shippingAddress})`,
+                      (err3, rows3, fields) => {
+                        if(!err3){
+                          len++;
+                          orders.orderItem = rows2[0];  
+                          orders.billingAddress = rows1[0];                           
+                          orders.shippingAddress = rows3[0];
+                          orderItem.push(orders); 
+                          if(len===ele.length){
+                            orderItem.forEach((ot, i)=>{
+                              let forOT = ot.orderItem;
+                              for(let i=0;i<forOT.length;i++){
+                                forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
+                                
+                              }
+                            });
+                            if(len===ele.length){
+                            
+                              res.send(orderItem);
+                            }
+                          }
+                        }
+                         
+                      });
+                    
+                    
+                  }
+                }
+              );
+              // orders.address = rows1[0];  
+              // orderAddress.push(orders); 
+              // if(len===ele.length){
+              //   // res.send(orderAddress);
+              // }
+            }
+          }
+        ); 
+
+        
+        
+      });
+    }
+  );
+});
+
+// Get all primary orders
+router.get("/primaryOrders", (req, res) => {
+  logger.info({
+    message: '/all orders api started',
+    dateTime: new Date()
+  });
+  let orders=[];
+  let orderAddress=[];
+  let orderItem = [];
+  let len=0;
+  let delivered=[];
+  let shipped=[];
+  let others=[];
+  sql.query(
+    `CALL get_allPrimaryOrders()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/all orders fetched successfully',
+          dateTime: new Date()
+        });
+        rows[0].forEach((resp)=>{
+          orders.push(resp);
+          
+        });
+      } else {
+        logger.info({
+          message: '/all orders failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+      orders.forEach((orders,i,ele) => {
+        sql.query(
+          `CALL get_addressById(${orders.billingAddress})`,
+          (err1, rows1, fields) => {
+            if (!err1) { 
+              sql.query(
+                `CALL get_orderItemByorder(${orders.id})`,
+                (err2, rows2, fields) => {
+                  if (!err2) { 
+                    sql.query(
+                      `CALL get_addressById(${orders.shippingAddress})`,
+                      (err3, rows3, fields) => {
+                        if(!err3){
+                          len++;
+                          orders.orderItem = rows2[0];  
+                          orders.billingAddress = rows1[0];                           
+                          orders.shippingAddress = rows3[0];
+                          orderItem.push(orders); 
+                          if(len===ele.length){
+                            orderItem.forEach((ot, i)=>{
+                              let forOT = ot.orderItem;
+                              for(let i=0;i<forOT.length;i++){
+                                forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
+                                
+                              }
+                            });
+                            if(len===ele.length){
+                            
+                              res.send(orderItem);
+                            }
+                          }
+                        }
+                         
+                      });
+                    
+                    
+                  }
+                }
+              );
+              // orders.address = rows1[0];  
+              // orderAddress.push(orders); 
+              // if(len===ele.length){
+              //   // res.send(orderAddress);
+              // }
+            }
+          }
+        ); 
+
+        
+        
+      });
+    }
+  );
+});
+
+// Get all Renewal orders
+router.get("/renewalOrders", (req, res) => {
+  logger.info({
+    message: '/all orders api started',
+    dateTime: new Date()
+  });
+  let orders=[];
+  let orderAddress=[];
+  let orderItem = [];
+  let len=0;
+  let delivered=[];
+  let shipped=[];
+  let others=[];
+  sql.query(
+    `CALL get_allRenewalOrders()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/all orders fetched successfully',
+          dateTime: new Date()
+        });
+        rows[0].forEach((resp)=>{
+          orders.push(resp);
+          
+        });
+      } else {
+        logger.info({
+          message: '/all orders failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+      orders.forEach((orders,i,ele) => {
+        sql.query(
+          `CALL get_addressById(${orders.billingAddress})`,
+          (err1, rows1, fields) => {
+            if (!err1) { 
+              sql.query(
+                `CALL get_orderItemByorder(${orders.id})`,
+                (err2, rows2, fields) => {
+                  if (!err2) { 
+                    sql.query(
+                      `CALL get_addressById(${orders.shippingAddress})`,
+                      (err3, rows3, fields) => {
+                        if(!err3){
+                          len++;
+                          orders.orderItem = rows2[0];  
+                          orders.billingAddress = rows1[0];                           
+                          orders.shippingAddress = rows3[0];
+                          orderItem.push(orders); 
+                          if(len===ele.length){
+                            orderItem.forEach((ot, i)=>{
+                              let forOT = ot.orderItem;
+                              for(let i=0;i<forOT.length;i++){
+                                forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
+                                
+                              }
+                            });
+                            if(len===ele.length){
+                            
+                              res.send(orderItem);
+                            }
+                          }
+                        }
+                         
+                      });
+                    
+                    
+                  }
+                }
+              );
+              // orders.address = rows1[0];  
+              // orderAddress.push(orders); 
+              // if(len===ele.length){
+              //   // res.send(orderAddress);
+              // }
+            }
+          }
+        ); 
+
+        
+        
+      });
+    }
+  );
+});
+
+// Get all Replacement orders
+router.get("/replacementOrders", (req, res) => {
+  logger.info({
+    message: '/all replacementOrders api started',
+    dateTime: new Date()
+  });
+  let orders=[];
+  let orderAddress=[];
+  let orderItem = [];
+  let len=0;
+  let delivered=[];
+  let shipped=[];
+  let others=[];
+  sql.query(
+    `CALL get_AllReplacementOrders()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/all replacementOrders fetched successfully',
+          dateTime: new Date()
+        });
+        rows[0].forEach((resp)=>{
+          orders.push(resp);
+          
+        });
+      } else {
+        logger.info({
+          message: '/all replacementOrders failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+      orders.forEach((orders,i,ele) => {
+        sql.query(
+          `CALL get_addressById(${orders.billingAddress})`,
+          (err1, rows1, fields) => {
+            if (!err1) { 
+              sql.query(
+                `CALL get_orderItemByorder(${orders.id})`,
+                (err2, rows2, fields) => {
+                  if (!err2) { 
+                    sql.query(
+                      `CALL get_addressById(${orders.shippingAddress})`,
+                      (err3, rows3, fields) => {
+                        if(!err3){
+                          len++;
+                          orders.orderItem = rows2[0];  
+                          orders.billingAddress = rows1[0];                           
+                          orders.shippingAddress = rows3[0];
+                          orderItem.push(orders); 
+                          if(len===ele.length){
+                            orderItem.forEach((ot, i)=>{
+                              let forOT = ot.orderItem;
+                              for(let i=0;i<forOT.length;i++){
+                                forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
+                                
+                              }
+                            });
+                            if(len===ele.length){
+                            
+                              res.send(orderItem);
+                            }
+                          }
+                        }
+                         
+                      });
+                    
+                    
+                  }
+                }
+              );
+              // orders.address = rows1[0];  
+              // orderAddress.push(orders); 
+              // if(len===ele.length){
+              //   // res.send(orderAddress);
+              // }
+            }
+          }
+        ); 
+
+        
+        
+      });
+    }
+  );
+});
+
+// Get all Return orders
+router.get("/returnOrders", (req, res) => {
+  logger.info({
+    message: '/all orders api started',
+    dateTime: new Date()
+  });
+  let orders=[];
+  let orderAddress=[];
+  let orderItem = [];
+  let len=0;
+  let delivered=[];
+  let shipped=[];
+  let others=[];
+  sql.query(
+    `CALL get_allReturnOrders()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/all orders fetched successfully',
+          dateTime: new Date()
+        });
+        rows[0].forEach((resp)=>{
+          orders.push(resp);
+          
+        });
+      } else {
+        logger.info({
+          message: '/all orders failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+      orders.forEach((orders,i,ele) => {
+        sql.query(
+          `CALL get_addressById(${orders.billingAddress})`,
+          (err1, rows1, fields) => {
+            if (!err1) { 
+              sql.query(
+                `CALL get_orderItemByorder(${orders.id})`,
+                (err2, rows2, fields) => {
+                  if (!err2) { 
+                    sql.query(
+                      `CALL get_addressById(${orders.shippingAddress})`,
+                      (err3, rows3, fields) => {
+                        if(!err3){
+                          len++;
+                          orders.orderItem = rows2[0];  
+                          orders.billingAddress = rows1[0];                           
+                          orders.shippingAddress = rows3[0];
+                          orderItem.push(orders); 
+                          if(len===ele.length){
+                            orderItem.forEach((ot, i)=>{
+                              let forOT = ot.orderItem;
+                              for(let i=0;i<forOT.length;i++){
+                                forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
+                                
+                              }
+                            });
+                            if(len===ele.length){
+                            
+                              res.send(orderItem);
+                            }
+                          }
+                        }
+                         
+                      });
+                    
+                    
+                  }
+                }
+              );
+              // orders.address = rows1[0];  
+              // orderAddress.push(orders); 
+              // if(len===ele.length){
+              //   // res.send(orderAddress);
+              // }
+            }
+          }
+        ); 
+
+        
+        
+      });
+    }
+  );
 });
 
 router.get('/getCustomerRequests', function(req, res) {

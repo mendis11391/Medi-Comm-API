@@ -3,7 +3,7 @@ var router = express.Router();
 var crypto = require("crypto");
 const constants = require("../constant/constUrl");
 var sql = require("../db.js");
-
+var requestify = require('requestify'); 
 const winston = require('winston');
 var currentDate = new Date().toJSON().slice(0,10);
 
@@ -259,6 +259,23 @@ router.post('/updateorderItem',verifyToken, function(req, res) {
     ],
     (err) => {
       if (!err) {
+        let requestType=0;
+        if(req.body.request_id==1){
+          requestType=10
+        } else{
+          requestType=9
+        }
+        requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/${requestType}`).then(function(templateRsponse) {
+					
+          let template = templateRsponse.getBody()[0]
+          requestify.post(`${constants.apiUrl}forgotpassword/rrRequest`, {
+            email: req.body.email,
+            template: template,
+            requestId:req.body.request_id,
+            product:req.body.renewals,
+            requestedDate: req.body.requested_date,
+          });
+        });
         res.send({message: 'Inserted Successfully'});
       } else {
         logger.info({
@@ -930,11 +947,22 @@ router.post('/kycDetailsSubmit', function(req, res) {
           });
         }
         
+        // requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/1`).then(function(templateRsponse) {
+					
+        //   let template = templateRsponse.getBody()[0]
+        //   requestify.post(`${constants.apiUrl}forgotpassword/eKYCMail`, {
+        //     email: req.body.profileEmail,
+        //     template: template,
+        //     // orderNo: req.body.order_id,
+        //     // requestId:req.body.request_id,
+        //     // requestedDate: req.body.requested_date,
+        //   });
+        // });
         
         res.send({message: 'Success'});
       } else {
         logger.info({
-          message: `failed to post products load. error:${err}`,
+          message: `failed to post eKYC individual. error:${err}`,
           dateTime: new Date()
         });
         res.send({message: err});
@@ -1568,5 +1596,19 @@ router.put("/getAllKYC/updatekycReferencesTab/:id", (req, res) => {
     }
   );
 });
+
+router.get('/customerLogs/logs',verifyToken, function(req, res, next) {
+  sql.query(
+    `CALL get_AllCustomerLogs()`,
+    (err, rows) => {
+      if (!err) {
+        res.send(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 
 module.exports = router;

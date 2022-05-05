@@ -45,7 +45,7 @@ function ISTTime(){
 }
 /********************txt local **** */
 router.post('/smsOtp',(req,res)=>{
-  var http = require('http');
+  var http = require('https');
 
   var urlencode = require('urlencode');
   
@@ -104,7 +104,7 @@ router.post('/smsOrder',(req,res)=>{
 		message: '/smsOrder post authjs api started',
 		dateTime: new Date()
 	});
-  var http = require('http');
+  var http = require('https');
 
   var urlencode = require('urlencode');
   
