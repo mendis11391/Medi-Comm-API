@@ -416,7 +416,7 @@ router.put("/updateAnytransactionField/:id", verifyToken,(req, res) => {
 });
 
 //update any order field
-router.put("/updateAnyOrderField/:id", verifyToken,(req, res) => {
+router.put("/updateAnyOrderField/:id", (req, res) => {
   var id = req.params.id;
   var sqlUpdate = `UPDATE orders SET ${req.body.orderField}= ? WHERE order_id= ?`;
   sql.query(
@@ -584,6 +584,26 @@ router.put("/updateOrderItemStatus/:id", verifyToken,(req, res) => {
     (err, rows) => {
       if (!err) {
         res.send({'message': 'status updated for order item'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update status and damage charges in order item
+router.put("/updateAnyOrderItemField/:id", verifyToken,(req, res) => {
+  var id = req.params.id;
+  var sqlUpdate = `UPDATE order_item SET ${req.body.field}= ? WHERE order_item_id= ?`;
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.fieldValue,
+      id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'updateAnyOrderItemField updated for order item'});
       } else {
         res.send({ error: err });
       }
@@ -904,12 +924,10 @@ router.get('/orderId/:id', function(req, res) {
                               orderItem.forEach((ot, i)=>{
                                 let forOT = ot.orderItem;
                                 for(let i=0;i<forOT.length;i++){
-                                  forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
-                                  
+                                  forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);                                  
                                 }
                               });
-                              if(len===ele.length){
-                              
+                              if(len===ele.length){                              
                                 res.send(orderItem);
                               }
                             }
@@ -1234,7 +1252,7 @@ router.get('/getOrderByMyOrderIdAPI/:id', function(req, res) {
     );
 });
 
-router.get('/:id', verifyToken,function(req, res) {  
+router.get('/:id', function(req, res) {  
   let orders=[];
   let orderAddress=[];
   let orderItem = [];

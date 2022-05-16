@@ -540,21 +540,15 @@ router.get('/', verifyToken,function(req, res) {
     );
 });
 
-// Get all new orders
-router.get("/newOrders", (req, res) => {
+// Get all orders
+router.get("/getAllOrders", (req, res) => {
   logger.info({
     message: '/all orders api started',
     dateTime: new Date()
   });
   let orders=[];
-  let orderAddress=[];
-  let orderItem = [];
-  let len=0;
-  let delivered=[];
-  let shipped=[];
-  let others=[];
   sql.query(
-    `CALL get_allNewOrders()`,
+    `CALL get_all_orders()`,
     (err, rows, fields) => {
       if (!err) {
         logger.info({
@@ -565,6 +559,7 @@ router.get("/newOrders", (req, res) => {
           orders.push(resp);
           
         });
+        res.send(rows[0]);
       } else {
         logger.info({
           message: '/all orders failed to load',
@@ -572,57 +567,32 @@ router.get("/newOrders", (req, res) => {
         });
         res.send({ error: err });
       }
-      orders.forEach((orders,i,ele) => {
-        sql.query(
-          `CALL get_addressById(${orders.billingAddress})`,
-          (err1, rows1, fields) => {
-            if (!err1) { 
-              sql.query(
-                `CALL get_orderItemByorder(${orders.id})`,
-                (err2, rows2, fields) => {
-                  if (!err2) { 
-                    sql.query(
-                      `CALL get_addressById(${orders.shippingAddress})`,
-                      (err3, rows3, fields) => {
-                        if(!err3){
-                          len++;
-                          orders.orderItem = rows2[0];  
-                          orders.billingAddress = rows1[0];                           
-                          orders.shippingAddress = rows3[0];
-                          orderItem.push(orders); 
-                          if(len===ele.length){
-                            orderItem.forEach((ot, i)=>{
-                              let forOT = ot.orderItem;
-                              for(let i=0;i<forOT.length;i++){
-                                forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
-                                
-                              }
-                            });
-                            if(len===ele.length){
-                            
-                              res.send(orderItem);
-                            }
-                          }
-                        }
-                         
-                      });
-                    
-                    
-                  }
-                }
-              );
-              // orders.address = rows1[0];  
-              // orderAddress.push(orders); 
-              // if(len===ele.length){
-              //   // res.send(orderAddress);
-              // }
-            }
-          }
-        ); 
+    }
+  );
+});
 
-        
-        
-      });
+// Get all new orders
+router.get("/newOrders", (req, res) => {
+  logger.info({
+    message: '/all orders api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_allNewOrders()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/all orders fetched successfully',
+          dateTime: new Date()
+        });
+        res.send(rows[0]);
+      } else {
+        logger.info({
+          message: '/all orders failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
     }
   );
 });
@@ -633,13 +603,6 @@ router.get("/primaryOrders", (req, res) => {
     message: '/all orders api started',
     dateTime: new Date()
   });
-  let orders=[];
-  let orderAddress=[];
-  let orderItem = [];
-  let len=0;
-  let delivered=[];
-  let shipped=[];
-  let others=[];
   sql.query(
     `CALL get_allPrimaryOrders()`,
     (err, rows, fields) => {
@@ -648,10 +611,7 @@ router.get("/primaryOrders", (req, res) => {
           message: '/all orders fetched successfully',
           dateTime: new Date()
         });
-        rows[0].forEach((resp)=>{
-          orders.push(resp);
-          
-        });
+        res.send(rows[0]);        
       } else {
         logger.info({
           message: '/all orders failed to load',
@@ -659,57 +619,6 @@ router.get("/primaryOrders", (req, res) => {
         });
         res.send({ error: err });
       }
-      orders.forEach((orders,i,ele) => {
-        sql.query(
-          `CALL get_addressById(${orders.billingAddress})`,
-          (err1, rows1, fields) => {
-            if (!err1) { 
-              sql.query(
-                `CALL get_orderItemByorder(${orders.id})`,
-                (err2, rows2, fields) => {
-                  if (!err2) { 
-                    sql.query(
-                      `CALL get_addressById(${orders.shippingAddress})`,
-                      (err3, rows3, fields) => {
-                        if(!err3){
-                          len++;
-                          orders.orderItem = rows2[0];  
-                          orders.billingAddress = rows1[0];                           
-                          orders.shippingAddress = rows3[0];
-                          orderItem.push(orders); 
-                          if(len===ele.length){
-                            orderItem.forEach((ot, i)=>{
-                              let forOT = ot.orderItem;
-                              for(let i=0;i<forOT.length;i++){
-                                forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
-                                
-                              }
-                            });
-                            if(len===ele.length){
-                            
-                              res.send(orderItem);
-                            }
-                          }
-                        }
-                         
-                      });
-                    
-                    
-                  }
-                }
-              );
-              // orders.address = rows1[0];  
-              // orderAddress.push(orders); 
-              // if(len===ele.length){
-              //   // res.send(orderAddress);
-              // }
-            }
-          }
-        ); 
-
-        
-        
-      });
     }
   );
 });
@@ -735,10 +644,7 @@ router.get("/renewalOrders", (req, res) => {
           message: '/all orders fetched successfully',
           dateTime: new Date()
         });
-        rows[0].forEach((resp)=>{
-          orders.push(resp);
-          
-        });
+        res.send(rows[0]);
       } else {
         logger.info({
           message: '/all orders failed to load',
@@ -746,57 +652,6 @@ router.get("/renewalOrders", (req, res) => {
         });
         res.send({ error: err });
       }
-      orders.forEach((orders,i,ele) => {
-        sql.query(
-          `CALL get_addressById(${orders.billingAddress})`,
-          (err1, rows1, fields) => {
-            if (!err1) { 
-              sql.query(
-                `CALL get_orderItemByorder(${orders.id})`,
-                (err2, rows2, fields) => {
-                  if (!err2) { 
-                    sql.query(
-                      `CALL get_addressById(${orders.shippingAddress})`,
-                      (err3, rows3, fields) => {
-                        if(!err3){
-                          len++;
-                          orders.orderItem = rows2[0];  
-                          orders.billingAddress = rows1[0];                           
-                          orders.shippingAddress = rows3[0];
-                          orderItem.push(orders); 
-                          if(len===ele.length){
-                            orderItem.forEach((ot, i)=>{
-                              let forOT = ot.orderItem;
-                              for(let i=0;i<forOT.length;i++){
-                                forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
-                                
-                              }
-                            });
-                            if(len===ele.length){
-                            
-                              res.send(orderItem);
-                            }
-                          }
-                        }
-                         
-                      });
-                    
-                    
-                  }
-                }
-              );
-              // orders.address = rows1[0];  
-              // orderAddress.push(orders); 
-              // if(len===ele.length){
-              //   // res.send(orderAddress);
-              // }
-            }
-          }
-        ); 
-
-        
-        
-      });
     }
   );
 });
@@ -942,12 +797,10 @@ router.get("/returnOrders", (req, res) => {
                             orderItem.forEach((ot, i)=>{
                               let forOT = ot.orderItem;
                               for(let i=0;i<forOT.length;i++){
-                                forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);
-                                
+                                forOT[i]['renewals_timline'] = JSON.parse(forOT[i].renewals_timline);                                
                               }
                             });
-                            if(len===ele.length){
-                            
+                            if(len===ele.length){                            
                               res.send(orderItem);
                             }
                           }

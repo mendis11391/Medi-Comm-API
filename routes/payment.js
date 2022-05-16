@@ -151,7 +151,7 @@ router.get('/',verifyToken, function(req, res) {
 });
 
 /************New code************ */
-router.post('/saveNewOrder',verifyToken, function(req, res) {
+router.post('/saveNewOrder',verifyToken, async function(req, res) {
 	logger.info({
 		message: '/saveNewOrder post orders api started',
 		dateTime: new Date()
@@ -163,6 +163,19 @@ router.post('/saveNewOrder',verifyToken, function(req, res) {
 	orderDateTime=[this.orderDate, this.orderTime];
 	orderdatetime=JSON.stringify(orderDateTime);
 
+	var kycData= await requestify.get(`${constants.apiUrl}users/getAllKYC/kycBycustomerId/${req.body.uid}`);
+	var kycParse = JSON.parse(kycData.body);
+	var kyc = kycParse.filter(item=>item.status==1);
+	var deliveryStatus=1;
+	if(kyc.length>0){
+		if(kyc[0].kyc_status=='eKYC submitted'){
+			deliveryStatus=7;
+		} else if(kyc[0].kyc_status=='Query raised'){
+			deliveryStatus=8;
+		} else if(kyc[0].kyc_status=='eKYC approved'){
+			deliveryStatus=2;
+		}
+	}
 	checkoutPInfo=JSON.parse(req.body.products);
 	let dPI = req.body.damageProtection;
 	checkoutPInfo.forEach((resp) => { //this loop is for expDate and nextStartDate calculation
@@ -230,7 +243,7 @@ router.post('/saveNewOrder',verifyToken, function(req, res) {
 	  req.body.orderType,
 	  '1',
 	  req.body.orderStatus,
-	  1,
+	  deliveryStatus,
 	  req.body.refundStatus,
 	  req.body.createdBy,
 	  req.body.modifiedBy,
@@ -2056,21 +2069,27 @@ router.post('/postManualOrderTransaction', function(req, res) {
     var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
 		[
-		req.body.transactionNo,
-		req.body.orderId,
-		req.body.orderAmount,
-		2,
-		req.body.paymentMode,
-		'Manual',
-		req.body.txMsg,
-		req.body.tDate
+			req.body.transactionNo,
+			req.body.orderId,
+			req.body.orderAmount,
+			req.body.paymentStatus,
+			req.body.paymentMode,
+			'Manual',
+			req.body.txMsg,
+			req.body.tDate
 		],
 		(err) => {
 		if (!err) {
 			logger.info({
 				message: '/postManualOrderTransaction cashfree posted successfully to transaction table',
 				dateTime: new Date()
-			});		
+			});	
+			var updateInvoice = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+			sql.query(updateInvoice,
+			[
+				req.body.paymentStatus,
+				req.body.orderId,
+			]);	
 			res.send({message: 'postManualOrderTransaction Successfully'});	
 		} else {
 			logger.info({
@@ -2149,6 +2168,25 @@ router.put('/updatePaymentStatus',(req, res, next)=>{
 	(err1) => {
 		if (!err1) {
 			res.send({message: 'payment status updated successfully'});
+		} else {
+			res.send({message: err1});
+		}
+	});
+});
+
+router.put('/updateTransaction/:id',(req, res, next)=>{
+	var updateOrder = `UPDATE transaction SET transaction_id=?,order_amount=?,status=?,type=?,transaction_msg=? WHERE id= ${req.params.id}`;
+	sql.query(updateOrder,
+	[
+		req.body.transactionNo,
+		req.body.orderAmount,
+		req.body.paymentStatus,
+		req.body.paymentMode,
+		req.body.txMsg,
+	],
+	(err1) => {
+		if (!err1) {
+			res.send({message: 'transaction status updated successfully'});
 		} else {
 			res.send({message: err1});
 		}

@@ -250,7 +250,7 @@ router.post('/updateorderItem',verifyToken, function(req, res) {
       req.body.order_id,
       req.body.renewals,
       req.body.request_id,
-      req.body.requested_date,
+      new Date(req.body.requested_date),
       req.body.request_reason,
       req.body.request_message,
       req.body.approval_status,
@@ -276,6 +276,52 @@ router.post('/updateorderItem',verifyToken, function(req, res) {
             requestedDate: req.body.requested_date,
           });
         });
+        res.send({message: 'Inserted Successfully'});
+      } else {
+        logger.info({
+          message: `return or replace request error:${err}`,
+          dateTime: new Date()
+        });
+        res.send({message: err});
+      }
+    }
+  );
+});
+
+router.post('/updateorderItem2',verifyToken, function(req, res) {
+	var sqlInsert = "INSERT INTO `customer_requests`( `order_item_id`, `order_id`,`renewals_timline`, `request_id`, `requested_date`, `request_reason`,`request_message`,`approval_status`, `approval_date`, `request_status`) VALUES (?, ?, ?,?,?,?,?,?,?,?)";  
+	sql.query(sqlInsert,
+    [
+      req.body.order_item_id,
+      req.body.order_id,
+      req.body.renewals,
+      req.body.request_id,
+      new Date(req.body.requested_date),
+      req.body.request_reason,
+      req.body.request_message,
+      req.body.approval_status,
+      new Date(),
+      req.body.request_status,
+    ],
+    (err) => {
+      if (!err) {
+        // let requestType=0;
+        // if(req.body.request_id==1){
+        //   requestType=10
+        // } else{
+        //   requestType=9
+        // }
+        // requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/${requestType}`).then(function(templateRsponse) {
+					
+        //   let template = templateRsponse.getBody()[0]
+        //   requestify.post(`${constants.apiUrl}forgotpassword/rrRequest`, {
+        //     email: req.body.email,
+        //     template: template,
+        //     requestId:req.body.request_id,
+        //     product:req.body.renewals,
+        //     requestedDate: req.body.requested_date,
+        //   });
+        // });
         res.send({message: 'Inserted Successfully'});
       } else {
         logger.info({
@@ -947,6 +993,18 @@ router.post('/kycDetailsSubmit', function(req, res) {
           });
         }
         
+        requestify.get(`${constants.apiUrl}orders/${req.body.customer_id}`).then(function(orders) {
+          console.log(orders.getBody()[0]);
+          let allOrders = [];
+          let filteredOrders=[];
+          allOrders=orders.getBody();
+          filteredOrders=allOrders.filter(item=>(item.paymentStatus=='Success' && item.orderType_id==1) && item.deliveryStatus!='4');
+          filteredOrders.forEach((resOrders)=>{
+            requestify.put(`${constants.apiUrl}orders/updateAnyOrderField/${resOrders.order_id}`, {orderField: 'deliveryStatus', orderValue: 7}).then(function(updateOrder) {
+              updateOrder.getBody();
+            });
+          });
+        });
         // requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/1`).then(function(templateRsponse) {
 					
         //   let template = templateRsponse.getBody()[0]
@@ -1386,7 +1444,7 @@ router.put("/getAllKYC/updatekycIdProofTab/:id", (req, res) => {
     ],
     (err) => {
       if (!err) {
-        var updateImage = `UPDATE kyc_image SET status=0 where kyc_id=? AND proofId = 1 OR proofId = 2;`
+        var updateImage = `UPDATE kyc_image SET status=0 where kyc_id=? AND (proofId = 1 OR proofId = 2);`
         sql.query(
           updateImage,
           [
@@ -1449,7 +1507,7 @@ router.put("/getAllKYC/updatekycAddressProofTab/:id", (req, res) => {
     ],
     (err) => {
       if (!err) {
-        var updateImage = `UPDATE kyc_image SET status=0 where kyc_id=? AND proofId = 3 OR proofId = 4 OR proofId = 5 OR proofId = 6 OR proofId = 7 OR proofId = 8 OR proofId = 9;`
+        var updateImage = `UPDATE kyc_image SET status=0 where kyc_id=? AND (proofId = 3 OR proofId = 4 OR proofId = 5 OR proofId = 6 OR proofId = 7 OR proofId = 8 OR proofId = 9);`
         sql.query(
           updateImage,
           [
@@ -1600,6 +1658,19 @@ router.put("/getAllKYC/updatekycReferencesTab/:id", (req, res) => {
 router.get('/customerLogs/logs',verifyToken, function(req, res, next) {
   sql.query(
     `CALL get_AllCustomerLogs()`,
+    (err, rows) => {
+      if (!err) {
+        res.send(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+router.get('/customerLogs/logs/:id',verifyToken, function(req, res, next) {
+  sql.query(
+    `CALL get_LogsByCustomerId(${req.params.id})`,
     (err, rows) => {
       if (!err) {
         res.send(rows[0]);

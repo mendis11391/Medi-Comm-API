@@ -22,7 +22,7 @@ router.post('/send', cors(), (req, res) => {
 
     outputData = outputData.replace("{orderNo}", req.body.orderNo);
     outputData = outputData.replace("{orderValue}", req.body.orderValue);
-    outputData = outputData.replace("{orderDate}", orderDate.getDate() +"-"+orderDate.getMonth()+"-"+orderDate.getFullYear());
+    outputData = outputData.replace("{orderDate}", orderDate.getDate() +"-"+(orderDate.getMonth()+1)+"-"+orderDate.getFullYear());
     outputData = outputData.replace("{paymentStatus}", req.body.paymentStatus);
 
     let transporter = nodemailer.createTransport({
@@ -179,11 +179,11 @@ router.post('/rrRequest', cors(), (req, res) => {
     if(req.body.requestId==1){
         outputData = outputData.replace("{product}", product.prod_name);
         outputData = outputData.replace("{assetId}", product.assetId);
-        outputData = outputData.replace("{requestedDate}", ISTTime.getDate() +"-"+ISTTime.getMonth()+"-"+ISTTime.getFullYear());
+        outputData = outputData.replace("{requestedDate}", ISTTime.getDate() +"-"+(ISTTime.getMonth()+1)+"-"+ISTTime.getFullYear());
     } else{
         outputData = outputData.replace("{product}", product.prod_name);
         outputData = outputData.replace("{assetId}", product.assetId);
-        outputData = outputData.replace("{requestedDate}", ISTTime.getDate() +"-"+ISTTime.getMonth()+"-"+ISTTime.getFullYear());
+        outputData = outputData.replace("{requestedDate}", ISTTime.getDate() +"-"+(ISTTime.getMonth()+1)+"-"+ISTTime.getFullYear());
     }
   
 
