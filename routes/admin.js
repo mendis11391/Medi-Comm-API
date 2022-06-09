@@ -321,6 +321,10 @@ cron.schedule('0 0 */1 * *', () => {
 });
 
 cron.schedule('0 0 */1 * *', () => {
+  logger.info({
+    message: `Primary order job running`,
+    dateTime: new Date()
+  });
   sql.query(
     `SELECT * FROM orders WHERE orderType_id=1 AND paymentStatus=8;`,
     (err, rows) => {
@@ -470,6 +474,15 @@ function renewalReminderJob(){
   var filteredOrders=[];
   var filteredOrderItems=[];
   var order;
+
+  var currentServerDate = new Date();
+
+	var currentOffset = currentServerDate.getTimezoneOffset();
+
+	var ISTOffset = 330;   // IST offset UTC +5:30 
+
+	var ISTTime = new Date(currentServerDate.getTime() + (ISTOffset + currentOffset)*60000);
+
   requestify.get(`${constants.apiUrl}orders/getAllOrderItems`).then(function(orderItems) {
     // Get the response body
     let orderItemsParse = JSON.parse(orderItems.body);
@@ -478,7 +491,7 @@ function renewalReminderJob(){
       let otParse = JSON.parse(order[o].renewals_timline);
       
       requestify.get(`${constants.apiUrl}orders/renewals/${order[o].customer_id}`).then(function(orderItems2) {
-        console.log(orderItems2);
+        // console.log(orderItems2);
       });
       for(let p=0;p<otParse.length;p++){
         if(otParse[p].order_item_id==order[o].order_item_id){
@@ -494,7 +507,7 @@ function renewalReminderJob(){
       
       filteredOrderItems = filteredOrders.filter(item=>item.renewed==0); 
       filteredOrderItems=filteredOrderItems.filter((v,i,a)=>a.findIndex(v2=>(v2.mobile==v.mobile))==i);  
-      let myFromDate = addDays(new Date(), 5);
+      let myFromDate = addDays(ISTTime, 0);
       filteredOrderItems = filteredOrderItems.filter(
         m => parseDate(m.startDate) <= new Date(myFromDate)
       );
@@ -502,10 +515,31 @@ function renewalReminderJob(){
     }
 
     filteredOrderItems.forEach((mailLoop)=>{
-      requestify.post(`${constants.apiUrl}forgotpassword/renewalReminder`, mailLoop);
-    })
+      let template = {
+        "apiKey": constants.whatsappAPIKey,
+        "campaignName": "Renewal Reminder",
+        "destination": mailLoop.mobile,
+        "userName": "IRENTOUT",
+        "source": "Primary order",
+        "media": {
+           "url": "https://irentout.com/assets/images/slider/5.png",
+           "filename": "IROHOME"
+        },
+        "templateParams": [
+          mailLoop.firstName
+        ],
+        "attributes": {
+          "InvoiceNo": "1234"
+        }
+      }
     
-    console.log(filteredOrderItems);
+       
+      if(mailLoop.mobile=="9945344111" || mailLoop.mobile=="8971870126" || mailLoop.mobile=="9663211233"){
+        requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
+        requestify.post(`${constants.apiUrl}forgotpassword/renewalReminder`, mailLoop);
+      }
+    });
+    
   });
 }
 
@@ -521,9 +555,16 @@ function parseDate(dateStr) {
   return new Date(year, month, day); 
 }
 
-// cron.schedule('* * * * *', () => {
-//   renewalReminderJob(); 
-// });
+cron.schedule('0 05 19 * * *', () => {
+  logger.info({
+    message: '/renewalReminderJob api started',
+    dateTime: new Date()
+  });
+  renewalReminderJob(); 
+}, {
+  scheduled: true,
+  timezone: "Asia/Kolkata"
+});
 
 
 /* GET all reviews */

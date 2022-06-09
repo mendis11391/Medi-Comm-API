@@ -356,6 +356,26 @@ router.put("/updatecustomerRequests/:id",verifyToken, (req, res) => {
   );
 });
 
+// Update status and damage charges in order item
+router.put("/updatecustomerRequestsMessage/:id",verifyToken, (req, res) => {
+  var id = req.params.id;
+  var sqlUpdate = 'UPDATE customer_requests SET request_message=? WHERE order_item_id= ?';
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.request_message,
+      id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'status updated for order item'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 
 router.get('/address/:id', verifyToken,function(req, res) {
   sql.query(

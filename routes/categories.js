@@ -192,7 +192,7 @@ router.get("/categoryAndSub", (req, res) => {
 });
 
 // Get all categoris
-router.get("/categoryAndSub/:id", (req, res) => { 
+router.get("/categoryAndSub/:id", verifyToken,(req, res) => { 
   sql.query(
     `CALL get_catByCatGroupId(${JSON.stringify(req.params.id)})`,
     (err, rows, fields) => {

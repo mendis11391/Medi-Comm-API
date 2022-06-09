@@ -43,6 +43,36 @@ function ISTTime(){
   var ISTTime = new Date(currentTime.getTime() + (ISTOffset + currentOffset)*60000);
   return ISTTime;
 }
+
+/********* whatsapp api ***************/
+//sms for place order
+router.post('/waOrderPlaced',(req,res)=>{
+  logger.info({
+		message: '/waOrderPlaced post authjs api started',
+		dateTime: new Date()
+	});
+  let template = {
+    "apiKey": constants.whatsappAPIKey,
+    "campaignName": "Order Successful",
+    "destination": req.body.mobile,
+    "userName": "IRENTOUT",
+    "source": "Primary order",
+    "media": {
+       "url": "https://irentout.com/assets/images/slider/5.png",
+       "filename": "IROHOME"
+    },
+    "templateParams": [
+      req.body.customerName, req.body.orderAmount, req.body.orderId
+    ],
+    "attributes": {
+      "InvoiceNo": "1234"
+    }
+   }
+
+   
+   requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
+  
+});
 /********************txt local **** */
 router.post('/smsOtp',(req,res)=>{
   var http = require('https');

@@ -1201,6 +1201,30 @@ router.post('/result',(req, res, next)=>{
 					customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
 				});
 
+				// requestify.post(`${constants.apiUrl}waOrderPlaced`, {
+				// 	customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId, orderAmount:req.body.orderAmount
+				// });
+
+				let template = {
+					"apiKey": constants.whatsappAPIKey,
+					"campaignName": "Order Successful",
+					"destination": orderDetails.mobile,
+					"userName": "IRENTOUT",
+					"source": "Primary order",
+					"media": {
+					   "url": "https://irentout.com/assets/images/slider/5.png",
+					   "filename": "IROHOME"
+					},
+					"templateParams": [
+						orderDetails.firstName+' '+orderDetails.lastName, req.body.orderAmount, req.body.orderId
+					],
+					"attributes": {
+					  "InvoiceNo": "1234"
+					}
+				}
+
+				requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
+
 				requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/1`).then(function(templateRsponse) {
 					
 					let template = templateRsponse.getBody()[0]
