@@ -526,9 +526,9 @@ router.put("/updateOtp/:cid", verifyToken,(req, res) => {
   );
 });
 /* GET cart details */
-router.get('/cart/:id',verifyToken, function(req, res, next) {
+router.get('/cart/:id',  function(req, res, next) {
   sql.query(
-    `SELECT customer_id, products FROM cart where customer_id = ?`,
+    `SELECT customer_id, products, modifiedAt FROM cart where customer_id = ?`,
     [req.params.id],
     (err, rows) => {
       if (!err) {
@@ -686,11 +686,12 @@ router.put("/wishlist/:id", verifyToken,(req, res) => {
 
 // Update cart
 router.put("/cart/:id", verifyToken,(req, res) => {
-  var sqlUpdate = "UPDATE `cart` SET `products`= ? WHERE `customer_id` = ?";
+  var sqlUpdate = "UPDATE `cart` SET `products`= ?, `modifiedAt`=? WHERE `customer_id` = ?";
   sql.query(
     sqlUpdate,
     [
       req.body.cart,
+      new Date(),
       req.params.id
     ],
     (err, rows) => {
@@ -824,6 +825,7 @@ router.post('/kycDetailsSubmit', function(req, res) {
   var rentedEletricityBill = req.body.rentedEletricityBill;
   var retalAgreement = req.body.retalAgreement;
   var anyBill = req.body.anyBill;
+  var allImages = [];
 
   logger.info({
     message: `aadhaar image. error:${req.body.aadharImage}`,
@@ -882,6 +884,7 @@ router.post('/kycDetailsSubmit', function(req, res) {
         var kycImage = "INSERT INTO `kyc_image`( `kyc_id`, `proofId`, `Image`, `created_at`, `modified_at`, `status`) VALUES (?,?,?,?,?,?)";  
         
         aadharImage.forEach((AIRes)=>{
+          allImages.push(AIRes);
           sql.query(kycImage,
             [
               result.insertId,
@@ -895,6 +898,7 @@ router.post('/kycDetailsSubmit', function(req, res) {
         });
 
         selfieImage.forEach((SIRes)=>{
+          allImages.push(SIRes);
           sql.query(kycImage,
             [
               result.insertId,
@@ -909,6 +913,7 @@ router.post('/kycDetailsSubmit', function(req, res) {
 
         if(pgReceipt.length>0){
           pgReceipt.forEach((PGRes)=>{
+            allImages.push(PGRes);
             sql.query(kycImage,
               [
                 result.insertId,
@@ -925,6 +930,7 @@ router.post('/kycDetailsSubmit', function(req, res) {
 
         if(collageId.length>0){
           collageId.forEach((CIRes)=>{
+            allImages.push(CIRes);
             sql.query(kycImage,
               [
                 result.insertId,
@@ -940,6 +946,7 @@ router.post('/kycDetailsSubmit', function(req, res) {
 
         if(permanentAddressProof.length>0){
           permanentAddressProof.forEach((PARes)=>{
+            allImages.push(PARes);
             sql.query(kycImage,
               [
                 result.insertId,
@@ -955,6 +962,7 @@ router.post('/kycDetailsSubmit', function(req, res) {
         
         if(ownElectricitybill.length>0){
           ownElectricitybill.forEach((OEBRes)=>{
+            allImages.push(OEBRes);
             sql.query(kycImage,
               [
                 result.insertId,
@@ -970,6 +978,7 @@ router.post('/kycDetailsSubmit', function(req, res) {
 
         if(rentedEletricityBill.length>0){
           rentedEletricityBill.forEach((REBRes)=>{
+            allImages.push(REBRes);
             sql.query(kycImage,
               [
                 result.insertId,
@@ -985,6 +994,7 @@ router.post('/kycDetailsSubmit', function(req, res) {
         
         if(retalAgreement.length>0){
           retalAgreement.forEach((RARes)=>{
+            allImages.push(RARes);
             sql.query(kycImage,
               [
                 result.insertId,
@@ -1000,6 +1010,7 @@ router.post('/kycDetailsSubmit', function(req, res) {
         
         if(anyBill.length>0){
           anyBill.forEach((ABRes)=>{
+            allImages.push(ABRes);
             sql.query(kycImage,
               [
                 result.insertId,
@@ -1024,6 +1035,11 @@ router.post('/kycDetailsSubmit', function(req, res) {
               updateOrder.getBody();
             });
           });
+        });
+
+        requestify.post(`${constants.apiUrl}forgotpassword/eKYCSubmitMail`, {
+          allImages:allImages,
+          kycDetails:req.body
         });
         // requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/1`).then(function(templateRsponse) {
 					
@@ -1364,8 +1380,16 @@ router.put("/getAllKYC/updateKYCMaintablefield/:id", verifyToken,(req, res) => {
     ],
     (err) => {
       if (!err) {
+        logger.info({
+          message: `/updateKYCMaintablefield: ${req}`,
+          dateTime: new Date()
+        });
         res.send({'message': 'KYC status updated'});
       } else {
+        logger.info({
+          message: `/updateKYCMaintablefield: ${err}`,
+          dateTime: new Date()
+        });
         res.send({ error: err });
       }
     }
@@ -1423,6 +1447,17 @@ router.put("/getAllKYC/kycFields/:id", (req, res) => {
 });
 
 router.put("/getAllKYC/updatekycDetailsTab/:id", (req, res) => {
+  var aadharImage = req.body.aadharImage;
+  var selfieImage = req.body.selfieImage;
+  var pgReceipt = req.body.pgReceipt;
+  var collageId = req.body.collageId;
+  var permanentAddressProof = req.body.permanentAddressProof;
+  var ownElectricitybill = req.body.ownElectricitybill;
+  var rentedEletricityBill = req.body.rentedEletricityBill;
+  var retalAgreement = req.body.retalAgreement;
+  var anyBill = req.body.anyBill;
+  var allImages = [];
+
   var sqlUpdate = "UPDATE kyc_individual SET alternate_mobile= ?, company = ?, occupation = ?, social_link=? WHERE kyc_id = ? AND status = 1";
   sql.query(
     sqlUpdate,
@@ -1443,6 +1478,63 @@ router.put("/getAllKYC/updatekycDetailsTab/:id", (req, res) => {
             req.params.id
           ]
         );
+
+
+        aadharImage.forEach((AIRes)=>{
+          allImages.push(AIRes);
+        });
+
+        selfieImage.forEach((SIRes)=>{
+          allImages.push(SIRes);
+        });
+
+        if(pgReceipt.length>0){
+          pgReceipt.forEach((PGRes)=>{
+            allImages.push(PGRes);
+          });
+        }
+        
+
+        if(collageId.length>0){
+          collageId.forEach((CIRes)=>{
+            allImages.push(CIRes);
+          });
+        }
+
+        if(permanentAddressProof.length>0){
+          permanentAddressProof.forEach((PARes)=>{
+            allImages.push(PARes);
+          });
+        }
+        
+        if(ownElectricitybill.length>0){
+          ownElectricitybill.forEach((OEBRes)=>{
+            allImages.push(OEBRes);
+          });
+        }
+
+        if(rentedEletricityBill.length>0){
+          rentedEletricityBill.forEach((REBRes)=>{
+            allImages.push(REBRes);
+          });
+        }
+        
+        if(retalAgreement.length>0){
+          retalAgreement.forEach((RARes)=>{
+            allImages.push(RARes);
+          });
+        }
+        
+        if(anyBill.length>0){
+          anyBill.forEach((ABRes)=>{
+            allImages.push(ABRes);            
+          });
+        }
+
+        requestify.post(`${constants.apiUrl}forgotpassword/eKYCSubmitMail`, {
+          allImages:allImages,
+          kycDetails:req.body
+        });
         res.send({'message': 'KYC status updated'});
       } else {
         res.send({ error: err });

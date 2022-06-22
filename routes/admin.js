@@ -127,7 +127,7 @@ router.get('/cashfree/:id',function(req, res) {
 //   console.log('3 hr');
 // });
 
-cron.schedule('0 0 */1 * *', () => {  
+cron.schedule('0 0 */1 * * *', () => {  
   sql.query(
     `SELECT * FROM orders WHERE orderType_id=2 AND paymentStatus=8;`,
     (err, rows) => {
@@ -320,7 +320,7 @@ cron.schedule('0 0 */1 * *', () => {
   });
 });
 
-cron.schedule('0 0 */1 * *', () => {
+cron.schedule('0 0 */1 * * *', () => {
   logger.info({
     message: `Primary order job running`,
     dateTime: new Date()
@@ -368,67 +368,87 @@ cron.schedule('0 0 */1 * *', () => {
                   dateTime: new Date()
                 });
                 var transactionData = successOrder[0];
-
-                var invoiceInsert = "INSERT INTO `invoice`(`invoice_id`, `order_id`, `invoice_description`, `status`) VALUES (?,?,?,?)";
-                var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
-                sql.query(sqlInsert,
-                  [
-                  transactionData.cf_payment_id,
-                  orders.order_id,
-                  transactionData.payment_amount,
-                  1,
-                  transactionData.payment_group,
-                  'Cashfree',
-                  transactionData.payment_message,
-                  new Date()
-                  ],
-                  (err1) => {
-                    if (!err1) {
-                      var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
-                      sql.query(updateOrder,
-                      [
-                        1,
-                        orders.order_id,
-                      ]);
+                
+                sql.query(
+                  `SELECT * FROM transaction WHERE transaction_id=${transactionData.cf_payment_id}`,
+                  (errTransaction, transactionRows) => {
+                    if (!errTransaction) {
+                      console.log(transactionRows);
+                      if(transactionRows.length==0){
+                        var invoiceInsert = "INSERT INTO `invoice`(`invoice_id`, `order_id`, `invoice_description`, `status`) VALUES (?,?,?,?)";
+                        var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
+                        sql.query(sqlInsert,
+                          [
+                          transactionData.cf_payment_id,
+                          orders.order_id,
+                          transactionData.payment_amount,
+                          1,
+                          transactionData.payment_group,
+                          'Cashfree',
+                          transactionData.payment_message,
+                          new Date()
+                          ],
+                          (err1) => {
+                            if (!err1) {
+                              var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+                              sql.query(updateOrder,
+                              [
+                                1,
+                                orders.order_id,
+                              ]);
+                            } else {
+                              res.send({message: err});
+                            }
+                          }
+                        );
+  
+                        
+                        sql.query(invoiceInsert,
+                          [
+                          'N/A',
+                          orders.order_id,
+                          'N/A',
+                          1
+                          ],
+                          (err1, results) => {
+                          if (!err1) {
+                            var invoiceNo = 'IRO/21-22/'+results.insertId;
+                            var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
+                            sql.query(updateInvoice,
+                            [
+                              invoiceNo,
+                              results.insertId,
+                            ]);
+                          } else {
+                            res.send({message: err});
+                          }
+                          }
+                        );
+  
+                        requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${orders.order_id}`).then(function(response) {
+                          // Get the response body
+                          let orderDetails = response.getBody()[0];
+                          requestify.post(`${constants.apiUrl}smsOrder`, {
+                            customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:orders.order_id
+                          });
+                          // requestify.post(`${constants.apiUrl}forgotpassword/send`, {
+                          // 	email: orderDetails.email
+                          // });
+                        });
+                      } else{
+                        var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+                        sql.query(updateOrder,
+                        [
+                          1,
+                          orders.order_id,
+                        ]);
+                      }
                     } else {
-                      res.send({message: err});
+                      res.send({ error: errTransaction });
                     }
                   }
                 );
-
                 
-                sql.query(invoiceInsert,
-                  [
-                  'N/A',
-                  orders.order_id,
-                  'N/A',
-                  1
-                  ],
-                  (err1, results) => {
-                  if (!err1) {
-                    var invoiceNo = 'IRO/21-22/'+results.insertId;
-                    var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
-                    sql.query(updateInvoice,
-                    [
-                      invoiceNo,
-                      results.insertId,
-                    ]);
-                  } else {
-                    res.send({message: err});
-                  }
-                  }
-                );
-
-                requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${orders.order_id}`).then(function(response) {
-                  // Get the response body
-                  let orderDetails = response.getBody()[0];
-                  requestify.post(`${constants.apiUrl}smsOrder`, {
-                    customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:orders.order_id
-                  });
-                  // requestify.post(`${constants.apiUrl}forgotpassword/send`, {
-                  // 	email: orderDetails.email
-                  // });
-                });
               } else if(cashreeData.length!=0 && cashreeData[0].payment_status!='NOT_ATTEMPTED'){
                 var updateOrder3 = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
                 sql.query(updateOrder3,
@@ -533,13 +553,32 @@ function renewalReminderJob(){
         }
       }
     
-       
-      if(mailLoop.mobile=="9945344111" || mailLoop.mobile=="8971870126" || mailLoop.mobile=="9663211233"){
-        requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
-        requestify.post(`${constants.apiUrl}forgotpassword/renewalReminder`, mailLoop);
-      }
+      logger.info({
+        message: `/renewalReminderJob Sent to : ${mailLoop.mobile}`,
+        dateTime: new Date()
+      });
+      requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
+      requestify.post(`${constants.apiUrl}forgotpassword/renewalReminder`, mailLoop);
     });
     
+  });
+}
+
+function cartJob(){
+  requestify.get(`${constants.apiUrl}users`).then(function(users) {
+    let allUsers=JSON.parse(users.body);
+    console.log(allUsers);
+    allUsers.forEach((usersRes)=>{
+      requestify.get(`${constants.apiUrl}users/cart/${usersRes.customer_id}`).then(function(carRes) {
+        // Get the response body
+        let cart = JSON.parse(carRes.body);
+        cart=cart[0];
+        let cartProduct = JSON.parse(cart.products);
+        if(cartProduct.length>0){
+          console.log('success');
+        } 
+      });
+    });
   });
 }
 
@@ -555,7 +594,7 @@ function parseDate(dateStr) {
   return new Date(year, month, day); 
 }
 
-cron.schedule('0 05 19 * * *', () => {
+cron.schedule('0 45 09 * * *', () => {
   logger.info({
     message: '/renewalReminderJob api started',
     dateTime: new Date()
@@ -568,12 +607,13 @@ cron.schedule('0 05 19 * * *', () => {
 
 
 /* GET all reviews */
-router.get('/', verifyToken,function(req, res) {
+router.get('/', function(req, res) {
     sql.query(
-        `SELECT * FROM admin`,
+        `SELECT * FROM customer`,
         (err, rows) => {
           if (!err) {
             res.send(rows);
+            cartJob();
           } else {
             res.send({ error: 'Error' });
           }

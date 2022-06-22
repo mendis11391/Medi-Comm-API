@@ -337,6 +337,132 @@ router.post('/renewalReminder', cors(), async (req, res) => {
     });
 });
 
+router.post('/eKYCSubmitMail', cors(), (req, res) => {
+    const emailId = 'manjeshwar17@gmail.com';
+    var outputData = `<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+    <head>
+    <!--[if gte mso 9]>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:AllowPNG/>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+    <![endif]-->
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="x-apple-disable-message-reformatting">
+      <!--[if !mso]><!--><meta http-equiv="X-UA-Compatible" content="IE=edge"><!--<![endif]-->
+      <title></title>
+      
+      
+    
+    <!--[if !mso]><!--><link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" rel="stylesheet" type="text/css"><link href="https://fonts.googleapis.com/css?family=Raleway:400,700&display=swap" rel="stylesheet" type="text/css"><!--<![endif]-->
+    <style>
+        table {
+          font-family: arial, sans-serif;
+          border-collapse: collapse;
+          width: 100%;
+        }
+        
+        td, th {
+          border: 1px solid #dddddd;
+          text-align: left;
+          padding: 8px;
+        }
+        
+        tr:nth-child(even) {
+          background-color: #dddddd;
+        }
+        </style>
+    </head>
+    
+    <body class="clean-body u_body" style="margin: 0;padding: 0;-webkit-text-size-adjust: 100%;background-color: #ffffff;color: #000000">
+        <h2>eKYC submitted by Customer#: ${req.body.kycDetails.customer_id}</h2>
+        <table>
+            <tr>
+              <th>Alternate Mobile no.</th>
+              <th>Company</th>
+              <th>occupation</th>
+              <th>socialLink</th>
+              <th>Aadhar No</th>
+              <th>Address Type</th>
+              <th>ref1 Name</th>
+              <th>ref1 Relation</th>
+              <th>ref1 Phone</th>
+              <th>ref2 Name</th>
+              <th>ref2 Relation</th>
+              <th>ref2 Phone</th>
+            </tr>
+            <tr>
+              <td>${req.body.kycDetails.alternateMobileNo}</td>
+              <td>${req.body.kycDetails.company}</td>
+              <td>${req.body.kycDetails.occupation}</td>
+              <td>${req.body.kycDetails.socialLink}</td>
+              <td>${req.body.kycDetails.aadharNo}</td>
+              <td>${req.body.kycDetails.addressType}</td>
+              <td>${req.body.kycDetails.ref1Name}</td>
+              <td>${req.body.kycDetails.ref1Relation}</td>
+              <td>${req.body.kycDetails.ref1Phone}</td>
+              <td>${req.body.kycDetails.ref2Name}</td>
+              <td>${req.body.kycDetails.ref2Relation}</td>
+              <td>${req.body.kycDetails.ref2Phone}</td>
+            </tr>
+          </table>
+    </body>
+    
+    </html>
+    `;  
+    
+
+    var docs=[];
+    var allDocs=[];
+    docs=req.body.allImages;
+
+    docs.forEach(element => {
+        if(element.startsWith('JVB')){
+            allDocs.push({path:'data:application/pdf;base64,'+element});
+        } else{
+            allDocs.push({path:'data:image/jpeg;base64,'+element});
+        }
+    });
+    
+
+
+    let transporter = nodemailer.createTransport({
+        // host: 'mail.irentout.com',
+        service: 'Zoho',
+        host:'smtppro.zoho.com',
+        port: 587, //Note: change to port:465 when website runs in https://irentout.com
+        secure: true, //Note: may be true
+        auth: {
+            user: 'support@irentout.com',
+            pass: 'U4bnUeDDxnve'
+        }
+    });
+  
+    let HelperOptions = {
+        from: '"Irentout" <support@irentout.com>',
+        to: emailId,
+        subject: 'KYC submit',
+        text: 'Hello',
+        html: outputData,
+        attachments: allDocs
+    };
+  
+  
+    transporter.sendMail(HelperOptions, (error, info) => {
+        if (error) {
+            console.log(error);
+            res.send({ message: 'Email sending failed', status: false, err: error });
+        }
+        else{
+            res.send({ message: 'Email sending succedded', status: true })
+        }                        
+    });
+});
+
 /* GET all email templates */
 router.get('/getEmailTemplates', function(req, res) {
     sql.query(
