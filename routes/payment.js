@@ -1225,9 +1225,14 @@ router.post('/result',(req, res, next)=>{
 
 				requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
 
+				logger.info({
+					message: '/result primaryorder: whatsapp message sent',
+					dateTime: new Date()
+				});
+
 				requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/1`).then(function(templateRsponse) {
 					
-					let template = templateRsponse.getBody()[0]
+					let template = templateRsponse.getBody()[0];
 					requestify.post(`${constants.apiUrl}forgotpassword/send`, {
 						email: orderDetails.email,
 						template: template,

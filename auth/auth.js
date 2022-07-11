@@ -431,9 +431,10 @@ router.post("/login", verifyToken,(req, res) => {
           sql.query(
             updateTokenQuery,
             [token, req.body.userName, adpass],
-            (err, rows) => {
+            (err, rows2) => {
               if (!err) {
-                res.send({ token: NoDtToken, authenticated: true});
+                console.log(rows[0]);
+                res.send({ token: NoDtToken, authenticated: true, login_type:rows[0].login_type});
               }
             }
           );
@@ -717,8 +718,8 @@ router.post('/userdetails', verifyToken,(req, res) => {
 });
 
 router.post('/admindetails', verifyToken,(req, res) => {
-  let getDetails = `SELECT customer_id, firstName FROM customer WHERE token = ? AND login_type= ?`;
-  sql.query(getDetails, [req.body.token, 'admin'], (err, rows) => {
+  let getDetails = `SELECT customer_id, firstName, login_type FROM customer WHERE token = ?`;
+  sql.query(getDetails, [req.body.token], (err, rows) => {
     if (!err) {
       if (rows.length > 0) {
        res.send({'data': rows, authenticated: true});
