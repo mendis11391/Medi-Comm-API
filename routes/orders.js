@@ -591,6 +591,111 @@ router.put("/updateOrderItemStatus/:id", verifyToken,(req, res) => {
   );
 });
 
+router.get('/fixRenewalsIssue', function(req, res) {
+  let orderItem=[];
+  let len=0;
+  logger.info({
+    message: 'Get fixRenewalsIssue',
+    dateTime: new Date()
+  });
+  sql.query(
+      `CALL get_AllActiveRenewals() `,
+      (err, rows) => {
+        if (!err) {
+          orderItem=rows[0]; 
+        } else {
+          res.send({ error: err });
+        }
+
+          if(orderItem){
+            orderItem.forEach((ot, i, ele)=>{
+              len++;
+              let forOT = ot;
+              let currDate=new Date();
+                
+              forOT['renewals_timline'] = JSON.parse(forOT.renewals_timline);
+              // forOT['renewals_timline'] .forEach((resp)=>{              
+              //   resp['indexs']=Math.floor((Math.random() * 9999) + 1);
+              //   resp.order_item_id = forOT.order_item_id                     
+                
+              // });            
+              
+              let cid = forOT.renewals_timline;
+              let lastIndexedItem = cid[cid.length-1];
+              let ucid = {};
+              for(let key in lastIndexedItem){
+                ucid[key] = lastIndexedItem[key];
+              }
+              if(lastIndexedItem.renewed==4 || lastIndexedItem.renewed==1){
+                logger.info({
+                  message: 'Active renewals:'+ JSON.stringify(lastIndexedItem),
+                  dateTime: new Date()
+                });
+                let ed = lastIndexedItem.nextStartDate;
+                let dateParts = ed.split("/");
+    
+                // month is 0-based, that's why we need dataParts[1] - 1
+                let dateObject = new Date(+dateParts[2], dateParts[1]-1, +dateParts[0]);	
+                let dd= dateObject.getDate();
+                let mm=dateObject.getMonth();
+                let yy=dateObject.getFullYear();
+    
+                let db = mm+1+'/'+dd+'/'+yy;
+                let expiryDate= new Date(db);
+                let Days=new Date(yy, mm+2, 0).getDate();
+    
+                if(Days<dd){
+                  newED = new Date(yy, mm+1, Days);              
+                  ned  = new Date(yy, mm+1, Days);
+                }else{					
+                  newED = new Date(yy, mm+1, dd-1);
+                  ned = new Date(yy, mm+1, dd-1);              
+                }
+                ned.setDate(ned.getDate() + 1);
+                  
+                let sd = lastIndexedItem.startDate;
+                let sdateParts = sd.split("/");
+    
+                // month is 0-based, that's why we need dataParts[1] - 1
+                let sDateObject = new Date(+sdateParts[2], sdateParts[1]-1, +sdateParts[0]);	
+                let sdd= sDateObject.getDate();
+                let smm=sDateObject.getMonth();
+                let syy=sDateObject.getFullYear();
+    
+                let sdb = smm+1+'/'+sdd+'/'+syy;
+                let startDate= new Date(sdb);
+
+                lastIndexedItem.overdew=1;
+                  // row['overdue']=1;
+                  ucid.renewed=0;
+                  ucid.startDate=lastIndexedItem.nextStartDate;
+                  ucid.expiryDate=ISTDate(newED);
+                  ucid.nextStartDate=ISTDate(ned);
+                  ucid.billPeriod = ucid.startDate+'-'+ucid.expiryDate
+                  ucid.overdew=0;
+                  ucid.ordered=0;
+                  forOT['renewals_timline'].push(ucid);
+                  var sqlUpdate = 'UPDATE order_item SET renewals_timline= ? WHERE order_item_id= ?';
+                  sql.query(
+                    sqlUpdate,
+                    [
+                      JSON.stringify(forOT['renewals_timline']),
+                      forOT['order_item_id']
+                    ]
+                  );
+              }
+               
+  
+              if(len===ele.length){          
+                res.send(orderItem);
+              }
+            });
+          }
+          
+      }
+    );
+});
+
 // Update status and damage charges in order item
 router.put("/updateAnyOrderItemField/:id", verifyToken,(req, res) => {
   var id = req.params.id;
@@ -614,6 +719,10 @@ router.put("/updateAnyOrderItemField/:id", verifyToken,(req, res) => {
 router.get('/renewals/:id', function(req, res) {
   let orderItem=[];
   let len=0;
+  logger.info({
+    message: 'Get renewals by customer#'+req.params.id,
+    dateTime: new Date()
+  });
   sql.query(
       `CALL get_renewalsByCustomerId(${req.params.id}) `,
       (err, rows) => {
@@ -625,8 +734,15 @@ router.get('/renewals/:id', function(req, res) {
           } else{
             res.send(rows[0]);
           }
-          
+          logger.info({
+            message: 'Get renewals by customer#'+req.params.id+'SP called successfully',
+            dateTime: new Date()
+          });
         } else {
+          logger.info({
+            message: 'Get renewals by customer#'+req.params.id+'SP Failed',
+            dateTime: new Date()
+          });
           res.send({ error: err });
         }
 
@@ -720,6 +836,10 @@ router.get('/renewals/:id', function(req, res) {
                 let startDate= new Date(sdb);
     
                 let daysInDiff=dateDiffInDays(startDate, currDate); 
+                logger.info({
+                  message: 'Get renewals by customer#: '+req.params.id+' renewals_timline '+daysInDiff+ ','+JSON.stringify(cid[i]),
+                  dateTime: new Date()
+                });
                 if(daysInDiff>=0 && (cid[i].renewed!=4 && cid[i].overdew!=1)){
                   if(cid[i].ordered==1){
                     cid[i].renewed=1
