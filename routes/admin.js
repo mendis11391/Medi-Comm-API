@@ -154,6 +154,10 @@ function primaryOrderJob(){
           
             request(options, function (error, response, body) {
               // if (error) throw new Error(error);
+              logger.info({
+                message: `Primary order job Data:${body}`,
+                dateTime: new Date()
+              });
               var data2 = JSON.parse(body);
               if(data2.code=='order_id_not_found'){
                 var updateOrder2 = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
@@ -274,202 +278,224 @@ function primaryOrderJob(){
 //   console.log('3 hr');
 // });
 
-// cron.schedule('0 0 */1 * * *', () => {  
-//   sql.query(
-//     `SELECT * FROM orders WHERE orderType_id=2 AND paymentStatus=8;`,
-//     (err, rows) => {
-//       if (!err) {
-//         var initiatedOrders = rows;
-//         initiatedOrders.forEach((orders)=>{
-//           logger.info({
-//             message: `Renewal order job running- order#: ${orders.order_id}`,
-//             dateTime: new Date()
-//           });
-//           var options = {
-//             method: 'GET',
-//             url: `${config.CashfreeAPI}/orders/${orders.order_id}/payments`,
-//             headers: {
-//               Accept: 'application/json',
-//               'x-client-id': config.appId,
-//               'x-client-secret': config.secretKey,
-//               'x-api-version': '2022-01-01'
-//             }
-//           };
-//           request(options, function (error, response, body) {
-//             // if (error) throw new Error(error);
-//             var data2 = JSON.parse(body);
-//             if(data2.code=='order_id_not_found'){
-//               var updateOrder2 = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
-//               sql.query(updateOrder2,
-//               [
-//                 11,
-//                 orders.order_id,
-//               ]);
-//             } else{
-//               let orderStatus = [];        
-//               orderStatus = JSON.parse(body);
-//               let items = orderStatus.filter(item=>item.payment_status=='SUCCESS');
-//               if(items.length>0){
-//                 logger.info({
-//                   message: `Renewal order success job executed- order#: ${orders.order_id}`,
-//                   dateTime: new Date()
-//                 });
-//                 var itemBody = items[0];
-//                 var invoiceInsert = "INSERT INTO `invoice`(`invoice_id`, `order_id`, `invoice_description`, `status`) VALUES (?,?,?,?)";
-//                 var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
-//                 sql.query(sqlInsert,
-//                   [
-//                     itemBody.cf_payment_id,
-//                     orders.order_id,
-//                     itemBody.order_amount,
-//                     1,
-//                     itemBody.payment_group,
-//                     'Cashfree',
-//                     itemBody.payment_message,
-//                     new Date()
-//                   ],
-//                   (err1) => {
-//                   if (!err1) {
-//                     var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
-//                     sql.query(updateOrder,
-//                     [
-//                       1,
-//                       orders.order_id,
-//                     ]);
-//                   } else {
-//                     res.send({message: err});
-//                   }
-//                   }
-//                 );
-          
-//                 sql.query(invoiceInsert,
-//                   [
-//                   'N/A',
-//                   orders.order_id,
-//                   'N/A',
-//                   1
-//                   ],
-//                   (err1, results) => {
-//                   if (!err1) {
-//                     var invoiceNo = 'IRO/21-22/'+results.insertId;
-//                     var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
-//                     sql.query(updateInvoice,
-//                     [
-//                       invoiceNo,
-//                       results.insertId,
-//                     ]);
-//                   } else {
-//                     res.send({message: err});
-//                   }
-//                   }
-//                 );
-          
-//                 var orderDetails;
-//                 var products;
-//                 var prodAll=[];
-//                 var AllProductsOf=[];
-//                 let cid = new Promise((resolve, reject) => {				
-//                   requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${orders.order_id}`).then(async function(response) {
-//                     // Get the response body
-//                     orderDetails = await response.getBody()[0];	
-//                     requestify.get(`${constants.apiUrl}orders/renewals2/${orderDetails.customer_id}`).then(async function(response2) {
-//                       // Get the response body
-//                       let renewalDetails = await response2.getBody();
-//                       let successOrders=renewalDetails.filter((successOrdersRes)=>{
-//                         // if(successOrders.overdue==1){
-//                         //   this.overdue=1;
-//                         // }
-//                       return successOrdersRes.paymentStatus=='1' && (successOrdersRes.orderType_id==1 || successOrdersRes.orderType_id==3);
-//                       });
-//                       let orders=await successOrders.reverse();
-//                       orders.forEach((res2)=>{
-//                         products=res2.renewals_timline;    
-//                         for(let p=0;p<products.length;p++){
-//                         let ucid={ 
-//                           indexs:products[p].indexs,
-//                           id: products[p].id,
-//                           prod_name:products[p].prod_name,
-//                           prod_price:products[p].prod_price,
-//                           prod_img:products[p].prod_img,
-//                           delvdate: products[p].delvdate,
-//                           actualStartDate:products[p].actualStartDate,
-//                           qty: products[p].qty, 
-//                           price: products[p].price, 
-//                           tenure: products[p].tenure,
-//                           primaryOrderNo:products[p].primaryOrderNo, 
-//                           currentOrderNo: products[p].currentOrderNo,
-//                           renewed:products[p].renewed,
-//                           startDate:products[p].startDate,
-//                           expiryDate:products[p].expiryDate,
-//                           nextStartDate:products[p].nextStartDate,
-//                           overdew:products[p].overdew,
-//                           ordered:products[p].ordered,
-//                           assetId:products[p].assetId,
-//                           deliveryStatus:'renewed',
-//                           dp:products[p].dp,
-//                           deliveryAssigned:products[p].deliveryAssigned,
-//                           replacement:products[p].replacement,
-//                           returnDate:products[p].returnDate,
-//                           billPeriod:products[p].billPeriod,
-//                           billAmount:products[p].billAmount,
-//                           damageCharges:products[p].damageCharges,
-//                           order_item_id:products[p].order_item_id,
-//                           p2Rent:products[p].p2Rent,
-//                           securityDepositDiff:products[p].securityDepositDiff,
-//                           returnedProduct: products[p].returnedProduct,
-//                           tenureBasePrice:products[p].tenureBasePrice,
-//                           tenure_id:products[p].tenure_id
-//                         }
-//                         AllProductsOf.push(ucid);
-//                         }  
-//                       });
-                    
-//                       for(let i=0;i<AllProductsOf.length;i++){
-//                         prodAll.push(AllProductsOf[i]);
-//                       }
-//                       requestify.get(`${constants.apiUrl}orders/orderId/${orderDetails.id}`).then(async function(response3) {
-          
-//                         let productsArr =[];
-//                         let prodLoop = await response3.getBody()[0].orderItem;
-//                         prodLoop.forEach((prodRenewals)=>{
-//                           productsArr.push(prodRenewals.renewals_timline[0]);
-//                         });
-//                         let oid = await response3.getBody()[0].order_id;
-//                         updateFields(productsArr, prodAll,oid);
-//                         resolve('cid success');
+function renewalOrderJob(){
+  sql.query(
+    `SELECT * FROM orders WHERE orderType_id=2 AND paymentStatus=8;`,
+    (err, rows) => {
+      if (!err) {
+        var initiatedOrders = rows;
+        initiatedOrders.forEach((orders)=>{
+          logger.info({
+            message: `Renewal order job running- order#: ${orders.order_id}`,
+            dateTime: new Date()
+          });
+          var options = {
+            method: 'GET',
+            url: `${config.CashfreeAPI}/orders/${orders.order_id}/payments`,
+            headers: {
+              Accept: 'application/json',
+              'x-client-id': config.appId,
+              'x-client-secret': config.secretKey,
+              'x-api-version': '2022-01-01'
+            }
+          };
+          request(options, function (error, response, body) {
+            // if (error) throw new Error(error);
+            var data2 = JSON.parse(body);
+            if(data2.code=='order_id_not_found'){
+              var updateOrder2 = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+              sql.query(updateOrder2,
+              [
+                11,
+                orders.order_id,
+              ]);
+            } else{
+              let orderStatus = [];        
+              orderStatus = JSON.parse(body);
+              let items = orderStatus.filter(item=>item.payment_status=='SUCCESS');
+              if(items.length>0){
+                logger.info({
+                  message: `Renewal order success job executed- order#: ${orders.order_id}`,
+                  dateTime: new Date()
+                });
+                var itemBody = items[0];
+                sql.query(
+                  `SELECT * FROM transaction WHERE transaction_id=${itemBody.cf_payment_id}`,
+                  (errTransaction, transactionRows) => {
+                    if (!errTransaction) {
+                      if(transactionRows.length==0){
+                        var invoiceInsert = "INSERT INTO `invoice`(`invoice_id`, `order_id`, `invoice_description`, `status`) VALUES (?,?,?,?)";
+                        var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
+                        sql.query(sqlInsert,
+                          [
+                            itemBody.cf_payment_id,
+                            orders.order_id,
+                            itemBody.order_amount,
+                            1,
+                            itemBody.payment_group,
+                            'Cashfree',
+                            itemBody.payment_message,
+                            new Date()
+                          ],
+                          (err1) => {
+                          if (!err1) {
+                            var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+                            sql.query(updateOrder,
+                            [
+                              1,
+                              orders.order_id,
+                            ]);
+                          } else {
+                            res.send({message: err});
+                          }
+                          }
+                        );
+                  
+                        sql.query(invoiceInsert,
+                          [
+                          'N/A',
+                          orders.order_id,
+                          'N/A',
+                          1
+                          ],
+                          (err1, results) => {
+                          if (!err1) {
+                            var invoiceNo = 'IRO/21-22/'+results.insertId;
+                            var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
+                            sql.query(updateInvoice,
+                            [
+                              invoiceNo,
+                              results.insertId,
+                            ]);
+                          } else {
+                            res.send({message: err});
+                          }
+                          }
+                        );
+                  
+                        var orderDetails;
+                        var products;
+                        var prodAll=[];
+                        var AllProductsOf=[];
+                        let cid = new Promise((resolve, reject) => {				
+                          requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${orders.order_id}`).then(async function(response) {
+                            // Get the response body
+                            orderDetails = await response.getBody()[0];	
+                            requestify.get(`${constants.apiUrl}orders/renewals2/${orderDetails.customer_id}`).then(async function(response2) {
+                              // Get the response body
+                              let renewalDetails = await response2.getBody();
+                              let successOrders=renewalDetails.filter((successOrdersRes)=>{
+                                // if(successOrders.overdue==1){
+                                //   this.overdue=1;
+                                // }
+                              return successOrdersRes.paymentStatus=='1' && (successOrdersRes.orderType_id==1 || successOrdersRes.orderType_id==3);
+                              });
+                              let orders=await successOrders.reverse();
+                              orders.forEach((res2)=>{
+                                products=res2.renewals_timline;    
+                                for(let p=0;p<products.length;p++){
+                                let ucid={ 
+                                  indexs:products[p].indexs,
+                                  id: products[p].id,
+                                  prod_name:products[p].prod_name,
+                                  prod_price:products[p].prod_price,
+                                  prod_img:products[p].prod_img,
+                                  delvdate: products[p].delvdate,
+                                  actualStartDate:products[p].actualStartDate,
+                                  qty: products[p].qty, 
+                                  price: products[p].price, 
+                                  tenure: products[p].tenure,
+                                  primaryOrderNo:products[p].primaryOrderNo, 
+                                  currentOrderNo: products[p].currentOrderNo,
+                                  renewed:products[p].renewed,
+                                  startDate:products[p].startDate,
+                                  expiryDate:products[p].expiryDate,
+                                  nextStartDate:products[p].nextStartDate,
+                                  overdew:products[p].overdew,
+                                  ordered:products[p].ordered,
+                                  assetId:products[p].assetId,
+                                  deliveryStatus:'renewed',
+                                  dp:products[p].dp,
+                                  deliveryAssigned:products[p].deliveryAssigned,
+                                  replacement:products[p].replacement,
+                                  returnDate:products[p].returnDate,
+                                  billPeriod:products[p].billPeriod,
+                                  billAmount:products[p].billAmount,
+                                  damageCharges:products[p].damageCharges,
+                                  order_item_id:products[p].order_item_id,
+                                  p2Rent:products[p].p2Rent,
+                                  securityDepositDiff:products[p].securityDepositDiff,
+                                  returnedProduct: products[p].returnedProduct,
+                                  tenureBasePrice:products[p].tenureBasePrice,
+                                  tenure_id:products[p].tenure_id
+                                }
+                                AllProductsOf.push(ucid);
+                                }  
+                              });
+                            
+                              for(let i=0;i<AllProductsOf.length;i++){
+                                prodAll.push(AllProductsOf[i]);
+                              }
+                              requestify.get(`${constants.apiUrl}orders/orderId/${orderDetails.id}`).then(async function(response3) {
+                  
+                                let productsArr =[];
+                                let prodLoop = await response3.getBody()[0].orderItem;
+                                prodLoop.forEach((prodRenewals)=>{
+                                  productsArr.push(prodRenewals.renewals_timline[0]);
+                                });
+                                let oid = await response3.getBody()[0].order_id;
+                                updateFields(productsArr, prodAll,oid);
+                                resolve('cid success');
+                                
+                              });
+                              
+                            });			
+                          });
+                        });
+                  
                         
-//                       });
-                      
-//                     });			
-//                   });
-//                 });
-          
-                
-//                 cid.then((success)=>{
-//                   logger.info({
-//                     message: '/renewalsResult transaction successfull',
-//                     dateTime: new Date()
-//                   });
-//                 });
-//               } else if(items.length!=0 && items[0].payment_status!='NOT_ATTEMPTED'){
-//                 var updateOrder3 = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
-//                 sql.query(updateOrder3,
-//                 [
-//                   11,
-//                   orders.order_id,
-//                 ]);
-//               }
-//             }
+                        cid.then((success)=>{
+                          logger.info({
+                            message: '/renewalsResult transaction successfull',
+                            dateTime: new Date()
+                          });
+                        });
+                      } else{
+                        var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+                        sql.query(updateOrder,
+                        [
+                          1,
+                          orders.order_id,
+                        ]);
+                      }
+                    } else {
+                      res.send({ error: errTransaction });
+                    }
+                  }
+                );
+              } else if(items.length!=0 && items[0].payment_status!='NOT_ATTEMPTED'){
+                var updateOrder3 = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+                sql.query(updateOrder3,
+                [
+                  11,
+                  orders.order_id,
+                ]);
+              }
+            }
             
-//           });
-//         });        
-//       }
-//   });
-// });
+          });
+        });        
+      }
+  });
+}
 
-// cron.schedule('0 0 */1 * * *', () => {
-//   primaryOrderJob();
-// });
+cron.schedule('0 0 */1 * * *', () => {  
+  renewalOrderJob();
+});
+
+cron.schedule('0 0 */1 * * *', () => {
+  primaryOrderJob();
+});
 
 
 
@@ -631,6 +657,10 @@ router.get('/primaryJob', function(req, res) {
   primaryOrderJob();
 });
 
+router.get('/renewalJob', function(req, res) {
+  renewalOrderJob();
+});
+
 // Get all orders
 router.get("/getAllOrders", (req, res) => {
   logger.info({
@@ -706,6 +736,32 @@ router.get("/primaryOrders", (req, res) => {
       } else {
         logger.info({
           message: '/all orders failed to load',
+          dateTime: new Date()
+        });
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Get all new orders
+router.get("/cancelledOrders", (req, res) => {
+  logger.info({
+    message: '/cancelledOrders api started',
+    dateTime: new Date()
+  });
+  sql.query(
+    `CALL get_allCancelledOrders()`,
+    (err, rows, fields) => {
+      if (!err) {
+        logger.info({
+          message: '/cancelledOrders fetched successfully',
+          dateTime: new Date()
+        });
+        res.send(rows[0]);
+      } else {
+        logger.info({
+          message: '/cancelledOrders failed to load',
           dateTime: new Date()
         });
         res.send({ error: err });

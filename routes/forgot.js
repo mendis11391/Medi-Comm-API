@@ -338,7 +338,7 @@ router.post('/renewalReminder', cors(), async (req, res) => {
 });
 
 router.post('/eKYCSubmitMail', cors(), (req, res) => {
-    const emailId = 'manjeshwar17@gmail.com';
+    const emailId = 'support@irentout.com';
     var outputData = `<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
     <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
     <head>
