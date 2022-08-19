@@ -330,34 +330,34 @@ router.post('/newRenew', function(req, res) {
 			resp.dp=0;
 		}
 		
-		let dateString = resp.delvdate;
+		// let dateString = resp.delvdate;
 
-		let dateParts = dateString.split("/");
+		// let dateParts = dateString.split("/");
 
-		// month is 0-based, that's why we need dataParts[1] - 1
-		let dateObject = new Date(+dateParts[2], dateParts[1]-1, +dateParts[0]);	
-		let dd= dateObject.getDate();
-		let mm=dateObject.getMonth();
-		let yy=dateObject.getFullYear();
+		// // month is 0-based, that's why we need dataParts[1] - 1
+		// let dateObject = new Date(+dateParts[2], dateParts[1]-1, +dateParts[0]);	
+		// let dd= dateObject.getDate();
+		// let mm=dateObject.getMonth();
+		// let yy=dateObject.getFullYear();
 
-		// let db = mm+'/'+dd+'/'+yy;
+		// // let db = mm+'/'+dd+'/'+yy;
 
-		// let deliveredDate = new Date(db);
-		// let sd=deliveredDate.getDate();
-		// let nd = sd-0;
-		// let ed = new Date(`${deliveredDate.getFullYear()}-${deliveredDate.getMonth()+3}-${nd}`);
-			let Days=new Date(yy, mm+2, 0).getDate();
+		// // let deliveredDate = new Date(db);
+		// // let sd=deliveredDate.getDate();
+		// // let nd = sd-0;
+		// // let ed = new Date(`${deliveredDate.getFullYear()}-${deliveredDate.getMonth()+3}-${nd}`);
+		// 	let Days=new Date(yy, mm+2, 0).getDate();
 
-            if(Days<dd){
-				newED = new Date(yy, mm+1, Days);              
-				ned  = new Date(yy, mm+1, Days);
-			  }else{					
-				newED = new Date(yy, mm+1, dd-1);
-				ned = new Date(yy, mm+1, dd-1);				
-			  }
-			ned.setDate(ned.getDate() + 1);
-			let expDate = newED.getDate()+'/'+(newED.getMonth()+1)+'/'+newED.getFullYear();
-			let nextStartDate = ned.getDate()+'/'+(ned.getMonth()+1)+'/'+ned.getFullYear();
+        //     if(Days<dd){
+		// 		newED = new Date(yy, mm+1, Days);              
+		// 		ned  = new Date(yy, mm+1, Days);
+		// 	  }else{					
+		// 		newED = new Date(yy, mm+1, dd-1);
+		// 		ned = new Date(yy, mm+1, dd-1);				
+		// 	  }
+		// 	ned.setDate(ned.getDate() + 1);
+		// 	let expDate = newED.getDate()+'/'+(newED.getMonth()+1)+'/'+newED.getFullYear();
+		// 	let nextStartDate = ned.getDate()+'/'+(ned.getMonth()+1)+'/'+ned.getFullYear();
 		// resp.expiryDate=ned.toLocaleDateString();
 		// resp.startDate=resp.delvdate;
 		// resp.expiryDate=expDate;
@@ -405,29 +405,31 @@ router.post('/newRenew', function(req, res) {
 		products.forEach((resProduct)=>{
 		  let renewalProduct = [];
 		  renewalProduct.push(resProduct);
-		  let startDate = getDates(resProduct.startDate);
-		  let expiryDate = getDates(resProduct.expiryDate);
+		//   let startDate = getDates(resProduct.startDate);
+		//   let expiryDate = getDates(resProduct.expiryDate);
+		  let startDate = resProduct.start_date;
+		  let expiryDate = resProduct.end_date;
 		  var sqlInsert = "INSERT INTO `order_item`(`primary_order_item_id`,`order_id`, `product_id`, `asset_id`, `discount`, `security_deposit`, `tenure_base_price`, `tenure_id`, tenure_period,`tenure_price`, `damage_protection`,`damage_charges`,`earlyReturnCharges`,`renewals_timline`,`overdue`,`delivery_status`, `startDate`, `endDate`, `status`, `createdAt`, `updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		  sql.query(sqlInsert,
 			  [
-			  0,
+			  resProduct.order_item_id,
 			  results.insertId,
-			  resProduct.id,
-			  resProduct.assetId,
+			  resProduct.product_id,
+			  resProduct.asset_id,
 			  0,
-			  resProduct.prod_price,
-			  resProduct.tenureBasePrice,
+			  resProduct.security_deposit,
+			  resProduct.tenure_base_price,
 			  resProduct.tenure_id,
-			  resProduct.tenure,
-			  resProduct.price,	  
-			  resProduct.dp,
+			  resProduct.tenure_period,
+			  resProduct.tenure_price,	  
+			  resProduct.damage_protection,
 			  0,
 			  0,
 			  JSON.stringify(renewalProduct),
 			  0,
 			  4,
-			  startDate,
-			  expiryDate,
+			  new Date(startDate),
+			  new Date(expiryDate),
 			  1,
 			  new Date(),
 			  new Date()
@@ -622,7 +624,23 @@ router.post('/newReplace',verifyToken, function(req, res) {
 			  1,
 			  new Date(),
 			  new Date()
-			  ]
+			  ],(errOT, OTResults)=>{
+				if(!errOT){
+					var sqlInsertORR =
+						"INSERT INTO `order_renewals`(`order_item_id`, `renewal_price`, `start_date`, `end_date`, `modified_at`, `modified_by`, `comments`, `is_renewed`,`is_renewal_created`) VALUES (?,?,?,?,?,?,?,?,?)";
+						sql.query(
+							sqlInsertORR,
+							[
+								OTResults.insertId, resProduct.price, startDate, expiryDate, new Date(), 1, 'nil', 1, 0
+							]
+						);
+						var updateOITStatus="UPDATE order_item SET status = 0 WHERE order_item_id=?";
+						sql.query(updateOITStatus,
+							[
+								resProduct.returnedProduct.order_item_id
+							]);
+				}
+			  }
 		  );
 		});
 		logger.info({
@@ -1505,6 +1523,16 @@ router.post('/renewalsResult',(req, res, next)=>{
 				requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${req.body.orderId}`).then(async function(response) {
 					// Get the response body
 					orderDetails = await response.getBody()[0];	
+
+					var updateRenewStatus="UPDATE order_renewals SET is_renewed = 1 WHERE order_item_id=? AND is_renewed=0";
+					orderDetails.orderItem.forEach((resOIT)=>{
+						sql.query(updateRenewStatus,
+							[
+								resOIT.primary_order_item_id
+							]);
+					});
+					
+					
 					requestify.post(`${constants.apiUrl}smsOrder`, {
 						customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
 					});
@@ -1753,6 +1781,28 @@ router.post('/RRResult',(req, res, next)=>{
 				}
 				}
 			);
+
+			sql.query(invoiceInsert,
+				[
+				'N/A',
+				req.body.orderId,
+				'N/A',
+				1
+				],
+				(err1, results) => {
+				if (!err1) {
+					var invoiceNo = 'IRO/21-22/'+results.insertId;
+					var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
+					sql.query(updateInvoice,
+					[
+						invoiceNo,
+						results.insertId,
+					]);
+				} else {
+					res.send({message: err});
+				}
+				}
+			);
 			
 			res.redirect(url.format({
 				pathname: `${constants.frontendUrl}/failure`,
@@ -1795,6 +1845,7 @@ router.post('/RRResult',(req, res, next)=>{
 			} else{
 				status=3;
 			}
+			var invoiceInsert = "INSERT INTO `invoice`(`invoice_id`, `order_id`, `invoice_description`, `status`) VALUES (?,?,?,?)";
 			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
 			sql.query(sqlInsert,
 				[
@@ -2250,6 +2301,19 @@ router.post('/postManualRenewalOrderTransaction',(req, res, next)=>{
 				req.body.paymentStatus,
 				req.body.orderId,
 			]);
+
+			requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${req.body.orderId}`).then(async function(response) {
+				// Get the response body
+				orderDetails = await response.getBody()[0];	
+
+				var updateRenewStatus="UPDATE order_renewals SET is_renewed = 1 WHERE order_item_id=? AND is_renewed=0";
+				orderDetails.orderItem.forEach((resOIT)=>{
+					sql.query(updateRenewStatus,
+						[
+							resOIT.primary_order_item_id
+						]);
+				});
+			});
 			
 		} else {
 			res.send({message: err});

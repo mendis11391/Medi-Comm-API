@@ -489,13 +489,13 @@ function renewalOrderJob(){
   });
 }
 
-cron.schedule('0 0 */1 * * *', () => {  
-  renewalOrderJob();
-});
+// cron.schedule('0 0 */1 * * *', () => {  
+//   renewalOrderJob();
+// });
 
-cron.schedule('0 0 */1 * * *', () => {
-  primaryOrderJob();
-});
+// cron.schedule('0 0 */1 * * *', () => {
+//   primaryOrderJob();
+// });
 
 
 
@@ -978,7 +978,29 @@ router.get("/returnOrders", (req, res) => {
 router.get('/getCustomerRequests', function(req, res) {
   let len=0;
   sql.query(
-      `CALL get_customerRequests() `,
+      `CALL get_returnCustomerRequests() `,
+      (err, rows) => {
+        if (!err) {
+          let requests = rows[0];
+          for(let i=0;i<requests.length;i++){
+            len++;
+            requests[i].renewals_timline=JSON.parse(requests[i].renewals_timline); 
+            if(len==requests.length){
+              res.send(requests);   
+            }
+          }            
+        } else {
+          res.send({ error: 'Error' });
+        }
+      }
+    );
+});
+
+
+router.get('/getReturnCustomerRequests', function(req, res) {
+  let len=0;
+  sql.query(
+      `CALL get_returnCustomerRequests() `,
       (err, rows) => {
         if (!err) {
           let requests = rows[0];
@@ -1019,6 +1041,50 @@ router.get('/getfolder', function(req, res) {
     );
 });
 
+router.get('/getOrderRenewalById/:id', verifyToken,function(req, res, next) {
+  sql.query(
+    `SELECT * FROM order_renewals WHERE order_item_id=?`,
+    [req.params.id],
+    (err, rows) => {
+      if (!err) {
+        res.send(rows);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+router.get('/getAllActiveRenewals', function(req, res, next) {
+  sql.query(
+    `CALL get_AllActiveRenewalReminders()`,
+    (err, rows) => {
+      if (!err) {       
+        res.send(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+
+// router.get('/getActiveOrderItems', function(req, res, next) {
+//   sql.query(
+//     `CALL activeOrderItems()`,
+//     (err, rows) => {
+//       if (!err) {
+//         rows[0].forEach((OTRes)=>{
+//           OTRes.renewals_timline = JSON.parse(OTRes.renewals_timline);
+//         });
+//         res.send(rows[0]);
+//       } else {
+//         res.send({ error: err });
+//       }
+//     }
+//   );
+// });
+
 router.get('/:id', verifyToken,function(req, res, next) {
   sql.query(
     `SELECT user_id, uname, usertype, email FROM admin WHERE user_id = ?`,
@@ -1033,6 +1099,47 @@ router.get('/:id', verifyToken,function(req, res, next) {
   );
 });
 
+
+router.post("/insertOrderRenewal",  function (req, res) {    
+    var sqlInsert =
+      "INSERT INTO `order_renewals`(`order_item_id`, `renewal_price`, `start_date`, `end_date`, `modified_at`, `modified_by`, `comments`, `is_renewed`,`is_renewal_created`) VALUES (?,?,?,?,?,?,?,?,?)";
+    sql.query(
+      sqlInsert,
+      [
+        req.body.order_item_id, req.body.renewal_price, new Date(req.body.start_date), new Date(req.body.end_date), new Date(), 1, 'nil', req.body.is_renewed, 0
+      ],
+      (err) => {
+        if (!err) {
+          res.send({message: 'Review Inserted Successfully'});
+        } else {
+          res.send({message: err});
+        }
+      }
+    );
+  });
+
+  router.put("/updateOrderRenewal/:id", function (req, res) {
+    
+    var sqlInsert =
+      "UPDATE order_renewals SET start_date = ?, end_date=? WHERE order_item_id=?;";
+    sql.query(
+      sqlInsert,
+      [
+       req.body.start_date, req.body.end_date, req.params.id
+      ],
+      (err) => {
+        if (!err) {
+          res.send({message: 'order renewal updated succesfully'});
+        } else {
+          res.send({message: err});
+          logger.info({
+            message: 'order renewal updation failed'+err,
+            dateTime: new Date()
+          });
+        }
+      }
+    );
+  });
   
 
 // router.post("/", function (req, res) {

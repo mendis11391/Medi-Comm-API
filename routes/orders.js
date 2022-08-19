@@ -984,6 +984,21 @@ router.get('/renewals2/:id', function(req, res) {
     );
 });
 
+
+router.get('/renewalsByCustomer/:id', function(req, res) {
+  sql.query(
+    `CALL get_renewalsByCustomerId2(${req.params.id}) `,
+    (err, rows) => {
+      if (!err) {
+        res.send(rows[0]);        
+      } else {
+        res.send({ error: err });
+      }      
+    }
+  );
+});
+
+
 router.get('/getAllOrderItems', function(req, res) {
   sql.query(
     `CALL get_allOrderItems()`,
@@ -1358,15 +1373,57 @@ router.get('/getOrderByMyOrderId/:id', verifyToken,function(req, res) {
 });
 
 router.get('/getOrderByMyOrderIdAPI/:id', function(req, res) {
+  let orders=[];
+  let orderItem = [];
+  let len=0;
   
   sql.query(
       `CALL get_OrderByMyOrderId(${JSON.stringify(req.params.id)}) `,
       (err, rows) => {
         if (!err) {          
-          res.send(rows[0]);
+          // res.send(rows[0]);
+          rows[0].forEach((res)=>{
+            orders.push(res);            
+          });
         } else {
           res.send({ error: 'Error' });
         }
+
+        orders.forEach((orders,i,ele) => {
+          sql.query(
+            `CALL get_addressById(${orders.billingAddress})`,
+            (err1, rows1, fields) => {
+              if (!err1) { 
+                sql.query(
+                  `CALL get_orderItemByorder(${orders.id})`,
+                  (err2, rows2, fields) => {
+                    if (!err2) { 
+                      sql.query(
+                        `CALL get_addressById(${orders.shippingAddress})`,
+                        (err3, rows3) => {
+                          if(!err3){
+                            len++;
+                            orders.orderItem = rows2[0];  
+                            orders.billingAddress = rows1[0]; 
+                            orders.shippingAddress = rows3[0];
+                            orderItem.push(orders); 
+                            if(len===ele.length){                              
+                              res.send(orderItem);
+                            }
+                          }
+                        });
+                      
+                    }
+                  }
+                );
+              }
+            }
+          ); 
+
+          
+          
+        });
+        
 
       }
     );
