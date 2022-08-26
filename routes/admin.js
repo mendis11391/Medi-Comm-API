@@ -975,7 +975,7 @@ router.get("/returnOrders", (req, res) => {
   );
 });
 
-router.get('/getCustomerRequests', function(req, res) {
+router.get('/getReturnCustomerRequests', function(req, res) {
   let len=0;
   sql.query(
       `CALL get_returnCustomerRequests() `,
@@ -996,11 +996,10 @@ router.get('/getCustomerRequests', function(req, res) {
     );
 });
 
-
-router.get('/getReturnCustomerRequests', function(req, res) {
+router.get('/getCustomerRequests', function(req, res) {
   let len=0;
   sql.query(
-      `CALL get_returnCustomerRequests() `,
+      `CALL get_customerRequests() `,
       (err, rows) => {
         if (!err) {
           let requests = rows[0];
@@ -1055,6 +1054,7 @@ router.get('/getOrderRenewalById/:id', verifyToken,function(req, res, next) {
   );
 });
 
+
 router.get('/getAllActiveRenewals', function(req, res, next) {
   sql.query(
     `CALL get_AllActiveRenewalReminders()`,
@@ -1067,7 +1067,6 @@ router.get('/getAllActiveRenewals', function(req, res, next) {
     }
   );
 });
-
 
 // router.get('/getActiveOrderItems', function(req, res, next) {
 //   sql.query(
@@ -1125,17 +1124,17 @@ router.post("/insertOrderRenewal",  function (req, res) {
     sql.query(
       sqlInsert,
       [
-       req.body.start_date, req.body.end_date, req.params.id
+       new Date(req.body.start_date), new Date(req.body.end_date), req.params.id
       ],
       (err) => {
         if (!err) {
-          res.send({message: 'order renewal updated succesfully'});
+          res.send({message: 'Review Inserted Successfully'});
         } else {
-          res.send({message: err});
-          logger.info({
+	  logger.info({
             message: 'order renewal updation failed'+err,
             dateTime: new Date()
           });
+          res.send({message: err});
         }
       }
     );

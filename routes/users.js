@@ -411,7 +411,7 @@ router.put("/updateDefaultAddress/:auid", verifyToken,(req, res) => {
 });
 
 /* GET all users */
-router.get('/', function(req, res) {
+router.get('/', verifyToken, function(req, res) {
   sql.query(
       `CALL get_AllCustomers()`,
       (err, rows) => {
