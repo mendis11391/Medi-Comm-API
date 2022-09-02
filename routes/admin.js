@@ -653,13 +653,13 @@ router.get('/', function(req, res) {
 });
 
 /* GET all reviews */
-router.get('/primaryJob', function(req, res) {
-  primaryOrderJob();
-});
+// router.get('/primaryJob', function(req, res) {
+//   primaryOrderJob();
+// });
 
-router.get('/renewalJob', function(req, res) {
-  renewalOrderJob();
-});
+// router.get('/renewalJob', function(req, res) {
+//   renewalOrderJob();
+// });
 
 // Get all orders
 router.get("/getAllOrders", (req, res) => {
@@ -1093,6 +1093,25 @@ router.get('/:id', verifyToken,function(req, res, next) {
         res.send(rows);
       } else {
         res.send({ error: err });
+      }
+    }
+  );
+});
+
+
+router.post("/insertNotes",  function (req, res) {    
+  var sqlInsert =
+    "INSERT INTO notes(notes, customer_id, notes_type, order_id, order_type, created_at) VALUES (?,?,?,?,?,?)";
+  sql.query(
+    sqlInsert,
+    [
+      req.body.comment, req.body.uid, 1, req.body.orderId, req.body.orderType, new Date()
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: 'Notes Inserted Successfully'});
+      } else {
+        res.send({message: err});
       }
     }
   );

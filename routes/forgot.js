@@ -11,7 +11,9 @@ const constants = require("../constant/constUrl");
 router.options('/send', cors());
 
 router.post('/send', cors(), (req, res) => {
-    const emailId = req.body.email;
+    const emailId = [];
+    emailId.push(req.body.email);
+    emailId.push('manjesh@futureconsole.in');
     var outputData = req.body.template.template;
 
     var subjectData = req.body.template.subject;
@@ -39,7 +41,7 @@ router.post('/send', cors(), (req, res) => {
 
     let HelperOptions = {
         from: '"Irentout" <support@irentout.com>',
-        to: emailId,
+        to: emailId, 
         subject: subjectData,
         text: 'Hello',
         html: outputData

@@ -687,6 +687,26 @@ router.post("/postScroller",verifyToken, function (req, res) {
   );
 });
 
+router.post("/postPricingScheme",verifyToken, function (req, res) {
+
+  var sqlInsert =
+    "INSERT INTO `pricing_schemes`( `scheme_name`, `status`) VALUES (?, ?)";
+  sql.query(
+    sqlInsert,
+    [
+      req.body.scheme_name,
+      1
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: 'Scheme Inserted Successfully'});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
 router.post("/postPromotionalProducts", verifyToken,function (req, res) {
 
   var sqlInsert =

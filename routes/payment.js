@@ -510,7 +510,7 @@ router.post('/newReturn', verifyToken,function(req, res) {
 			  resProduct.order_item_id,
 			  results.insertId,
 			  resProduct.id,
-			  'To be assigned',
+			  resProduct.assetId,
 			  0,
 			  resProduct.prod_price,
 			  resProduct.tenureBasePrice,

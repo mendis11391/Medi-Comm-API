@@ -150,6 +150,25 @@ router.put("/updateBasicUserDetails/:id", verifyToken,(req, res) => {
 });
 
 // Update user firstName, lastName, and email
+router.put("/updateUserLastActivity/:id", verifyToken,(req, res) => {
+  var sqlUpdate = `UPDATE customer SET lastLogin= ? WHERE customer_id = ?`;
+  sql.query(
+    sqlUpdate,
+    [
+      new Date(),
+      req.params.id
+    ],
+    (err) => {
+      if (!err) {
+        res.send({'message': 'user details updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update user firstName, lastName, and email
 router.put("/updateUserDetail/:id", verifyToken,(req, res) => {
   var sqlUpdate = `UPDATE customer SET ${req.body.fieldName}= ? WHERE customer_id = ?`;
   sql.query(
