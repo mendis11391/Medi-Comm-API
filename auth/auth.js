@@ -402,7 +402,7 @@ router.post("/login", verifyToken,(req, res) => {
   adpass += secretkey.final('hex');
 
   sql.query(
-    `SELECT * from customer WHERE email = ? and password = ?`,
+    `SELECT * from CUSTOMER WHERE email = ? AND password = ? AND status = 1 `,
     [req.body.userName, adpass],
     (err, rows) => {
       if (!err) {
@@ -718,7 +718,7 @@ router.post('/userdetails', verifyToken,(req, res) => {
 });
 
 router.post('/admindetails', verifyToken,(req, res) => {
-  let getDetails = `SELECT customer_id, firstName, login_type FROM customer WHERE token = ?`;
+  let getDetails = `SELECT customer_id, firstName, login_type, status FROM customer WHERE token = ?`;
   sql.query(getDetails, [req.body.token], (err, rows) => {
     if (!err) {
       if (rows.length > 0) {

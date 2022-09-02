@@ -1084,6 +1084,19 @@ router.get('/getAllActiveRenewals', function(req, res, next) {
 //   );
 // });
 
+router.get('/getNotesByOrderId/:id', verifyToken,function(req, res, next) {
+  sql.query(
+    `CALL get_AllNotesByOrderId(${req.params.id})`,
+    (err, rows) => {
+      if (!err) {
+        res.send(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 router.get('/:id', verifyToken,function(req, res, next) {
   sql.query(
     `SELECT user_id, uname, usertype, email FROM admin WHERE user_id = ?`,

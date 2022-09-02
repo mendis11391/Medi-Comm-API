@@ -5,7 +5,7 @@ var sql = require("../db.js");
 
 // Verify token 
 function verifyToken(req, res, next) {
-  if(req.headers.origin===`${constants.frontendUrl}` || req.headers.origin===`${constants.frontendUrl}/admin`){
+  if(req.headers.origin===`${constants.frontendUrl}` || req.headers.origin===`${constants.frontendUrl}/iroadmin`){
     next();
   } else{
     return res.status(401).send("Unauthorized request");

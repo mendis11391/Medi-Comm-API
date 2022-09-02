@@ -13,7 +13,9 @@ router.options('/send', cors());
 router.post('/send', cors(), (req, res) => {
     const emailId = [];
     emailId.push(req.body.email);
-    emailId.push('manjesh@futureconsole.in');
+    emailId.push('santosh@reachfci.com');
+    emailId.push('harsha@reachfci.com');
+    emailId.push('pushpa@reachfci.com');
     var outputData = req.body.template.template;
 
     var subjectData = req.body.template.subject;
