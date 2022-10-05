@@ -7,15 +7,16 @@ var crypto = require("crypto");
 var requestify = require('requestify'); 
 var sql = require("../db.js");
 const constants = require("../constant/constUrl");
+const config = require('../config.json');
 
 router.options('/send', cors());
 
 router.post('/send', cors(), (req, res) => {
     const emailId = [];
+    config.emails.forEach((configEmails)=>{
+        emailId.push(configEmails);
+    });
     emailId.push(req.body.email);
-    emailId.push('santosh@reachfci.com');
-    emailId.push('harsha@reachfci.com');
-    emailId.push('pushpa@reachfci.com');
     var outputData = req.body.template.template;
 
     var subjectData = req.body.template.subject;

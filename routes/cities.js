@@ -93,6 +93,29 @@ router.get('/getAllDeliveryPincodes/:id', function(req, res) {
     );
 });
 
+// Update padding
+router.put('/updatepincode/:id', verifyToken,(req, res) => {
+  var sqlUpdate = "UPDATE `delivery_pincodes` SET `pincode`= ?, `free`= ?, `status`= ?,`delivery_2wheeler`= ?,`delivery_4wheeler`= ? WHERE `id` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.pincode,
+      req.body.freeDelivery,
+      req.body.status,
+      req.body.twoWheelerCharges,
+      req.body.fourWheelerCharges,
+      req.params.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'taxes updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 router.get('/taxes/:id', function(req, res) {
   logger.info({
     message: '/taxes/:id api started',

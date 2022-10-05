@@ -79,7 +79,7 @@ function addOneDay(date){
 }
 
 // Get all orders
-router.get("/", (req, res) => {
+router.get("/", verifyToken,(req, res) => {
   logger.info({
     message: '/all orders api started',
     dateTime: new Date()

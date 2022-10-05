@@ -1068,6 +1068,19 @@ router.get('/getAllActiveRenewals', function(req, res, next) {
   );
 });
 
+router.get('/getAllNotes', function(req, res, next) {
+  sql.query(
+    `CALL get_AllNotes()`,
+    (err, rows) => {
+      if (!err) {       
+        res.send(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 // router.get('/getActiveOrderItems', function(req, res, next) {
 //   sql.query(
 //     `CALL activeOrderItems()`,
@@ -1097,6 +1110,19 @@ router.get('/getNotesByOrderId/:id', verifyToken,function(req, res, next) {
   );
 });
 
+router.get('/getNotesByCustomerId/:id', verifyToken,function(req, res, next) {
+  sql.query(
+    `CALL get_AllNotesByCustomerId(${req.params.id})`,
+    (err, rows) => {
+      if (!err) {
+        res.send(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 router.get('/:id', verifyToken,function(req, res, next) {
   sql.query(
     `SELECT user_id, uname, usertype, email FROM admin WHERE user_id = ?`,
@@ -1114,11 +1140,11 @@ router.get('/:id', verifyToken,function(req, res, next) {
 
 router.post("/insertNotes",  function (req, res) {    
   var sqlInsert =
-    "INSERT INTO notes(notes, customer_id, notes_type, order_id, order_type, created_at) VALUES (?,?,?,?,?,?)";
+    "INSERT INTO notes(notes, customer_id, frontCustomer_id, notes_type, order_id, order_type, created_at) VALUES (?,?,?,?,?,?,?)";
   sql.query(
     sqlInsert,
     [
-      req.body.comment, req.body.uid, 1, req.body.orderId, req.body.orderType, new Date()
+      req.body.comment, req.body.uid, req.body.frontUid, 1, req.body.orderId, req.body.orderType, new Date()
     ],
     (err) => {
       if (!err) {
@@ -1161,6 +1187,52 @@ router.post("/insertOrderRenewal",  function (req, res) {
       (err) => {
         if (!err) {
           res.send({message: 'Review Inserted Successfully'});
+        } else {
+	  logger.info({
+            message: 'order renewal updation failed'+err,
+            dateTime: new Date()
+          });
+          res.send({message: err});
+        }
+      }
+    );
+  });
+
+  router.put("/updateOrderRenewal/:id", function (req, res) {
+    
+    var sqlInsert =
+      "UPDATE order_renewals SET start_date = ?, end_date=? WHERE order_item_id=?;";
+    sql.query(
+      sqlInsert,
+      [
+       new Date(req.body.start_date), new Date(req.body.end_date), req.params.id
+      ],
+      (err) => {
+        if (!err) {
+          res.send({message: 'Review Inserted Successfully'});
+        } else {
+	  logger.info({
+            message: 'order renewal updation failed'+err,
+            dateTime: new Date()
+          });
+          res.send({message: err});
+        }
+      }
+    );
+  });
+
+  router.put("/updateOrderRenewalPrice/:id", function (req, res) {
+    
+    var sqlInsert =
+      "UPDATE order_renewals SET renewal_price = ? WHERE id=?;";
+    sql.query(
+      sqlInsert,
+      [
+       req.body.renewal_price,  req.params.id
+      ],
+      (err) => {
+        if (!err) {
+          res.send({message: 'Success'});
         } else {
 	  logger.info({
             message: 'order renewal updation failed'+err,

@@ -10,5 +10,8 @@
         "prod":{
             "cashfreePayUrl":"https://www.cashfree.com/checkout/post/submit"
         }
-    }
+    },
+    "mobiles": [],
+    "emails": []
 }
+
