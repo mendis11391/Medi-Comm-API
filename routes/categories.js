@@ -422,6 +422,30 @@ router.get("/getAllPricingSchemes",verifyToken, (req, res) => {
 });
 
 // Update spec name and image
+router.put("/updateMainCategory",verifyToken,(req, res) => {
+
+  var sqlUpdate = "UPDATE `category_group` SET `main_cat_name`= ?, `main_cat_heading`=?, `main_slug`=?, `main_meta_title`=?, `main_meta_description`=? WHERE `id` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.main_cat_name,
+      req.body.main_cat_heading,
+      req.body.main_slug,
+      req.body.main_meta_title,
+      req.body.main_meta_description,
+      req.body.id
+    ],
+    (err, rows) => {
+      if (!err) {
+        res.send({'message': 'Category_group updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update spec name and image
 router.put("/updateSpecNameAndImage",verifyToken,(req, res) => {
 
   var sqlUpdate = "UPDATE `specifications` SET `spec_image`= ? WHERE `spec_id` = ?";
@@ -560,6 +584,33 @@ router.put(":id", verifyToken,(req, res) => {
   );
 });
 
+router.post("/insertCategoryGroup", verifyToken, function (req, res) {
+  var sqlInsert =
+    "INSERT INTO `category_group`(`main_cat_name`, `main_cat_heading`, `main_slug`,`main_meta_title`,`main_meta_description`,`createdBy`,`modifiedBy`,`createdAt`, `modifiedAt`, `status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  sql.query(
+    sqlInsert,
+    [
+      req.body.main_cat_name,
+      req.body.main_cat_heading,
+      req.body.main_slug,
+      req.body.main_meta_title,
+      req.body.main_meta_description,
+      1,
+      1,
+      new Date(),
+      new Date(),
+      1
+    ],
+    (err, results) => {
+      if (!err) {        
+        res.send({message: 'Inserted Successfully'});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
 router.post("/", verifyToken, function (req, res) {
   var sqlInsert =
     "INSERT INTO `category`(`cat_group`, `cat_name`,`cat_heading`,`cat_image`,`slug`,`metaTitle`,`metaDescription`, `cat_schema`, `createdBy`,`modifiedBy`,`createdAt`, `modifiedAt`, `cat_status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -602,6 +653,31 @@ router.post("/", verifyToken, function (req, res) {
     }
   );
 });
+
+router.put("/updateCategory",  function (req, res) {
+  var sqlUpdate =
+    "UPDATE category SET `cat_group`=?, `cat_name`=?,`cat_heading`=?,`slug`=?,`metaTitle`=?,`metaDescription`=? WHERE  (`cat_id` = ?);";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.mainCatId,
+      req.body.subCatName,
+      req.body.catHeading,
+      req.body.subCatSlug,
+      req.body.subCatMetaTitle,
+      req.body.subCatMetaDescription,
+      JSON.stringify(req.body.catId)
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: 'Inserted Successfully'});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
 
 router.post("/addSpecValue", verifyToken,function (req, res) {
   var sqlInsert =

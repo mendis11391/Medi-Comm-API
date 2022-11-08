@@ -1157,13 +1157,17 @@ router.post("/insertNotes",  function (req, res) {
 });
 
 
-router.post("/insertOrderRenewal",  function (req, res) {    
+router.post("/insertOrderRenewal",  function (req, res) {  
+    var startDate = new Date(req.body.start_date);
+    startDate.setHours(0,0,0,0);
+    var endDate =  new Date(req.body.end_date);
+    endDate.setHours(0,0,0,0);
     var sqlInsert =
-      "INSERT INTO `order_renewals`(`order_item_id`, `renewal_price`, `start_date`, `end_date`, `modified_at`, `modified_by`, `comments`, `is_renewed`,`is_renewal_created`) VALUES (?,?,?,?,?,?,?,?,?)";
+      "INSERT INTO `order_renewals`(`order_item_id`,`rent`, `renewal_price`, `start_date`, `end_date`, `modified_at`, `modified_by`, `comments`, `is_renewed`,`is_renewal_created`) VALUES (?,?,?,?,?,?,?,?,?,?)";
     sql.query(
       sqlInsert,
       [
-        req.body.order_item_id, req.body.renewal_price, new Date(req.body.start_date), new Date(req.body.end_date), new Date(), 1, 'nil', req.body.is_renewed, 0
+        req.body.order_item_id,req.body.renewal_price, req.body.renewal_price, startDate, endDate, new Date(), 1, 'nil', req.body.is_renewed, 0
       ],
       (err) => {
         if (!err) {
@@ -1176,13 +1180,16 @@ router.post("/insertOrderRenewal",  function (req, res) {
   });
 
   router.put("/updateOrderRenewal/:id", function (req, res) {
-    
+    var startDate = new Date(req.body.start_date);
+    startDate.setHours(0,0,0,0);
+    var endDate =  new Date(req.body.end_date);
+    endDate.setHours(0,0,0,0);
     var sqlInsert =
       "UPDATE order_renewals SET start_date = ?, end_date=? WHERE order_item_id=?;";
     sql.query(
       sqlInsert,
       [
-       new Date(req.body.start_date), new Date(req.body.end_date), req.params.id
+        startDate, endDate, req.params.id
       ],
       (err) => {
         if (!err) {
@@ -1236,6 +1243,52 @@ router.post("/insertOrderRenewal",  function (req, res) {
         } else {
 	  logger.info({
             message: 'order renewal updation failed'+err,
+            dateTime: new Date()
+          });
+          res.send({message: err});
+        }
+      }
+    );
+  });
+
+  router.put("/updateOrderRentPrice/:id", function (req, res) {
+    
+    var sqlInsert =
+      "UPDATE order_renewals SET rent = ? WHERE id=?;";
+    sql.query(
+      sqlInsert,
+      [
+       req.body.rent,  req.params.id
+      ],
+      (err) => {
+        if (!err) {
+          res.send({message: 'Success'});
+        } else {
+	  logger.info({
+            message: 'order renewal updation failed'+err,
+            dateTime: new Date()
+          });
+          res.send({message: err});
+        }
+      }
+    );
+  });
+
+  router.put("/updateOrderRenewalEndDate/:id", function (req, res) {
+    
+    var sqlInsert =
+      "UPDATE order_renewals SET end_date = ? WHERE id=?;";
+    sql.query(
+      sqlInsert,
+      [
+       req.body.end_date, req.params.id
+      ],
+      (err) => {
+        if (!err) {
+          res.send({message: 'Success'});
+        } else {
+	        logger.info({
+            message: 'order renewal End date updation failed'+err,
             dateTime: new Date()
           });
           res.send({message: err});

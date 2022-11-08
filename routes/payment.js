@@ -124,6 +124,7 @@ function getDates(date){
   
 	// month is 0-based, that's why we need dataParts[1] - 1
 	let dateObject = new Date(+dateParts[2], dateParts[1]-1, +dateParts[0]);  
+	dateObject.setHours(0,0,0,0);
 	return dateObject;
 }
 
@@ -295,7 +296,17 @@ router.post('/saveNewOrder',verifyToken, async function(req, res) {
 			  ]
 		  );
 		});
-        res.send({message: 'Inserted Successfully', txnid: req.body.txnid});
+
+		var sqlUpdateOrderId = `UPDATE orders SET order_id=?, primary_id=? WHERE id = ${results.insertId}` ;
+		var updatedOrderId=req.body.orderID+results.insertId;
+		  sql.query(sqlUpdateOrderId,
+			  [
+				updatedOrderId,
+				updatedOrderId
+			  ]
+		  );
+
+        res.send({message: 'Inserted Successfully', txnid: updatedOrderId});
       } else {
 		logger.info({
 			message: 'failed to post /saveNewOrder'+err,
@@ -435,7 +446,15 @@ router.post('/newRenew', function(req, res) {
 			  ]
 		  );
 		});
-        res.send({message: 'Inserted Successfully', txnid: req.body.txnid});
+
+		var sqlUpdateOrderId = `UPDATE orders SET order_id=? WHERE id = ${results.insertId}` ;
+		var updatedOrderId=req.body.orderID+results.insertId;
+		sql.query(sqlUpdateOrderId,
+			[
+			updatedOrderId
+			]
+		);
+        res.send({message: 'Inserted Successfully', txnid: updatedOrderId});
       } else {
 		logger.info({
 			message: '/newRenew failed to post in orders query',
@@ -1542,7 +1561,7 @@ router.post('/renewalsResult',(req, res, next)=>{
 					// Get the response body
 					orderDetails = await response.getBody()[0];	
 
-					var updateRenewStatus="UPDATE order_renewals SET is_renewed = 1 WHERE order_item_id=? AND is_renewed=0";
+					var updateRenewStatus=`UPDATE order_renewals SET is_renewed=1, modified_at=now(), modified_by=${orderDetails.customer_id}, comments='renewalsResult' WHERE order_item_id=? AND is_renewed=0`;
 					orderDetails.orderItem.forEach((resOIT)=>{
 						sql.query(updateRenewStatus,
 							[
@@ -1773,54 +1792,54 @@ router.post('/RRResult',(req, res, next)=>{
     switch(req.body.txStatus){
         case txnTypes.cancelled: {
 
-			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
-			sql.query(sqlInsert,
-				[
-				req.body.referenceId,
-				req.body.orderId,
-				req.body.orderAmount,
-				2,
-				req.body.paymentMode,
-				'Cashfree',
-				req.body.txMsg,
-				new Date()
-				],
-				(err) => {
-				if (!err) {
-					var updateOrder = `UPDATE orders SET orderStatus = ?, paymentStatus = ? where order_id= ?`;
-					sql.query(updateOrder,
-					[
-						2,
-						4,
-						req.body.orderId,
-					]);
-				} else {
-					res.send({message: err});
-				}
-				}
-			);
+			// var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
+			// sql.query(sqlInsert,
+			// 	[
+			// 	req.body.referenceId,
+			// 	req.body.orderId,
+			// 	req.body.orderAmount,
+			// 	2,
+			// 	req.body.paymentMode,
+			// 	'Cashfree',
+			// 	req.body.txMsg,
+			// 	new Date()
+			// 	],
+			// 	(err) => {
+			// 	if (!err) {
+			// 		var updateOrder = `UPDATE orders SET orderStatus = ?, paymentStatus = ? where order_id= ?`;
+			// 		sql.query(updateOrder,
+			// 		[
+			// 			2,
+			// 			4,
+			// 			req.body.orderId,
+			// 		]);
+			// 	} else {
+			// 		res.send({message: err});
+			// 	}
+			// 	}
+			// );
 
-			sql.query(invoiceInsert,
-				[
-				'N/A',
-				req.body.orderId,
-				'N/A',
-				1
-				],
-				(err1, results) => {
-				if (!err1) {
-					var invoiceNo = 'IRO/21-22/'+results.insertId;
-					var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
-					sql.query(updateInvoice,
-					[
-						invoiceNo,
-						results.insertId,
-					]);
-				} else {
-					res.send({message: err});
-				}
-				}
-			);
+			// sql.query(invoiceInsert,
+			// 	[
+			// 	'N/A',
+			// 	req.body.orderId,
+			// 	'N/A',
+			// 	1
+			// 	],
+			// 	(err1, results) => {
+			// 	if (!err1) {
+			// 		var invoiceNo = 'IRO/21-22/'+results.insertId;
+			// 		var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
+			// 		sql.query(updateInvoice,
+			// 		[
+			// 			invoiceNo,
+			// 			results.insertId,
+			// 		]);
+			// 	} else {
+			// 		res.send({message: err});
+			// 	}
+			// 	}
+			// );
 			
 			res.redirect(url.format({
 				pathname: `${constants.frontendUrl}/failure`,
@@ -1887,6 +1906,28 @@ router.post('/RRResult',(req, res, next)=>{
 						]);
 					}
 					
+				} else {
+					res.send({message: err});
+				}
+				}
+			);
+
+			sql.query(invoiceInsert,
+				[
+				'N/A',
+				req.body.orderId,
+				'N/A',
+				1
+				],
+				(err1, results) => {
+				if (!err1) {
+					var invoiceNo = 'IRO/21-22/'+results.insertId;
+					var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
+					sql.query(updateInvoice,
+					[
+						invoiceNo,
+						results.insertId,
+					]);
 				} else {
 					res.send({message: err});
 				}
@@ -2324,7 +2365,7 @@ router.post('/postManualRenewalOrderTransaction',(req, res, next)=>{
 				// Get the response body
 				orderDetails = await response.getBody()[0];	
 
-				var updateRenewStatus="UPDATE order_renewals SET is_renewed = 1 WHERE order_item_id=? AND is_renewed=0";
+				var updateRenewStatus=`UPDATE order_renewals SET is_renewed=1, modified_at=now(), modified_by=${orderDetails.customer_id}, comments='postManualRenewalOrderTransaction' WHERE order_item_id=? AND is_renewed=0`;
 				orderDetails.orderItem.forEach((resOIT)=>{
 					sql.query(updateRenewStatus,
 						[
