@@ -1088,7 +1088,7 @@ router.get('/index' , (req, res, next)=>{
 
 router.post('/result',(req, res, next)=>{
 	logger.info({
-		message: '/result cashfree api started',
+		message: `/result cashfree api started, order#: ${req.body.orderId}`,
 		dateTime: new Date()
 	});
     console.log("merchantHosted result hit");
@@ -1281,7 +1281,7 @@ router.post('/result',(req, res, next)=>{
 
 
 				logger.info({
-					message: '/result primaryorder: whatsapp message sent',
+					message: `/result primaryorder: whatsapp message sent: order#: ${req.body.orderId}`,
 					dateTime: new Date()
 				});
 

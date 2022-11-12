@@ -129,6 +129,25 @@ router.post("/addresses", verifyToken,function (req, res) {
 });
 
 // Update user firstName, lastName, and email
+router.put("/updateUsernotification/:id", verifyToken,(req, res) => {
+  var sqlUpdate = "UPDATE `customer` SET `is_notification_enabled`= ? WHERE `customer_id` = ?";
+  sql.query(
+    sqlUpdate,
+    [
+      req.body.is_notification_enabled,
+      req.params.id
+    ],
+    (err) => {
+      if (!err) {
+        res.send({'message': 'user details updated'});
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
+// Update user firstName, lastName, and email
 router.put("/updateBasicUserDetails/:id", verifyToken,(req, res) => {
   var sqlUpdate = "UPDATE `customer` SET `firstName`= ?, `lastName`=?, `email`=? WHERE `customer_id` = ?";
   sql.query(

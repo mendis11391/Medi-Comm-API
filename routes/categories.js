@@ -192,7 +192,7 @@ router.get("/categoryAndSub", (req, res) => {
 });
 
 // Get all categoris
-router.get("/categoryAndSub/:id", verifyToken,(req, res) => { 
+router.get("/categoryAndSub/:id", (req, res) => { 
   sql.query(
     `CALL get_catByCatGroupId(${JSON.stringify(req.params.id)})`,
     (err, rows, fields) => {
@@ -656,7 +656,7 @@ router.post("/", verifyToken, function (req, res) {
 
 router.put("/updateCategory",  function (req, res) {
   var sqlUpdate =
-    "UPDATE category SET `cat_group`=?, `cat_name`=?,`cat_heading`=?,`slug`=?,`metaTitle`=?,`metaDescription`=? WHERE  (`cat_id` = ?);";
+    "UPDATE category SET `cat_group`=?, `cat_name`=?,`cat_heading`=?,`slug`=?,`metaTitle`=?,`metaDescription`=?,`cat_schema`=? WHERE  (`cat_id` = ?);";
   sql.query(
     sqlUpdate,
     [
@@ -666,6 +666,7 @@ router.put("/updateCategory",  function (req, res) {
       req.body.subCatSlug,
       req.body.subCatMetaTitle,
       req.body.subCatMetaDescription,
+      req.body.subCatMetaSeoContent,
       JSON.stringify(req.body.catId)
     ],
     (err) => {
