@@ -656,7 +656,7 @@ router.post("/", verifyToken, function (req, res) {
 
 router.put("/updateCategory",  function (req, res) {
   var sqlUpdate =
-    "UPDATE category SET `cat_group`=?, `cat_name`=?,`cat_heading`=?,`slug`=?,`metaTitle`=?,`metaDescription`=?,`cat_schema`=? WHERE  (`cat_id` = ?);";
+    "UPDATE category SET `cat_group`=?, `cat_name`=?,`cat_heading`=?,`slug`=?,`metaTitle`=?,`metaDescription`=?,`cat_schema`=? WHERE (`cat_id` = ?)";
   sql.query(
     sqlUpdate,
     [

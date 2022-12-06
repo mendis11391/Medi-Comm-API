@@ -6,6 +6,7 @@ const querystring = require("querystring");
 const TokenGenerator = require("uuid-token-generator");
 const constants = require("../constant/constUrl");
 const Speakeasy = require("speakeasy");
+var requestify = require('requestify'); 
 
 const winston = require('winston');
 var currentDate = new Date().toJSON().slice(0,10);
@@ -90,7 +91,8 @@ router.post('/smsOtp',(req,res)=>{
   
   var sender='IROOTP';
   
-  var data='username='+username+'&hash='+hash+'&sender='+sender+'&numbers='+number+'&message='+msg
+  var data='username='+username+'&hash='+hash+'&sender='+sender+'&numbers='+number+'&message='+msg;
+  
   
   var options = {
   
@@ -119,7 +121,26 @@ router.post('/smsOtp',(req,res)=>{
     response.on('end', function () {
   
     console.log(str);
+    let template = {
+      "apiKey": constants.whatsappAPIKey,
+      "campaignName": "login_otp",
+      "destination": req.body.mobile,
+      "userName": "IRENTOUT",
+      "source": "login_otp",
+      "media": {
+         "url": "https://irentout.com/assets/images/slider/5.png",
+         "filename": "IROHOME"
+      },
+      "templateParams": [
+        otp, req.body.city
+      ],
+      "attributes": {
+        "InvoiceNo": "1234"
+      }
+     }
   
+     
+     requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
     });
   
   }
@@ -597,7 +618,7 @@ router.post("/otpRegister",verifyToken, (req, res) => {
   // cryptPassword += encryptedTime.final('hex');
 
   let insQuery =
-    "INSERT INTO `customer`( `firstName`, `lastName`, `mobile`, `email`, `password`, `registeredAt`, `lastLogin`,`login_type`, `token`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO `customer`( `firstName`, `lastName`, `mobile`, `email`, `password`, `registeredAt`, `lastLogin`,`login_type`, `token`,`status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   let checkUser = "select firstName from customer where mobile = ? and login_type = 'web'";
   sql.query(checkUser, [req.body.phone], (err, rows) => {
     if (!err) {
@@ -613,7 +634,8 @@ router.post("/otpRegister",verifyToken, (req, res) => {
             new Date(),
             new Date(),
             "web",
-            logintoken
+            logintoken,
+            0
           ],
           (err1, results) => {
             if (!err1) {
@@ -685,10 +707,32 @@ router.post("/totp-validate", verifyToken,(request, response, next) => {
 });
 
 router.post('/otpUserdetails', verifyToken,(req, res) => {
-  let getDetails = "select customer_id, firstName, login_type from customer where mobile = ?";
+  let getDetails = "select customer_id, firstName, login_type, status from customer where mobile = ?";
+  let updateStatus = "UPDATE customer SET status=1 WHERE customer_id = ?";
   sql.query(getDetails, [req.body.mobile], (err, rows) => {
     if (!err) {
       if (rows.length > 0) {
+        if(rows[0].status==false){          
+          sql.query(updateStatus, [rows[0].customer_id], (err, rows) => {});
+          let template = {
+            "apiKey": constants.whatsappAPIKey,
+            "campaignName": "Logged In Greeting",
+            "destination": req.body.mobile,
+            "userName": "IRENTOUT",
+            "source": "Logged In Greeting",
+            "media": {
+               "url": "https://irentout.com/assets/images/slider/5.png",
+               "filename": "IROHOME"
+            },
+            "templateParams": ["User"],
+            "attributes": {
+              "InvoiceNo": "1234"
+            }
+           }
+        
+           
+           requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
+        }
        res.send({'data': rows, authenticated: true});
       } else {
         res.send({'data': {}, authenticated: false});

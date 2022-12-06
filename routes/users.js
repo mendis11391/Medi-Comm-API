@@ -281,7 +281,7 @@ router.get('/getCustomerById/:id',verifyToken, function(req, res) {
 });
 
 router.post('/updateorderItem',verifyToken, function(req, res) {
-	var sqlInsert = "INSERT INTO `customer_requests`( `order_item_id`, `order_id`,`renewals_timline`, `request_id`, `requested_date`, `request_reason`,`request_message`,`approval_status`, `approval_date`, `request_status`) VALUES (?, ?, ?,?,?,?,?,?,?,?)";  
+	var sqlInsert = "INSERT INTO `customer_requests`( `order_item_id`, `order_id`,`renewals_timline`, `request_id`, `requested_date`, `request_reason`,`request_message`,`approval_status`, `approval_date`, `request_status`) VALUES (?, ?, ?,?,?,?,?,?,?,?)";    
 	sql.query(sqlInsert,
     [
       req.body.order_item_id,
@@ -296,25 +296,58 @@ router.post('/updateorderItem',verifyToken, function(req, res) {
       req.body.request_status,
     ],
     (err) => {
-      if (!err) {
-        let requestType=0;
-        if(req.body.request_id==1){
-          requestType=10
-        } else{
-          requestType=9
-        }
-        requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/${requestType}`).then(function(templateRsponse) {
-					
-          let template = templateRsponse.getBody()[0]
-          requestify.post(`${constants.apiUrl}forgotpassword/rrRequest`, {
-            email: req.body.email,
-            template: template,
-            requestId:req.body.request_id,
-            product:req.body.renewals,
-            requestedDate: req.body.requested_date,
+      if (!err) {        
+          let requestType=0;
+          let campaign = '';
+          let params = [];
+          let requestedDate = new Date(req.body.requested_date);
+
+          // Get the response body
+          if(req.body.request_id==1){
+            requestType=10;
+            let repaceproduct = JSON.parse(req.body.renewals);
+            campaign = "Replacement/ Upgrade requested";
+            params.push(req.body.firstName);
+            params.push(repaceproduct[0].prod_name);
+          } else{
+            requestType=9;   
+            campaign = "Return Requested";
+            params.push(req.body.firstName);
+            params.push(requestedDate.getDate()+'/'+(requestedDate.getMonth()+1)+'/'+requestedDate.getFullYear());       
+          }
+          
+          let template = {
+            "apiKey": constants.whatsappAPIKey,
+            "campaignName": campaign,
+            "destination": req.body.mobile,
+            "userName": "IRENTOUT",
+            "source": campaign,
+            "media": {
+               "url": "https://irentout.com/assets/images/slider/5.png",
+               "filename": "IROHOME"
+            },
+            "templateParams": params,
+            "attributes": {
+              "InvoiceNo": "1234"
+            }
+           }
+        
+           
+           requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
+  
+          requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/${requestType}`).then(function(templateRsponse) {
+            
+            let template = templateRsponse.getBody()[0]
+            requestify.post(`${constants.apiUrl}forgotpassword/rrRequest`, {
+              email: req.body.email,
+              template: template,
+              requestId:req.body.request_id,
+              product:req.body.renewals,
+              requestedDate: req.body.requested_date,
+            });
           });
-        });
-        res.send({message: 'Inserted Successfully'});
+          res.send({message: 'Inserted Successfully'});
+        
       } else {
         logger.info({
           message: `return or replace request error:${err}`,
@@ -360,6 +393,43 @@ router.post('/updateorderItem2',verifyToken, function(req, res) {
         //     requestedDate: req.body.requested_date,
         //   });
         // });
+        let requestType=0;
+          let campaign = '';
+          let params = [];
+          let requestedDate = new Date(req.body.requested_date);
+
+          // Get the response body
+          if(req.body.request_id==1){
+            requestType=10;
+            let repaceproduct = JSON.parse(req.body.renewals);
+            campaign = "Replacement/ Upgrade requested";
+            params.push(req.body.firstName);
+            params.push(repaceproduct.prod_name);
+          } else{
+            requestType=9;   
+            campaign = "Return Requested";
+            params.push(req.body.firstName);
+            params.push(requestedDate.getDate()+'/'+(requestedDate.getMonth()+1)+'/'+requestedDate.getFullYear());       
+          }
+          
+          let template = {
+            "apiKey": constants.whatsappAPIKey,
+            "campaignName": campaign,
+            "destination": req.body.mobile,
+            "userName": "IRENTOUT",
+            "source": campaign,
+            "media": {
+               "url": "https://irentout.com/assets/images/slider/5.png",
+               "filename": "IROHOME"
+            },
+            "templateParams": params,
+            "attributes": {
+              "InvoiceNo": "1234"
+            }
+           }
+        
+           
+           requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
         res.send({message: 'Inserted Successfully'});
       } else {
         logger.info({
@@ -856,37 +926,28 @@ router.post('/kycDetailsSubmit', function(req, res) {
   
   var aadharImage = req.body.aadharImage;
   var selfieImage = req.body.selfieImage;
-  var pgReceipt = req.body.pgReceipt;
-  var collageId = req.body.collageId;
-  var permanentAddressProof = req.body.permanentAddressProof;
-  var ownElectricitybill = req.body.ownElectricitybill;
-  var rentedEletricityBill = req.body.rentedEletricityBill;
-  var retalAgreement = req.body.retalAgreement;
-  var anyBill = req.body.anyBill;
+  var pgReceipt = req.body.pgReceipt ? req.body.pgReceipt : [];
+  var collageId = req.body.collageId ? req.body.collageId : [];
+  var permanentAddressProof = req.body.permanentAddressProof ? req.body.permanentAddressProof : [];
+  var ownElectricitybill = req.body.ownElectricitybill ? req.body.ownElectricitybill : [];
+  var rentedEletricityBill = req.body.rentedEletricityBill ? req.body.rentedEletricityBill : [];
+  var retalAgreement = req.body.retalAgreement ? req.body.retalAgreement : [];
+  var anyBill = req.body.anyBill ? req.body.anyBill : [];
   var allImages = [];
+  var kycStatus = 'eKYC submitted';
 
-  logger.info({
-    message: `aadhaar image. error:${req.body.aadharImage}`,
-    dateTime: new Date()
-  });
+  if(req.body.ref1Name==''){
+    kycStatus = 'eKYC partially submitted';
+  }
 
-  logger.info({
-    message: `Selfie image. error:${req.body.selfieImage}`,
-    dateTime: new Date()
-  });
-
-  logger.info({
-    message: `Electricity bill. error:${req.body.ownElectricitybill}`,
-    dateTime: new Date()
-  });
-  
+   
 	var kycMain = "INSERT INTO `kyc_main_table`( `customer_id`, `customer_type`, `comments`, `kyc_status`, `editable`, `approved_date`,`expiry_date`,`created_at`, `modified_at`, `status`) VALUES (?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(kycMain,
     [
       req.body.customer_id,
       req.body.customerType,
       '',
-      'eKYC submitted',
+      kycStatus,
       0,
       new Date(),
       new Date(),
@@ -901,18 +962,18 @@ router.post('/kycDetailsSubmit', function(req, res) {
         sql.query(kycIndividual,
           [
             result.insertId,
-            req.body.alternateMobileNo,
-            req.body.company,
-            req.body.occupation,
-            req.body.socialLink,
-            req.body.aadharNo,
-            req.body.addressType,
-            req.body.ref1Name,
-            req.body.ref1Relation,
-            req.body.ref1Phone,
-            req.body.ref2Name,
-            req.body.ref2Relation,
-            req.body.ref2Phone,
+            req.body.alternateMobileNo ? req.body.alternateMobileNo : '',
+            req.body.company ? req.body.company : '',
+            req.body.occupation ? req.body.occupation : '',
+            req.body.socialLink ? req.body.socialLink : '',
+            req.body.aadharNo ? req.body.aadharNo : '',
+            req.body.addressType ? req.body.addressType : 0,
+            req.body.ref1Name ? req.body.ref1Name : '',
+            req.body.ref1Relation ? req.body.ref1Relation : '',
+            req.body.ref1Phone ? req.body.ref1Phone : '',
+            req.body.ref2Name ? req.body.ref2Name : '',
+            req.body.ref2Relation ? req.body.ref2Relation : '',
+            req.body.ref2Phone ? req.body.ref2Phone : '',
             new Date(),
             new Date(),
             1
@@ -1103,6 +1164,29 @@ router.post('/kycDetailsSubmit', function(req, res) {
   );
 });
 
+router.post('/kycSubmittedWhatsapp', function(req, res) {
+  let template = {
+    "apiKey": constants.whatsappAPIKey,
+    "campaignName": "eKYC Submitted",
+    "destination": req.body.mobile,
+    "userName": "IRENTOUT",
+    "source": "eKYC Submitted",
+    "media": {
+       "url": "https://irentout.com/assets/images/slider/5.png",
+       "filename": "IROHOME"
+    },
+    "templateParams": [
+      req.body.customerName, 
+    ],
+    "attributes": {
+      "InvoiceNo": "1234"
+    }
+   }
+
+   
+   requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
+});
+
 router.post('/kycCompanyDetailsSubmit', function(req, res) {
   
   var gstCertificate = req.body.gstCertificate;
@@ -1256,6 +1340,18 @@ router.post('/kycCompanyDetailsSubmit', function(req, res) {
           });
         }
 
+        res.send({message: 'Inserted Successfully'});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
+router.post('/insertUrlLogs', function(req, res) {
+  sql.query(`CALL insertUrlLogs(${req.body.sessionId}, ${req.body.customerId}, ${JSON.stringify(req.body.url)}, ${JSON.stringify(req.body.tag)}, ${req.body.conversion})`,    
+    (err) => {
+      if (!err) {
         res.send({message: 'Inserted Successfully'});
       } else {
         res.send({message: err});
@@ -1422,6 +1518,36 @@ router.put("/getAllKYC/updateKYCMaintablefield/:id", verifyToken,(req, res) => {
           message: `/updateKYCMaintablefield: ${req}`,
           dateTime: new Date()
         });
+        let campaignName = '';
+        let params = [];
+        if(req.body.value=='eKYC approved'){
+          campaignName = 'eKYC Approved';
+          params.push(req.body.fullName);
+        } else if(req.body.value=='Query raised'){
+          campaignName = 'eKYC Query Raised'
+          params.push(req.body.fullName);
+          // var html = req.body.comments.replace(/<\/?[^>]+(>|$)/g, "").replace("/\n/g", "").replace("/\t/g", "");
+          
+          params.push(req.body.comments);
+        }
+        let template = {
+          "apiKey": constants.whatsappAPIKey,
+          "campaignName": campaignName,
+          "destination": req.body.mobile,
+          "userName": "IRENTOUT",
+          "source": "",
+          "media": {
+             "url": "https://irentout.com/assets/images/slider/5.png",
+             "filename": "IROHOME"
+          },
+          "templateParams": params,
+          "attributes": {
+            "InvoiceNo": "1234"
+          }
+         }
+      
+         
+        requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
         res.send({'message': 'KYC status updated'});
       } else {
         logger.info({

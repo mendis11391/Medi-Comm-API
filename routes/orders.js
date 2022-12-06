@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 const constants = require("../constant/constUrl");
 var sql = require("../db.js");
+var requestify = require('requestify'); 
 
 const winston = require('winston');
 var currentDate = new Date().toJSON().slice(0,10);
@@ -284,7 +285,17 @@ router.put("/updateRenewTimline/:id", verifyToken,(req, res) => {
               });
               let orderItems = rows2[0];
               // console.log(orderItems.length);
+              var uniqueOrderItems=[];
+              
                 for(let i=0; i<orderItems.length;i++){
+                  let ottemp = uniqueOrderItems.filter(item=>item.product_id==orderItems[i].product_id);
+                  if(ottemp.length>0){
+                    ottemp[0].prodqty+=1;                      
+                  }else{
+                    orderItems[i].prodqty=1;
+                    uniqueOrderItems.push(orderItems[i]);
+                  }
+
                   if(orderItems[i].delivery_status==4 ){
                     delivered.push(1);              
                   } else {
@@ -302,9 +313,6 @@ router.put("/updateRenewTimline/:id", verifyToken,(req, res) => {
                   }
                 }
 
-                console.log(others);
-                console.log(delivered);
-                console.log(shipped);
                 if(shipped.includes(1) && (others.includes(1) && !delivered.includes(1))){
                   deliverStatus = 2;
                 } else if(shipped.includes(1) && !others.includes(1) && !delivered.includes(1)){
@@ -328,12 +336,37 @@ router.put("/updateRenewTimline/:id", verifyToken,(req, res) => {
                     deliverStatus,
                     orderId
                   ],(err3, rows3) => {
-                    if (err3) {
+                    if (err3) {                      
                       logger.info({
                         message: '/updateRenewTimline/:id Error:'+err3,
                         dateTime: new Date()
                       });
                       res.send({ error: err3 });
+                    }else{
+                      let templateprods="";
+                      if(deliverStatus==4){
+                        uniqueOrderItems.forEach((prodItems)=>{
+                          templateprods+= '(Product name:'+prodItems.prod_name+', Quantity:'+prodItems.prodqty+'),';
+                        });
+                        let template = {
+                          "apiKey": constants.whatsappAPIKey,
+                          "campaignName": "Order Delivered",
+                          "destination": req.body.mobile,
+                          "userName": "IRENTOUT",
+                          "source": "Order Delivered",
+                          "media": {
+                             "url": "https://irentout.com/assets/images/slider/5.png",
+                             "filename": "IROHOME"
+                          },
+                          "templateParams": [req.body.fullName, req.body.orderNo, templateprods],
+                          "attributes": {
+                            "InvoiceNo": "1234"
+                          }
+                         }
+                      
+                         
+                         requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
+                      }
                     }
                   }
                 );
@@ -1233,7 +1266,7 @@ router.get('/orderDetails2/:id',verifyToken, function(req, res) {
     );
 });
 
-router.get('/orderDetails/:id', verifyToken,function(req, res) {
+router.get('/orderDetails/:id', function(req, res) {
   
   let orders=[];
   let orderAddress=[];
@@ -1243,6 +1276,10 @@ router.get('/orderDetails/:id', verifyToken,function(req, res) {
   let delivered=[];
   let shipped=[];
   let others=[];
+  logger.info({
+    message: '/orderDetails results param: '+JSON.stringify(req.params.id),
+    dateTime: new Date()
+  });
   sql.query(
       `CALL getOrderByOrderId('${req.params.id}') `,
       (err, rows) => {
@@ -1251,7 +1288,15 @@ router.get('/orderDetails/:id', verifyToken,function(req, res) {
             orders.push(res);
             
           });
+          logger.info({
+            message: '/orderDetails results: '+JSON.stringify(rows),
+            dateTime: new Date()
+          });
         } else {
+          logger.info({
+            message: '/orderDetails: '+err,
+            dateTime: new Date()
+          });
           res.send({ error: err});
         }
         orders.forEach((orders,i,ele) => {
@@ -1263,6 +1308,10 @@ router.get('/orderDetails/:id', verifyToken,function(req, res) {
                   `CALL get_orderItemByorder(${orders.id})`,
                   (err2, rows2, fields) => {
                     if (!err2) { 
+                      logger.info({
+                        message: '/orderDetails results err2: '+JSON.stringify(rows2),
+                        dateTime: new Date()
+                      });
                       sql.query(
                         `CALL get_addressById(${orders.shippingAddress})`,
                         (err3, rows3) => {
@@ -1273,6 +1322,10 @@ router.get('/orderDetails/:id', verifyToken,function(req, res) {
                             orders.shippingAddress = rows3[0];
                             orderItem.push(orders); 
                             if(len===ele.length){
+                              logger.info({
+                                message: '/orderDetails results err3: '+JSON.stringify(orderItem),
+                                dateTime: new Date()
+                              });
                               orderItem.forEach((ot, i)=>{
                                 let forOT = ot.orderItem;
                                 for(let i=0;i<forOT.length;i++){
@@ -1350,7 +1403,10 @@ router.get('/orderDetails/:id', verifyToken,function(req, res) {
           
         });
 
-        
+        logger.info({
+          message: '/End of loop: ',
+          dateTime: new Date()
+        });
 
 
       }

@@ -516,7 +516,8 @@ router.post('/newReturn', verifyToken,function(req, res) {
     (err, results) => {
       if (!err) {
 		var products = checkoutPInfo;
-
+		var templateProds = '';
+		
 		products.forEach((resProduct)=>{
 		  let renewalProduct = [];
 		  renewalProduct.push(resProduct);
@@ -549,6 +550,28 @@ router.post('/newReturn', verifyToken,function(req, res) {
 			  ]
 		  );
 		});
+		products.forEach((resProductItems)=>{			
+			templateProds+='('+resProductItems.prod_name+')';	
+		});
+
+		let template = {
+            "apiKey": constants.whatsappAPIKey,
+            "campaignName": "Return Order Generated",
+            "destination": req.body.mobile,
+            "userName": "IRENTOUT",
+            "source": "Return Order Generated",
+            "media": {
+               "url": "https://irentout.com/assets/images/slider/5.png",
+               "filename": "IROHOME"
+            },
+            "templateParams": [req.body.firstName,req.body.orderID,templateProds],
+            "attributes": {
+              "InvoiceNo": "1234"
+            }
+           }
+        
+           
+           requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
 
 		logger.info({
 			message: '/newReturn posted in orders successfully',
@@ -1115,7 +1138,7 @@ router.post('/result',(req, res, next)=>{
 				(err) => {
 				if (!err) {
 					logger.info({
-						message: '/result cashfree posted successfully to transaction table',
+						message: `/result cashfree posted successfully to transaction table with cancelled transaction#: ${req.body.referenceId}`,
 						dateTime: new Date()
 					});
 					var updateOrder = `UPDATE orders SET orderStatus = ?, paymentStatus = ? where order_id= ?`;
@@ -1195,6 +1218,10 @@ router.post('/result',(req, res, next)=>{
 				],
 				(err1) => {
 				if (!err1) {
+					logger.info({
+						message: `/result cashfree posted successfully to transaction table with transaction#: ${req.body.referenceId}`,
+						dateTime: new Date()
+					});
 					var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
 					sql.query(updateOrder,
 					[
@@ -1443,6 +1470,10 @@ router.post('/renewalsResult',(req, res, next)=>{
 				],
 				(err) => {
 				if (!err) {
+					logger.info({
+						message: `/renewalsResult cashfree posted successfully to transaction table with cancelled transaction#: ${req.body.referenceId}`,
+						dateTime: new Date()
+					});
 					var updateOrder = `UPDATE orders SET orderStatus = ?, paymentStatus = ? where order_id= ?`;
 					sql.query(updateOrder,
 					[
@@ -1518,6 +1549,10 @@ router.post('/renewalsResult',(req, res, next)=>{
 				],
 				(err1) => {
 				if (!err1) {
+					logger.info({
+						message: `/renewalsResult cashfree posted successfully to transaction table with transaction#: ${req.body.referenceId}`,
+						dateTime: new Date()
+					});
 					var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
 					sql.query(updateOrder,
 					[
@@ -1569,6 +1604,25 @@ router.post('/renewalsResult',(req, res, next)=>{
 							]);
 					});
 					
+					let template = {
+						"apiKey": constants.whatsappAPIKey,
+						"campaignName": "Renewal Order Success",
+						"destination": orderDetails.mobile,
+						"userName": "IRENTOUT",
+						"source": "Renewal Order Success",
+						"media": {
+						   "url": "https://irentout.com/assets/images/slider/5.png",
+						   "filename": "IROHOME"
+						},
+						"templateParams": [
+							orderDetails.firstName+' '+orderDetails.lastName,  req.body.orderId,req.body.orderAmount
+						],
+						"attributes": {
+						  "InvoiceNo": "1234"
+						}
+					}
+	
+					requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
 					
 					requestify.post(`${constants.apiUrl}smsOrder`, {
 						customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
@@ -1676,7 +1730,7 @@ router.post('/renewalsResult',(req, res, next)=>{
 				// }));
 			});
 			res.redirect(url.format({
-				pathname: `${constants.frontendUrl}/order-success`,
+				pathname: `${constants.frontendUrl}/Thank-you`,
 				query: {
 					"transID": req.body.orderId,
 				}
@@ -1897,6 +1951,10 @@ router.post('/RRResult',(req, res, next)=>{
 				],
 				(err1) => {
 				if (!err1) {
+					logger.info({
+						message: `/RRResult cashfree posted successfully to transaction table with transaction#: ${req.body.referenceId}`,
+						dateTime: new Date()
+					});
 					if(req.body.txStatus=='SUCCESS'){
 						var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
 						sql.query(updateOrder,
@@ -1935,7 +1993,7 @@ router.post('/RRResult',(req, res, next)=>{
 			);
 			
 			res.redirect(url.format({
-				pathname: `${constants.frontendUrl}/order-success`,
+				pathname: `${constants.frontendUrl}/Thank-you`,
 				query: {
 				   "transID": req.body.orderId,
 				 }

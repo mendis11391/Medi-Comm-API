@@ -1,22 +1,63 @@
 var express = require("express");
 var multer = require("multer");
+var fs = require('fs'); 
 // const TokenGenerator = require("uuid-token-generator");
 const constants = require("../constant/constUrl");
 var productImgArr = [];
 
+// var storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, "public/images/products");
+//   },
+//   filename: function (req, file, cb) {
+//     const dte = Date.now();
+//     let filename = `${dte}-${file.originalname}`;
+//     productImgArr.push(filename);
+//     cb(null, filename);
+//   },
+// });
+
+// var upload = multer({ dest: "Upload_folder_name" })
+// If you do not want to use diskStorage then uncomment it
+    
 var storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "public/images/products");
+      // Uploads is the Upload_folder_name
+      var path = `${constants.imagePath}/${req.body.directory}/`
+      fs.mkdirSync(path, { recursive: true })
+      cb(null, path)
   },
   filename: function (req, file, cb) {
-    const dte = Date.now();
-    let filename = `${dte}-${file.originalname}`;
-    productImgArr.push(filename);
-    cb(null, filename);
-  },
-});
+    cb(null, req.body.file_name+".jpg")
+  }
+})
 
-var upload = multer({ storage: storage });
+// Define the maximum size for uploading
+// picture i.e. 1 MB. it is optional
+const maxSize = 1 * 1000 * 1000;
+
+var upload = multer({ 
+  storage: storage,
+  limits: { fileSize: maxSize },
+  fileFilter: function (req, file, cb){
+  
+      // Set the filetypes, it is optional
+      var filetypes = /jpeg|jpg|png/;
+      var mimetype = filetypes.test(file.mimetype);
+      
+      // var extname = filetypes.test(path.extname(
+      //             file.originalname).toLowerCase());
+      
+      if (mimetype) {
+          return cb(null, true);
+      }
+    
+      cb("Error: File upload only supports the "
+              + "following filetypes - " + filetypes);
+    } 
+
+// mypic is the name of file attribute
+}).single("product_image");  
 
 var router = express.Router();
 
@@ -503,6 +544,20 @@ router.put("/updateTenureDiscounts",verifyToken, (req, res) => {
       }
     }
   );
+});
+
+// Delete a categories by id
+router.delete('/deleteProductCategoryByProdId/:id/:cat',  (req, res) => {
+  sql.query('delete from products where cat_id = ? AND product_id=? AND is_primary=0',
+   [req.params.cat,req.params.id], (err) => {
+    if (!err) {
+        res.send('Deleted succesfully');
+    }
+     else{
+      res.send({ error: 'Error' });
+    }
+      
+  })
 });
 
 // Delete a tenure discounts by id
@@ -1633,7 +1688,7 @@ router.put("/:id",verifyToken, (req, res) => {
   var highlightLength = req.body.highlightType;
   var accessoriesLength = req.body.accessory;
   var prodUpdate =
-  `UPDATE products SET cat_id=? WHERE product_id=?`;
+  `UPDATE products SET cat_id=? WHERE product_id=? AND is_primary=1`;
   var prodDetailsUpdate =
     `UPDATE prod_details SET prod_name=?,metaTitle=?,metaDescription=?,metaKeywords=?,slug=?,prod_description=?, prod_image=?, securityDeposit=?,tenure_base_price=?,prod_status=?,priority=?, position=? WHERE id=?`;
   var prodSpecsDelete = `DELETE FROM product_specs WHERE product_id=?`;
@@ -1912,6 +1967,27 @@ router.post("/",  verifyToken,function (req, res, next) {
 });
 
 
+// Add new city
+router.post('/postProductCategory',verifyToken, function(req, res) {
+  var productsInsert =
+    "INSERT INTO `products`( `product_id`, `quantity`, `prod_code`, `cat_id`, `brand_id`, `city_id`, `delivery_timeline`) values (?, ?, ?, ?, ?, ?, ?)";
+    let citiesLength = ["1", "2", "3","4"];
+    for(let i=0;i<citiesLength.length;i++){
+      sql.query(
+        productsInsert,
+        [req.body.product_id, req.body.prodQty, '', req.body.subCatId, req.body.brandId, citiesLength[i], req.body.deliveryTimeline],
+        (err1) => {
+          if (!err1) {
+            // res.send({ res: "Inserted succesfully" });
+          } else{
+            res.send({error:err1});
+          }
+        }
+      );
+    }
+});
+
+
 // Get order by txn id
 router.get("/ordDetails/:txnid", (req, res) => {
   let queryDta = `SELECT * FROM orders WHERE txnid = "${req.params.txnid}"`;
@@ -1957,5 +2033,29 @@ router.get("/ordDetails/:txnid", (req, res) => {
     }
   });
 });
+
+
+router.post("/upload",function (req, res, next) {
+        
+  // Error MiddleWare for multer file upload, so if any
+  // error occurs, the image would not be uploaded!
+  upload(req,res,function(err) {
+
+      if(err) {
+        // ERROR occurred (here it can be occurred due
+        // to uploading image of size greater than
+        // 1MB or uploading different file type)
+        logger.info({
+          message: `failed to post products Image. error:${err}`,
+          dateTime: new Date()
+        });
+        res.send(err)
+      }
+      else {
+        // SUCCESS, image successfully uploaded
+        res.send("Success, Image uploaded!")
+      }
+  })
+})
 
 module.exports = router;
