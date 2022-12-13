@@ -1081,6 +1081,19 @@ router.get('/getAllNotes', function(req, res, next) {
   );
 });
 
+router.get('/getUrlLogs',verifyToken, function(req, res, next) {
+  sql.query(
+    `CALL 	get_AllUrlLogs()`,
+    (err, rows) => {
+      if (!err) {
+        res.send(rows[0]);
+      } else {
+        res.send({ error: err });
+      }
+    }
+  );
+});
+
 // router.get('/getActiveOrderItems', function(req, res, next) {
 //   sql.query(
 //     `CALL activeOrderItems()`,

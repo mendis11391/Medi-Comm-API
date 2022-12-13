@@ -2430,6 +2430,26 @@ router.post('/postManualRenewalOrderTransaction',(req, res, next)=>{
 							resOIT.primary_order_item_id
 						]);
 				});
+
+				let template = {
+					"apiKey": constants.whatsappAPIKey,
+					"campaignName": "Renewal Order Success",
+					"destination": orderDetails.mobile,
+					"userName": "IRENTOUT",
+					"source": "Renewal Order Success",
+					"media": {
+					   "url": "https://irentout.com/assets/images/slider/5.png",
+					   "filename": "IROHOME"
+					},
+					"templateParams": [
+						orderDetails.firstName+' '+orderDetails.lastName, req.body.orderId,JSON.stringify(req.body.orderAmount)
+					],
+					"attributes": {
+					  "InvoiceNo": "1234"
+					}
+				}
+
+				requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
 			});
 			
 		} else {

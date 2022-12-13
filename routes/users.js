@@ -532,6 +532,8 @@ router.get('/', verifyToken, function(req, res) {
     );
 });
 
+
+
 /* GET user details by id*/
 router.get('/getUserAddressInfo/:getid',verifyToken, function(req, res, next) {
   sql.query(
@@ -1695,10 +1697,10 @@ router.put("/getAllKYC/updatekycDetailsTab/:id", (req, res) => {
           });
         }
 
-        requestify.post(`${constants.apiUrl}forgotpassword/eKYCSubmitMail`, {
-          allImages:allImages,
-          kycDetails:req.body
-        });
+        // requestify.post(`${constants.apiUrl}forgotpassword/eKYCSubmitMail`, {
+        //   allImages:allImages,
+        //   kycDetails:req.body
+        // });
         res.send({'message': 'KYC status updated'});
       } else {
         res.send({ error: err });
