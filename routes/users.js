@@ -302,6 +302,12 @@ router.post('/updateorderItem',verifyToken, function(req, res) {
           let params = [];
           let requestedDate = new Date(req.body.requested_date);
 
+          var currentOffset = requestedDate.getTimezoneOffset();
+
+          var ISTOffset = 330;   // IST offset UTC +5:30 
+
+          var ISTTime = new Date(requestedDate.getTime() + (ISTOffset + currentOffset)*60000);
+
           // Get the response body
           if(req.body.request_id==1){
             requestType=10;
@@ -313,7 +319,7 @@ router.post('/updateorderItem',verifyToken, function(req, res) {
             requestType=9;   
             campaign = "Return Requested";
             params.push(req.body.firstName);
-            params.push(requestedDate.getDate()+'/'+(requestedDate.getMonth()+1)+'/'+requestedDate.getFullYear());       
+            params.push(ISTTime.getDate()+'/'+(ISTTime.getMonth()+1)+'/'+ISTTime.getFullYear());       
           }
           
           let template = {
@@ -398,6 +404,12 @@ router.post('/updateorderItem2',verifyToken, function(req, res) {
           let params = [];
           let requestedDate = new Date(req.body.requested_date);
 
+          var currentOffset = requestedDate.getTimezoneOffset();
+
+          var ISTOffset = 330;   // IST offset UTC +5:30 
+
+          var ISTTime = new Date(requestedDate.getTime() + (ISTOffset + currentOffset)*60000);
+
           // Get the response body
           if(req.body.request_id==1){
             requestType=10;
@@ -409,7 +421,7 @@ router.post('/updateorderItem2',verifyToken, function(req, res) {
             requestType=9;   
             campaign = "Return Requested";
             params.push(req.body.firstName);
-            params.push(requestedDate.getDate()+'/'+(requestedDate.getMonth()+1)+'/'+requestedDate.getFullYear());       
+            params.push(ISTTime.getDate()+'/'+(ISTTime.getMonth()+1)+'/'+ISTTime.getFullYear());       
           }
           
           let template = {

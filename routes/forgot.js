@@ -13,9 +13,9 @@ router.options('/send', cors());
 
 router.post('/send', cors(), (req, res) => {
     const emailId = [];
-    config.emails.forEach((configEmails)=>{
-        emailId.push(configEmails);
-    });
+    // config.emails.forEach((configEmails)=>{
+    //     emailId.push(configEmails);
+    // });
     emailId.push(req.body.email);
     var outputData = req.body.template.template;
 

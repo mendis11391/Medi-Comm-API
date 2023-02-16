@@ -222,7 +222,7 @@ router.post('/saveNewOrder',verifyToken, async function(req, res) {
 		resp.billPeriod = 'To be assigned';
 	});
 
-	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `deliveryCharges`,`damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`,`paymentStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `deliveryCharges`,`damageProtection`, `total`, `totalSecurityDeposit`, `discount`,`taxAmount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`,`paymentStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
       req.body.orderID,
@@ -233,7 +233,8 @@ router.post('/saveNewOrder',verifyToken, async function(req, res) {
       req.body.damageProtection,
 	  req.body.total,
 	  req.body.securityDeposit,
-	  req.body.discount,	  
+	  req.body.discount,
+	  (req.body.subTotal*0.18),	  
 	  req.body.grandTotal,
 	  '',
 	  req.body.firstName,
@@ -375,7 +376,7 @@ router.post('/newRenew', function(req, res) {
 		// resp.deliveryAssigned=0;
 	});
 
-	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`,`paymentStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`,`taxAmount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`,`paymentStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
       req.body.primaryID,
@@ -385,7 +386,8 @@ router.post('/newRenew', function(req, res) {
       req.body.damageProtection,
 	  req.body.total,
 	  req.body.securityDeposit,
-	  req.body.discount,	  
+	  req.body.discount,
+	  (req.body.subTotal*0.18),	 	  
 	  req.body.grandTotal,
 	  '',
 	  req.body.firstName,
@@ -484,7 +486,7 @@ router.post('/newReturn', verifyToken,function(req, res) {
 
 	checkoutPInfo=JSON.parse(req.body.products);
 
-	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`, `paymentStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`,`taxAmount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`, `paymentStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
       req.body.primaryID,
@@ -495,6 +497,7 @@ router.post('/newReturn', verifyToken,function(req, res) {
 	  req.body.total,
 	  req.body.securityDeposit,
 	  req.body.discount,	  
+	  (req.body.subTotal*0.18),	 
 	  req.body.grandTotal,
 	  '',
 	  req.body.firstName,
@@ -603,7 +606,7 @@ router.post('/newReplace',verifyToken, function(req, res) {
 
 	checkoutPInfo=JSON.parse(req.body.products);
 
-	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`, `paymentStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `damageProtection`, `total`, `totalSecurityDeposit`, `discount`, `taxAmount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`, `paymentStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
       req.body.primaryID,
@@ -613,7 +616,8 @@ router.post('/newReplace',verifyToken, function(req, res) {
       req.body.damageProtection,
 	  req.body.total,
 	  req.body.securityDeposit,
-	  req.body.discount,	  
+	  req.body.discount,	
+	  (req.body.subTotal*0.18),	   
 	  req.body.grandTotal,
 	  '',
 	  req.body.firstName,
@@ -668,11 +672,11 @@ router.post('/newReplace',verifyToken, function(req, res) {
 			  ],(errOT, OTResults)=>{
 				if(!errOT){
 					var sqlInsertORR =
-						"INSERT INTO `order_renewals`(`order_item_id`, `renewal_price`, `start_date`, `end_date`, `modified_at`, `modified_by`, `comments`, `is_renewed`,`is_renewal_created`) VALUES (?,?,?,?,?,?,?,?,?)";
+						"INSERT INTO `order_renewals`(`order_item_id`,`rent`, `renewal_price`, `start_date`, `end_date`, `modified_at`, `modified_by`, `comments`, `is_renewed`,`is_renewal_created`) VALUES (?,?,?,?,?,?,?,?,?,?)";
 						sql.query(
 							sqlInsertORR,
 							[
-								OTResults.insertId, resProduct.price, startDate, expiryDate, new Date(), 1, 'nil', 1, 0
+								OTResults.insertId,resProduct.price, resProduct.price, startDate, expiryDate, new Date(), 1, 'nil', 1, 0
 							]
 						);
 						var updateOITStatus="UPDATE order_item SET status = 0 WHERE order_item_id=?";
@@ -1205,128 +1209,137 @@ router.post('/result',(req, res, next)=>{
 			}
 			var invoiceInsert = "INSERT INTO `invoice`(`invoice_id`, `order_id`, `invoice_description`, `status`) VALUES (?,?,?,?)";
 			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
-			sql.query(sqlInsert,
+			var checkTransaction = "SELECT * FROM transaction WHERE transaction_id = ? AND status=1";
+			sql.query(checkTransaction,
 				[
-				req.body.referenceId,
-				req.body.orderId,
-				req.body.orderAmount,
-				status,
-				req.body.paymentMode,
-				'Cashfree',
-				req.body.txMsg,
-				new Date()
-				],
-				(err1) => {
-				if (!err1) {
-					logger.info({
-						message: `/result cashfree posted successfully to transaction table with transaction#: ${req.body.referenceId}`,
-						dateTime: new Date()
-					});
-					var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
-					sql.query(updateOrder,
-					[
-						status,
-						req.body.orderId,
-					]);
-				} else {
-					res.send({message: err});
-				}
-				}
-			);
-
+					req.body.referenceId,
+				],(checkTransactionErr, checkTransactionRows)=>{
+					if(!checkTransactionErr && checkTransactionRows.length==0){
+						sql.query(sqlInsert,
+							[
+							req.body.referenceId,
+							req.body.orderId,
+							req.body.orderAmount,
+							status,
+							req.body.paymentMode,
+							'Cashfree',
+							req.body.txMsg,
+							new Date()
+							],
+							(err1) => {
+							if (!err1) {
+								logger.info({
+									message: `/result cashfree posted successfully to transaction table with transaction#: ${req.body.referenceId}`,
+									dateTime: new Date()
+								});
+								var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+								sql.query(updateOrder,
+								[
+									status,
+									req.body.orderId,
+								]);
+							} else {
+								res.send({message: err});
+							}
+							}
+						);			
+						
+						sql.query(invoiceInsert,
+							[
+							'N/A',
+							req.body.orderId,
+							'N/A',
+							1
+							],
+							(err1, results) => {
+							if (!err1) {
+								var invoiceNo = 'IRO/21-22/'+results.insertId;
+								var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
+								sql.query(updateInvoice,
+								[
+									invoiceNo,
+									results.insertId,
+								]);
+							} else {
+								res.send({message: err});
+							}
+							}
+						);
 			
-			sql.query(invoiceInsert,
-				[
-				'N/A',
-				req.body.orderId,
-				'N/A',
-				1
-				],
-				(err1, results) => {
-				if (!err1) {
-					var invoiceNo = 'IRO/21-22/'+results.insertId;
-					var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
-					sql.query(updateInvoice,
-					[
-						invoiceNo,
-						results.insertId,
-					]);
-				} else {
-					res.send({message: err});
-				}
-				}
-			);
-
-			requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${req.body.orderId}`).then(function(response) {
-				// Get the response body
-				let orderDetails = response.getBody()[0];
-				let prodNames;
-				requestify.post(`${constants.apiUrl}smsOrder`, {
-					customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
-				});
-				prodNames=orderDetails.orderItem.map((x) => x.prod_name).join(', ')
+						requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${req.body.orderId}`).then(function(response) {
+							// Get the response body
+							let orderDetails = response.getBody()[0];
+							let prodNames;
+							requestify.post(`${constants.apiUrl}smsOrder`, {
+								customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
+							});
+							prodNames=orderDetails.orderItem.map((x) => x.prod_name).join(', ')
+							
+							sql.query(`CALL insertSignalrQueue(${orderDetails.id},${orderDetails.grandTotal},${orderDetails.orderType_id},${JSON.stringify(prodNames)},${orderDetails.orderItem.length},${JSON.stringify(orderDetails.firstName)},${JSON.stringify(orderDetails.lastName)},${JSON.stringify(orderDetails.email)},${JSON.stringify(orderDetails.mobile)}, 0)`,
+								(errSignalRQ, results) => {
+									if (errSignalRQ) {						
+										// res.send({message: errSignalRQ});
+									}
+								}
+							);
+							// requestify.post(`${constants.apiUrl}waOrderPlaced`, {
+							// 	customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId, orderAmount:req.body.orderAmount
+							// });
+			
+							let mobileNos=[];
+							config.mobiles.forEach((configMobiles)=>{
+								mobileNos.push(configMobiles);
+							})
+			
+							// mobileNos = config.mobiles;
+							mobileNos.push(orderDetails.mobile);
+							mobileNos.forEach((mobileNumber)=>{
+								let template = {
+									"apiKey": constants.whatsappAPIKey,
+									"campaignName": "Order Successful",
+									"destination": mobileNumber,
+									"userName": "IRENTOUT",
+									"source": "Primary order",
+									"media": {
+									   "url": "https://irentout.com/assets/images/slider/5.png",
+									   "filename": "IROHOME"
+									},
+									"templateParams": [
+										orderDetails.firstName+' '+orderDetails.lastName, req.body.orderAmount, req.body.orderId
+									],
+									"attributes": {
+									  "InvoiceNo": "1234"
+									}
+								}
 				
-				sql.query(`CALL insertSignalrQueue(${orderDetails.id},${orderDetails.grandTotal},${orderDetails.orderType_id},${JSON.stringify(prodNames)},${orderDetails.orderItem.length},${JSON.stringify(orderDetails.firstName)},${JSON.stringify(orderDetails.lastName)},${JSON.stringify(orderDetails.email)},${JSON.stringify(orderDetails.mobile)}, 0)`,
-					(errSignalRQ, results) => {
-						if (errSignalRQ) {						
-							// res.send({message: errSignalRQ});
-						}
+								requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
+							});
+			
+			
+							logger.info({
+								message: `/result primaryorder: whatsapp message sent: order#: ${req.body.orderId}`,
+								dateTime: new Date()
+							});
+			
+							requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/1`).then(function(templateRsponse) {
+								
+								let template = templateRsponse.getBody()[0];
+								requestify.post(`${constants.apiUrl}forgotpassword/send`, {
+									email: orderDetails.email,
+									template: template,
+									orderNo: req.body.orderId,
+									orderDate: orderDetails.createdAt,
+									orderValue: orderDetails.grandTotal,
+									paymentStatus: 'Success',
+									orderType:orderDetails.orderType_id
+								});
+							});
+			
+						});
 					}
-				);
-				// requestify.post(`${constants.apiUrl}waOrderPlaced`, {
-				// 	customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId, orderAmount:req.body.orderAmount
-				// });
 
-				let mobileNos=[];
-				config.mobiles.forEach((configMobiles)=>{
-					mobileNos.push(configMobiles);
-				})
-
-				// mobileNos = config.mobiles;
-				mobileNos.push(orderDetails.mobile);
-				mobileNos.forEach((mobileNumber)=>{
-					let template = {
-						"apiKey": constants.whatsappAPIKey,
-						"campaignName": "Order Successful",
-						"destination": mobileNumber,
-						"userName": "IRENTOUT",
-						"source": "Primary order",
-						"media": {
-						   "url": "https://irentout.com/assets/images/slider/5.png",
-						   "filename": "IROHOME"
-						},
-						"templateParams": [
-							orderDetails.firstName+' '+orderDetails.lastName, req.body.orderAmount, req.body.orderId
-						],
-						"attributes": {
-						  "InvoiceNo": "1234"
-						}
-					}
-	
-					requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
 				});
-
-
-				logger.info({
-					message: `/result primaryorder: whatsapp message sent: order#: ${req.body.orderId}`,
-					dateTime: new Date()
-				});
-
-				requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/1`).then(function(templateRsponse) {
-					
-					let template = templateRsponse.getBody()[0];
-					requestify.post(`${constants.apiUrl}forgotpassword/send`, {
-						email: orderDetails.email,
-						template: template,
-						orderNo: req.body.orderId,
-						orderDate: orderDetails.createdAt,
-						orderValue: orderDetails.grandTotal,
-						paymentStatus: 'Success',
-						orderType:orderDetails.orderType_id
-					});
-				});
-
-			});
+			
 			
 			
 			res.redirect(url.format({
