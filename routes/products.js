@@ -1690,7 +1690,7 @@ router.put("/:id",verifyToken, (req, res) => {
   var prodUpdate =
   `UPDATE products SET cat_id=? WHERE product_id=? AND is_primary=1`;
   var prodDetailsUpdate =
-    `UPDATE prod_details SET prod_name=?,metaTitle=?,metaDescription=?,metaKeywords=?,slug=?,prod_description=?, prod_image=?, securityDeposit=?,tenure_base_price=?,prod_status=?,priority=?, position=? WHERE id=?`;
+    `UPDATE prod_details SET prod_name=?,metaTitle=?,metaDescription=?,metaKeywords=?,slug=?,prod_description=?, prod_image=?,prod_hd_image=?, securityDeposit=?,tenure_base_price=?,prod_status=?,priority=?, position=? WHERE id=?`;
   var prodSpecsDelete = `DELETE FROM product_specs WHERE product_id=?`;
   var prodSpecsInsert = "INSERT INTO `product_specs`(`product_id`, `spec_id`, `status`, `Spec_Value_id`) values (?, ?, ?, ?)";
   var prodHighlightsDelete =  `DELETE FROM prod_highlights WHERE product_id=?`;
@@ -1707,6 +1707,7 @@ router.put("/:id",verifyToken, (req, res) => {
       req.body.slug,
       req.body.prodDescription,
       req.body.prodImage,
+      req.body.prodHdImage,
       req.body.securityDeposit,
       req.body.tenureBasePrice,
       req.body.prodStatus,
@@ -1840,7 +1841,7 @@ router.post("/",  verifyToken,function (req, res, next) {
   // const prodCode = `IRO${categoryCode}${prodModel}${rand}`;
 
   var prodDetailsInsert =
-    "INSERT INTO `prod_details`(`prod_id`, `offer_id`, `prod_name`, `metaTitle`,`metaDescription`,`metaKeywords`, `slug`, `prod_image`, `prod_description`, `prod_qty`, `securityDeposit`, `tenure_base_price`, `prod_status`, `publishedAt`, `startsAt`, `endsAt`, `priority`,`position`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO `prod_details`(`prod_id`, `offer_id`, `prod_name`, `metaTitle`,`metaDescription`,`metaKeywords`, `slug`, `prod_image`, `prod_hd_image`,`prod_description`, `prod_qty`, `securityDeposit`, `tenure_base_price`, `prod_status`, `publishedAt`, `startsAt`, `endsAt`, `priority`,`position`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   var updateProdId = 'UPDATE prod_details SET `prod_id`=? WHERE id=?';
   var productsInsert =
     "INSERT INTO `products`( `product_id`, `quantity`, `prod_code`, `cat_id`, `brand_id`, `city_id`, `delivery_timeline`) values (?, ?, ?, ?, ?, ?, ?)";
@@ -1858,6 +1859,7 @@ router.post("/",  verifyToken,function (req, res, next) {
       req.body.metaKeywords,
       req.body.slug,
       req.body.prodImage,
+      req.body.prodHdImage,
       req.body.prodDescription,
       req.body.prodQty,
       req.body.securityDeposit,

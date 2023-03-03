@@ -30,6 +30,7 @@
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0",
     "query-string": "^6.11.1",
+    "razorpay": "^2.8.6",
     "request": "^2.88.2",
     "requestify": "^0.2.5",
     "speakeasy": "^2.0.0",

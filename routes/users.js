@@ -536,6 +536,9 @@ router.get('/', verifyToken, function(req, res) {
       `CALL get_AllCustomers()`,
       (err, rows) => {
         if (!err) {
+          rows[0].forEach((items)=>{
+            items.activeItems = JSON.parse(items.activeItems);
+          });
           res.send(rows[0]);
         } else {
           res.send({ error:err });

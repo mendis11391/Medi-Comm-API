@@ -30,6 +30,13 @@ var logger = winston.createLogger({
   ],
 });
 
+var Razorpay = require('razorpay');
+
+var instance = new Razorpay({
+	key_id: config.razorKeyId,
+	key_secret: config.razorPaySecret,
+});
+
 function updateFields(productsArrData, prodAllData, oid){
     let cON;
     let order_item_id;
@@ -2495,6 +2502,464 @@ router.post('/postManualRenewalOrderTransaction',(req, res, next)=>{
 	);
 
     
+});
+
+router.post('/razorPayOrder', (req, res,next) =>{
+	var options = {
+		method:req.body.method,
+		amount: req.body.amount,  // amount in the smallest currency unit
+		currency: "INR",
+		receipt: req.body.receipt,
+		payment_capture: 0
+	};
+	instance.orders.create(options, function(err, order) {
+		if(err){
+			console.log(err);
+			next(err);
+		}
+
+		if(order){
+			console.log(order);
+			res.json({success:true, status:'Order created successfully',name:req.body.name, value: order, key:config.razorKeyId})
+		}
+	});
+});
+
+router.post('/verifyRazorPayPrimary', (req, res) =>{
+
+	let body=req.body.razorpay_order_id + "|" + req.body.razorpay_payment_id;
+   
+	var crypto = require("crypto");
+	var expectedSignature = crypto.createHmac('sha256', config.razorPaySecret)
+									 .update(body.toString())
+									 .digest('hex');
+									 console.log("sig received " ,req.body.razorpay_signature);
+									 console.log("sig generated " ,expectedSignature);
+	 var response = {"signatureIsValid":"false"};
+	 if(expectedSignature === req.body.razorpay_signature){		
+		response={"signatureIsValid":"true"}
+		requestify.request(`https://api.razorpay.com/v1/payments/${req.body.razorpay_payment_id}`, {
+			method: 'GET',
+			auth: {
+				username: config.razorKeyId,
+				password: config.razorPaySecret
+			},
+			dataType: 'json'		
+		})
+		.then(function(response) {
+			// get the response body
+			const razorPayResponse = response.getBody();
+			var amount = razorPayResponse.amount.toString();
+			if(razorPayResponse.status=='authorized'){
+				status=1;
+			} else{
+				status=3;
+			}
+			
+			var invoiceInsert = "INSERT INTO `invoice`(`invoice_id`, `order_id`, `invoice_description`, `status`) VALUES (?,?,?,?)";
+			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
+			var checkTransaction = "SELECT * FROM transaction WHERE transaction_id = ? AND status=1";
+			sql.query(checkTransaction,
+				[
+					req.body.referenceId,
+				],(checkTransactionErr, checkTransactionRows)=>{
+					if(!checkTransactionErr && checkTransactionRows.length==0){
+						sql.query(sqlInsert,
+							[
+								razorPayResponse.id,
+								req.body.orderId,
+								amount.slice(0,-2),
+								status,
+								razorPayResponse.method,
+								'RazorPay',
+								razorPayResponse.order_id,
+								new Date()
+							],
+							(err1) => {
+							if (!err1) {
+								logger.info({
+									message: `/result cashfree posted successfully to transaction table with transaction#: ${req.body.referenceId}`,
+									dateTime: new Date()
+								});
+								var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+								sql.query(updateOrder,
+								[
+									status,
+									req.body.orderId,
+								]);
+							} else {
+								res.send({message: err});
+							}
+							}
+						);			
+						
+						sql.query(invoiceInsert,
+							[
+							'N/A',
+							req.body.orderId,
+							'N/A',
+							1
+							],
+							(err1, results) => {
+							if (!err1) {
+								var invoiceNo = 'IRO/21-22/'+results.insertId;
+								var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
+								sql.query(updateInvoice,
+								[
+									invoiceNo,
+									results.insertId,
+								]);
+							} else {
+								res.send({message: err});
+							}
+							}
+						);
+			
+						requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${req.body.orderId}`).then(function(response) {
+							// Get the response body
+							let orderDetails = response.getBody()[0];
+							let prodNames;
+							requestify.post(`${constants.apiUrl}smsOrder`, {
+								customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
+							});
+							prodNames=orderDetails.orderItem.map((x) => x.prod_name).join(', ')
+							
+							sql.query(`CALL insertSignalrQueue(${orderDetails.id},${orderDetails.grandTotal},${orderDetails.orderType_id},${JSON.stringify(prodNames)},${orderDetails.orderItem.length},${JSON.stringify(orderDetails.firstName)},${JSON.stringify(orderDetails.lastName)},${JSON.stringify(orderDetails.email)},${JSON.stringify(orderDetails.mobile)}, 0)`,
+								(errSignalRQ, results) => {
+									if (errSignalRQ) {						
+										// res.send({message: errSignalRQ});
+									}
+								}
+							);
+							// requestify.post(`${constants.apiUrl}waOrderPlaced`, {
+							// 	customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId, orderAmount:req.body.orderAmount
+							// });
+			
+							let mobileNos=[];
+							config.mobiles.forEach((configMobiles)=>{
+								mobileNos.push(configMobiles);
+							})
+			
+							// mobileNos = config.mobiles;
+							mobileNos.push(orderDetails.mobile);
+							mobileNos.forEach((mobileNumber)=>{
+								let template = {
+									"apiKey": constants.whatsappAPIKey,
+									"campaignName": "Order Successful",
+									"destination": mobileNumber,
+									"userName": "IRENTOUT",
+									"source": "Primary order",
+									"media": {
+									   "url": "https://irentout.com/assets/images/slider/5.png",
+									   "filename": "IROHOME"
+									},
+									"templateParams": [
+										orderDetails.firstName+' '+orderDetails.lastName, JSON.stringify(orderDetails.grandTotal), orderDetails.order_id
+									],
+									"attributes": {
+									  "InvoiceNo": "1234"
+									}
+								}
+								logger.info({
+									message: `/result primaryorder: Sending whatsapp message: order#: ${orderDetails.order_id}, mobile:${mobileNumber}`,
+									dateTime: new Date()
+								});
+								requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
+							});
+			
+			
+							logger.info({
+								message: `/result primaryorder: whatsapp message sent: order#: ${orderDetails.order_id}`,
+								dateTime: new Date()
+							});
+			
+							requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/1`).then(function(templateRsponse) {
+								
+								let template = templateRsponse.getBody()[0];
+								requestify.post(`${constants.apiUrl}forgotpassword/send`, {
+									email: orderDetails.email,
+									template: template,
+									orderNo: orderDetails.order_id,
+									orderDate: orderDetails.createdAt,
+									orderValue: orderDetails.grandTotal,
+									paymentStatus: 'Success',
+									orderType:orderDetails.orderType_id
+								});
+							});
+			
+						});
+					}
+
+				});
+			
+			
+			// res.redirect(url.format({
+			// 	pathname: `${constants.frontendUrl}/order-success`,
+			// 	query: {
+			// 	   "transID": req.body.orderId,
+			// 	 }
+			// }));
+		});
+	 }
+	 res.send(response);	 
+});
+
+router.post('/verifyRazorPayRenewal', (req, res) =>{
+
+	let body=req.body.razorpay_order_id + "|" + req.body.razorpay_payment_id;
+   
+	var crypto = require("crypto");
+	var expectedSignature = crypto.createHmac('sha256', config.razorPaySecret)
+									 .update(body.toString())
+									 .digest('hex');
+									 console.log("sig received " ,req.body.razorpay_signature);
+									 console.log("sig generated " ,expectedSignature);
+	 var response = {"signatureIsValid":"false"};
+	 if(expectedSignature === req.body.razorpay_signature){		
+		response={"signatureIsValid":"true"}
+		requestify.request(`https://api.razorpay.com/v1/payments/${req.body.razorpay_payment_id}`, {
+			method: 'GET',
+			auth: {
+				username: config.razorKeyId,
+				password: config.razorPaySecret
+			},
+			dataType: 'json'		
+		})
+		.then(function(response) {
+			// get the response body
+			const razorPayResponse = response.getBody();
+			var amount = razorPayResponse.amount.toString();
+			if(razorPayResponse.status=='authorized'){
+				status=1;
+			} else{
+				status=3;
+			}
+
+			var invoiceInsert = "INSERT INTO `invoice`(`invoice_id`, `order_id`, `invoice_description`, `status`) VALUES (?,?,?,?)";
+			var sqlInsert = "INSERT INTO `transaction`(`transaction_id`, `order_id`,`order_amount`, `status`, `type`,`transaction_source`,`transaction_msg`, `createdAt`) VALUES (?,?,?,?,?,?,?,?)";  
+			sql.query(sqlInsert,
+				[
+					razorPayResponse.id,
+					req.body.orderId,
+					amount.slice(0,-2),
+					status,
+					razorPayResponse.method,
+					'RazorPay',
+					razorPayResponse.order_id,
+					new Date()
+				],
+				(err1) => {
+				if (!err1) {
+					logger.info({
+						message: `/renewalsResult cashfree posted successfully to transaction table with transaction#: ${req.body.referenceId}`,
+						dateTime: new Date()
+					});
+					var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+					sql.query(updateOrder,
+					[
+						status,
+						req.body.orderId,
+					]);
+				} else {
+					res.send({message: err});
+				}
+				}
+			);
+
+			sql.query(invoiceInsert,
+				[
+				'N/A',
+				req.body.orderId,
+				'N/A',
+				1
+				],
+				(err1, results) => {
+				if (!err1) {
+					var invoiceNo = 'IRO/21-22/'+results.insertId;
+					var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
+					sql.query(updateInvoice,
+					[
+						invoiceNo,
+						results.insertId,
+					]);
+				} else {
+					res.send({message: err});
+				}
+				}
+			);
+
+			var orderDetails;
+			var products;
+			var prodAll=[];
+			var AllProductsOf=[];
+			let cid = new Promise((resolve, reject) => {				
+				requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${req.body.orderId}`).then(async function(response) {
+					// Get the response body
+					orderDetails = await response.getBody()[0];	
+
+					var updateRenewStatus=`UPDATE order_renewals SET is_renewed=1, modified_at=now(), modified_by=${orderDetails.customer_id}, comments='renewalsResult' WHERE order_item_id=? AND is_renewed=0`;
+					orderDetails.orderItem.forEach((resOIT)=>{
+						sql.query(updateRenewStatus,
+							[
+								resOIT.primary_order_item_id
+							]);
+					});
+					
+					let template = {
+						"apiKey": constants.whatsappAPIKey,
+						"campaignName": "Renewal Order Success",
+						"destination": orderDetails.mobile,
+						"userName": "IRENTOUT",
+						"source": "Renewal Order Success",
+						"media": {
+						   "url": "https://irentout.com/assets/images/slider/5.png",
+						   "filename": "IROHOME"
+						},
+						"templateParams": [
+							orderDetails.firstName+' '+orderDetails.lastName,  orderDetails.order_id,JSON.stringify(orderDetails.grandTotal)
+						],
+						"attributes": {
+						  "InvoiceNo": "1234"
+						}
+					}
+	
+					requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
+					
+					requestify.post(`${constants.apiUrl}smsOrder`, {
+						customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
+					});
+					requestify.get(`${constants.apiUrl}orders/renewals2/${orderDetails.customer_id}`).then(async function(response2) {
+						// Get the response body
+						let renewalDetails = await response2.getBody();
+						let successOrders=renewalDetails.filter((successOrdersRes)=>{
+							// if(successOrders.overdue==1){
+							//   this.overdue=1;
+							// }
+						return successOrdersRes.paymentStatus=='1' && (successOrdersRes.orderType_id==1 || successOrdersRes.orderType_id==3);
+						});
+						let orders=await successOrders.reverse();
+						orders.forEach((res2)=>{
+							products=res2.renewals_timline;    
+							for(let p=0;p<products.length;p++){
+							let ucid={ 
+								indexs:products[p].indexs,
+								id: products[p].id,
+								prod_name:products[p].prod_name,
+								prod_price:products[p].prod_price,
+								prod_img:products[p].prod_img,
+								delvdate: products[p].delvdate,
+								actualStartDate:products[p].actualStartDate,
+								qty: products[p].qty, 
+								price: products[p].price, 
+								tenure: products[p].tenure,
+								primaryOrderNo:products[p].primaryOrderNo, 
+								currentOrderNo: products[p].currentOrderNo,
+								renewed:products[p].renewed,
+								startDate:products[p].startDate,
+								expiryDate:products[p].expiryDate,
+								nextStartDate:products[p].nextStartDate,
+								overdew:products[p].overdew,
+								ordered:products[p].ordered,
+								assetId:products[p].assetId,
+								deliveryStatus:'renewed',
+								dp:products[p].dp,
+								deliveryAssigned:products[p].deliveryAssigned,
+								replacement:products[p].replacement,
+								returnDate:products[p].returnDate,
+								billPeriod:products[p].billPeriod,
+								billAmount:products[p].billAmount,
+								damageCharges:products[p].damageCharges,
+								order_item_id:products[p].order_item_id,
+								p2Rent:products[p].p2Rent,
+								securityDepositDiff:products[p].securityDepositDiff,
+								returnedProduct: products[p].returnedProduct,
+								tenureBasePrice:products[p].tenureBasePrice,
+								tenure_id:products[p].tenure_id
+							}
+							AllProductsOf.push(ucid);
+							}  
+						});
+					
+						for(let i=0;i<AllProductsOf.length;i++){
+							prodAll.push(AllProductsOf[i]);
+						}
+						requestify.get(`${constants.apiUrl}orders/orderId/${orderDetails.id}`).then(async function(response3) {
+
+							let productsArr =[];
+							let prodLoop = await response3.getBody()[0].orderItem;
+							prodLoop.forEach((prodRenewals)=>{
+								productsArr.push(prodRenewals.renewals_timline[0]);
+							});
+							let oid = await response3.getBody()[0].order_id;
+							console.log(productsArr);
+							console.log(prodAll)
+							console.log(oid);
+							updateFields(productsArr, prodAll,oid);
+							resolve('cid success');
+							
+						});
+
+						requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/2`).then(function(templateRsponse) {
+					
+							let template = templateRsponse.getBody()[0]
+							requestify.post(`${constants.apiUrl}forgotpassword/send`, {
+								email: orderDetails.email,
+								template: template,
+								orderNo: req.body.orderId,
+								orderDate: orderDetails.createdAt,
+								orderValue: orderDetails.grandTotal,
+								paymentStatus: 'Success',
+								orderType:orderDetails.orderType_id
+							});
+						});
+						
+					});			
+				});
+			});
+
+			
+			cid.then((success)=>{
+				logger.info({
+					message: '/renewalsResult transaction successfully',
+					dateTime: new Date()
+				});
+				// res.redirect(url.format({
+				// 	pathname: `${constants.frontendUrl}/order-success`,
+				// 	query: {
+				// 	   "transID": req.body.orderId,
+				// 	 }
+				// }));
+			});
+			
+			
+			
+			
+			// res.redirect(url.format({
+			// 	pathname: `${constants.frontendUrl}/order-success`,
+			// 	query: {
+			// 	   "transID": req.body.orderId,
+			// 	 }
+			// }));
+		});
+	 }
+	 res.send(response);	 
+});
+
+router.get('/razorPay/:id', function(req, res) {
+	requestify.request(`https://api.razorpay.com/v1/payments/${req.params.id}`, {
+		method: 'GET',
+		auth: {
+			username: config.razorKeyId,
+			password: config.razorPaySecret
+		},
+		dataType: 'json'		
+	})
+	.then(function(response) {
+		// get the response body
+		response.getBody();
+		res.json(response.getBody())
+	});
+
 });
 
 module.exports = router

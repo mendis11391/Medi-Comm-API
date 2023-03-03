@@ -1,5 +1,7 @@
 {
     "enviornment": "prod",
+    "razorKeyId": "rzp_test_CAF05ieQ1S1BJo",
+    "razorPaySecret":"typybgDJWBESBrlQNFbHlk7I",
     "appId":"9919345c947b577353500475a39199",
     "secretKey":"2c0442aa3d959d2ae48f1c2e17527a46cc35d1fa" ,
     "CashfreeAPI":"https://sandbox.cashfree.com/pg",
