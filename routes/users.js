@@ -512,22 +512,37 @@ router.get('/address/:id', verifyToken,function(req, res) {
 
 
 // Update address
-router.put("/updateDefaultAddress/:auid", verifyToken,(req, res) => {
+router.put("/updateDefaultAddress/:auid", (req, res) => {
+  var updateDefaultToFalse = "UPDATE `address` SET `default_address`= 0 WHERE `customer_id` = ?";
   var sqlUpdate = "UPDATE `address` SET `default_address`= ? WHERE `address_id` = ?";
   sql.query(
-    sqlUpdate,
+    updateDefaultToFalse,
     [
-      req.body.default_address,
-      req.params.auid
+      req.body.uid
     ],
     (err, rows) => {
       if (!err) {
-        res.send({'message': 'Address updated'});
+        sql.query(
+          sqlUpdate,
+          [
+            req.body.default_address,
+            req.params.auid
+          ],
+          (err2, rows) => {
+            if (!err2) {
+              res.send({'message': 'Address updated'});
+            } else {
+              res.send({ error: err2 });
+            }
+          }
+        );
+        // res.send({'message': 'Address updated'});
       } else {
         res.send({ error: err });
       }
     }
   );
+  
 });
 
 /* GET all users */

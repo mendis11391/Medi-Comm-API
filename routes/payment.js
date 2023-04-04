@@ -229,7 +229,7 @@ router.post('/saveNewOrder',verifyToken, async function(req, res) {
 		resp.billPeriod = 'To be assigned';
 	});
 
-	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `deliveryCharges`,`damageProtection`, `total`, `totalSecurityDeposit`, `discount`,`taxAmount`, `grandTotal`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`,`paymentStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
+	var sqlInsert = "INSERT INTO `orders`( `primary_id`, `order_id`, `customer_id`, `subTotal`, `deliveryCharges`,`damageProtection`, `total`, `totalSecurityDeposit`, `discount`,`taxAmount`, `grandTotal`,`balanceAmount`, `promo`, `firstName`, `lastName`, `mobile`, `email`, `billingAddress`, `shippingAddress`, `orderType_id`, `orderStatus`,`paymentStatus`, `deliveryStatus`, `refundStatus`, `createdBy`, `modifiedBy`, `createdAt`, `modifiedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";  
 	sql.query(sqlInsert,
     [
       req.body.orderID,
@@ -243,6 +243,7 @@ router.post('/saveNewOrder',verifyToken, async function(req, res) {
 	  req.body.discount,
 	  (req.body.subTotal*0.18),	  
 	  req.body.grandTotal,
+	  req.body.balanceAmount,
 	  '',
 	  req.body.firstName,
 	  req.body.lastName,
@@ -1239,7 +1240,14 @@ router.post('/result',(req, res, next)=>{
 									message: `/result cashfree posted successfully to transaction table with transaction#: ${req.body.referenceId}`,
 									dateTime: new Date()
 								});
-								var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+								// var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+								// sql.query(updateOrder,
+								// [
+								// 	status,
+								// 	req.body.orderId,
+								// ]);
+
+								var updateOrder = `UPDATE orders SET paymentStatus = ?, paidamount=(SELECT * FROM(SELECT paidAmount from orders WHERE order_id=${JSON.stringify(req.body.orderId)}) AS t)+${req.body.orderAmount} where order_id= ?`;
 								sql.query(updateOrder,
 								[
 									status,
@@ -1353,6 +1361,7 @@ router.post('/result',(req, res, next)=>{
 				pathname: `${constants.frontendUrl}/order-success`,
 				query: {
 				   "transID": req.body.orderId,
+				   "PGtransId":req.body.referenceId
 				 }
 			}));
             // return res.status(200).render('result',{data:{
@@ -1573,7 +1582,13 @@ router.post('/renewalsResult',(req, res, next)=>{
 						message: `/renewalsResult cashfree posted successfully to transaction table with transaction#: ${req.body.referenceId}`,
 						dateTime: new Date()
 					});
-					var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+					// var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+					// sql.query(updateOrder,
+					// [
+					// 	status,
+					// 	req.body.orderId,
+					// ]);
+					var updateOrder = `UPDATE orders SET paymentStatus = ?, paidamount=(SELECT * FROM(SELECT paidAmount from orders WHERE order_id=${JSON.stringify(req.body.orderId)}) AS t)+${req.body.orderAmount} where order_id= ?`;
 					sql.query(updateOrder,
 					[
 						status,
@@ -1753,6 +1768,7 @@ router.post('/renewalsResult',(req, res, next)=>{
 				pathname: `${constants.frontendUrl}/Thank-you`,
 				query: {
 					"transID": req.body.orderId,
+					"PGtransId":req.body.referenceId
 				}
 			}));
 			break;
@@ -2016,6 +2032,7 @@ router.post('/RRResult',(req, res, next)=>{
 				pathname: `${constants.frontendUrl}/Thank-you`,
 				query: {
 				   "transID": req.body.orderId,
+				   "PGtransId":req.body.referenceId
 				 }
 			}));
             // return res.status(200).render('result',{data:{
@@ -2289,7 +2306,7 @@ router.post('/postManualOrderTransaction', function(req, res) {
 			req.body.transactionNo,
 			req.body.orderId,
 			req.body.orderAmount,
-			req.body.paymentStatus,
+			1,
 			req.body.paymentMode,
 			'Manual',
 			req.body.txMsg,
@@ -2301,12 +2318,12 @@ router.post('/postManualOrderTransaction', function(req, res) {
 				message: '/postManualOrderTransaction cashfree posted successfully to transaction table',
 				dateTime: new Date()
 			});	
-			var updateInvoice = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
-			sql.query(updateInvoice,
-			[
-				req.body.paymentStatus,
-				req.body.orderId,
-			]);	
+			// var updateInvoice = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+			// sql.query(updateInvoice,
+			// [
+			// 	req.body.paymentStatus,
+			// 	req.body.orderId,
+			// ]);	
 			res.send({message: 'postManualOrderTransaction Successfully'});	
 		} else {
 			logger.info({
@@ -2369,7 +2386,7 @@ router.post('/postInvoice',(req, res, next)=>{
 				results.insertId,
 			]);
 		} else {
-			res.send({message: err});
+			res.send({message: err1});
 		}
 		}
 	);
@@ -2387,6 +2404,39 @@ router.put('/updatePaymentStatus',(req, res, next)=>{
 			res.send({message: 'payment status updated successfully'});
 		} else {
 			res.send({message: err1});
+		}
+	});
+});
+
+router.put('/updateBalanceAmount',(req, res, next)=>{
+	var updateOrder = `UPDATE orders SET balanceAmount = ?, paidAmount = ? where order_id= ?`;
+	sql.query(updateOrder,
+	[
+		req.body.balanceAmount,
+		req.body.paidAmount,
+		req.body.orderId,
+	],
+	(err1) => {
+		if (!err1) {
+			res.send({message: 'payment status updated successfully'});
+		} else {
+			res.send({message: err1});
+		}
+	});
+});
+
+router.put('/updatePGOrderId',(req, res, next)=>{
+	var updateOrder = `UPDATE orders SET pg_order_id = ? where order_id= ?`;
+	sql.query(updateOrder,
+	[
+		req.body.pg_order_id,
+		req.body.orderId,
+	],
+	(err1) => {
+		if (!err1) {
+			res.send({message: '/updatePGOrderId updated successfully', status:'Success'});
+		} else {
+			res.send({message: err1, status:'Failed'});
 		}
 	});
 });
@@ -2578,116 +2628,164 @@ router.post('/verifyRazorPayPrimary', (req, res) =>{
 							(err1) => {
 							if (!err1) {
 								logger.info({
-									message: `/result cashfree posted successfully to transaction table with transaction#: ${req.body.referenceId}`,
+									message: `/verifyRazorPayPrimary  posted successfully to transaction table with transaction#: ${razorPayResponse.id}`,
 									dateTime: new Date()
 								});
-								var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+								if(req.body.selectedMode=='COD' && razorPayResponse.status=='authorized'){
+									status=4;
+								}else if(req.body.selectedMode=='orderPay' && razorPayResponse.status=='authorized'){
+									let updateOrderBalanceAmount = `UPDATE orders SET balanceamount = ? where order_id= ?`;
+									sql.query(updateOrderBalanceAmount,
+									[
+										0,
+										req.body.orderId,
+									]);
+								}
+								var updateOrder = `UPDATE orders SET paymentStatus = ?, paidamount=(SELECT * FROM(SELECT paidAmount from orders WHERE order_id=${JSON.stringify(req.body.orderId)}) AS t)+${amount.slice(0,-2)} where order_id= ?`;
 								sql.query(updateOrder,
 								[
 									status,
 									req.body.orderId,
-								]);
+								],
+								(orderUpdateErr) => {
+									if (!orderUpdateErr) {
+										requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${req.body.orderId}`).then(function(response) {
+											// Get the response body
+											let orderDetails = response.getBody()[0];
+											let prodNames;
+											var campaignName = 'Order Successful';
+											var customerFullName = orderDetails.firstName+' '+orderDetails.lastName;
+											var orderId = orderDetails.order_id;
+											var paidAmount = JSON.stringify(orderDetails.grandTotal);
+											var balanceAmount = 0;
+											var emailTemplate = {templateNo:1, templateUrl:'send'};
+				
+											var templateParams = [customerFullName,paidAmount,orderId];
+											
+											if(req.body.selectedMode=='COD'){
+												campaignName = 'Pay on Delivery Order Success';
+												balanceAmount = JSON.stringify(orderDetails.balanceAmount);
+												paidAmount = JSON.stringify(orderDetails.paidAmount);
+												templateParams = [];
+												templateParams = [customerFullName,paidAmount,orderId,balanceAmount];
+												emailTemplate.templateNo = 12;
+												emailTemplate.templateUrl = 'pod';
+												logger.info({
+													message: `/verifyRazorPayPrimary  templateparams: ${templateParams}, emailTemplate: ${emailTemplate}`,
+													dateTime: new Date()
+												});
+											}else if(req.body.selectedMode=='orderPay'){
+												campaignName = 'Balance Payment Receipt';
+												paidAmount = amount.slice(0,-2);
+												templateParams = [];
+												templateParams = [customerFullName,paidAmount,orderId];
+											}
+				
+											requestify.post(`${constants.apiUrl}smsOrder`, {
+												customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
+											});
+											prodNames=orderDetails.orderItem.map((x) => x.prod_name).join(', ')
+											
+											sql.query(`CALL insertSignalrQueue(${orderDetails.id},${orderDetails.grandTotal},${orderDetails.orderType_id},${JSON.stringify(prodNames)},${orderDetails.orderItem.length},${JSON.stringify(orderDetails.firstName)},${JSON.stringify(orderDetails.lastName)},${JSON.stringify(orderDetails.email)},${JSON.stringify(orderDetails.mobile)}, 0)`,
+												(errSignalRQ, results) => {
+													if (errSignalRQ) {						
+														// res.send({message: errSignalRQ});
+													}
+												}
+											);
+											// requestify.post(`${constants.apiUrl}waOrderPlaced`, {
+											// 	customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId, orderAmount:req.body.orderAmount
+											// });
+							
+											let mobileNos=[];
+											config.mobiles.forEach((configMobiles)=>{
+												mobileNos.push(configMobiles);
+											})
+							
+											// mobileNos = config.mobiles;
+											mobileNos.push(orderDetails.mobile);
+											mobileNos.forEach((mobileNumber)=>{
+												let template = {
+													"apiKey": constants.whatsappAPIKey,
+													"campaignName": campaignName,
+													"destination": mobileNumber,
+													"userName": "IRENTOUT",
+													"source": "Primary order",
+													"media": {
+													   "url": "https://irentout.com/assets/images/slider/5.png",
+													   "filename": "IROHOME"
+													},
+													"templateParams": templateParams,
+													"attributes": {
+													  "InvoiceNo": "1234"
+													}
+												}
+												logger.info({
+													message: `/verifyRazorPayPrimary primaryorder: Sending whatsapp message: order#: ${orderDetails.order_id}, mobile:${mobileNumber}`,
+													dateTime: new Date()
+												});
+												requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
+											});
+							
+							
+											logger.info({
+												message: `/verifyRazorPayPrimary primaryorder: whatsapp message sent: order#: ${orderDetails.order_id}`,
+												dateTime: new Date()
+											});
+							
+											requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/${emailTemplate.templateNo}`).then(function(templateRsponse) {
+												
+												let template = templateRsponse.getBody()[0];
+												requestify.post(`${constants.apiUrl}forgotpassword/${emailTemplate.templateUrl}`, {
+													email: orderDetails.email,
+													template: template,
+													orderNo: orderDetails.order_id,
+													orderDate: orderDetails.createdAt,
+													orderValue: orderDetails.grandTotal,
+													paidAmount:paidAmount,
+													balanceAmount:balanceAmount,
+													paymentStatus: 'Success',
+													orderType:orderDetails.orderType_id
+												});
+											});
+							
+										});
+									}
+								});
+
+								
 							} else {
 								res.send({message: err});
 							}
 							}
 						);			
 						
-						sql.query(invoiceInsert,
-							[
-							'N/A',
-							req.body.orderId,
-							'N/A',
-							1
-							],
-							(err1, results) => {
-							if (!err1) {
-								var invoiceNo = 'IRO/21-22/'+results.insertId;
-								var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
-								sql.query(updateInvoice,
+						if(req.body.selectedMode!='COD'){
+							sql.query(invoiceInsert,
 								[
-									invoiceNo,
-									results.insertId,
-								]);
-							} else {
-								res.send({message: err});
-							}
-							}
-						);
-			
-						requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${req.body.orderId}`).then(function(response) {
-							// Get the response body
-							let orderDetails = response.getBody()[0];
-							let prodNames;
-							requestify.post(`${constants.apiUrl}smsOrder`, {
-								customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
-							});
-							prodNames=orderDetails.orderItem.map((x) => x.prod_name).join(', ')
-							
-							sql.query(`CALL insertSignalrQueue(${orderDetails.id},${orderDetails.grandTotal},${orderDetails.orderType_id},${JSON.stringify(prodNames)},${orderDetails.orderItem.length},${JSON.stringify(orderDetails.firstName)},${JSON.stringify(orderDetails.lastName)},${JSON.stringify(orderDetails.email)},${JSON.stringify(orderDetails.mobile)}, 0)`,
-								(errSignalRQ, results) => {
-									if (errSignalRQ) {						
-										// res.send({message: errSignalRQ});
-									}
+								'N/A',
+								req.body.orderId,
+								'N/A',
+								1
+								],
+								(err1, results) => {
+								if (!err1) {
+									var invoiceNo = 'IRO/21-22/'+results.insertId;
+									var updateInvoice = `UPDATE invoice SET invoice_id = ? where id= ?`;
+									sql.query(updateInvoice,
+									[
+										invoiceNo,
+										results.insertId,
+									]);
+								} else {
+									res.send({message: err});
+								}
 								}
 							);
-							// requestify.post(`${constants.apiUrl}waOrderPlaced`, {
-							// 	customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId, orderAmount:req.body.orderAmount
-							// });
+						}
+						
 			
-							let mobileNos=[];
-							config.mobiles.forEach((configMobiles)=>{
-								mobileNos.push(configMobiles);
-							})
-			
-							// mobileNos = config.mobiles;
-							mobileNos.push(orderDetails.mobile);
-							mobileNos.forEach((mobileNumber)=>{
-								let template = {
-									"apiKey": constants.whatsappAPIKey,
-									"campaignName": "Order Successful",
-									"destination": mobileNumber,
-									"userName": "IRENTOUT",
-									"source": "Primary order",
-									"media": {
-									   "url": "https://irentout.com/assets/images/slider/5.png",
-									   "filename": "IROHOME"
-									},
-									"templateParams": [
-										orderDetails.firstName+' '+orderDetails.lastName, JSON.stringify(orderDetails.grandTotal), orderDetails.order_id
-									],
-									"attributes": {
-									  "InvoiceNo": "1234"
-									}
-								}
-								logger.info({
-									message: `/result primaryorder: Sending whatsapp message: order#: ${orderDetails.order_id}, mobile:${mobileNumber}`,
-									dateTime: new Date()
-								});
-								requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
-							});
-			
-			
-							logger.info({
-								message: `/result primaryorder: whatsapp message sent: order#: ${orderDetails.order_id}`,
-								dateTime: new Date()
-							});
-			
-							requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/1`).then(function(templateRsponse) {
-								
-								let template = templateRsponse.getBody()[0];
-								requestify.post(`${constants.apiUrl}forgotpassword/send`, {
-									email: orderDetails.email,
-									template: template,
-									orderNo: orderDetails.order_id,
-									orderDate: orderDetails.createdAt,
-									orderValue: orderDetails.grandTotal,
-									paymentStatus: 'Success',
-									orderType:orderDetails.orderType_id
-								});
-							});
-			
-						});
+						
 					}
 
 				});
@@ -2754,7 +2852,13 @@ router.post('/verifyRazorPayRenewal', (req, res) =>{
 						message: `/renewalsResult cashfree posted successfully to transaction table with transaction#: ${req.body.referenceId}`,
 						dateTime: new Date()
 					});
-					var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+					// var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+					// sql.query(updateOrder,
+					// [
+					// 	status,
+					// 	req.body.orderId,
+					// ]);
+					var updateOrder = `UPDATE orders SET paymentStatus = ?, paidamount=(SELECT * FROM(SELECT paidAmount from orders WHERE order_id=${JSON.stringify(req.body.orderId)}) AS t)+${amount.slice(0,-2)} where order_id= ?`;
 					sql.query(updateOrder,
 					[
 						status,

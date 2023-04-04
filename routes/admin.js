@@ -1068,6 +1068,30 @@ router.get('/getAllActiveRenewals', function(req, res, next) {
   );
 });
 
+router.get('/getTransactionsByOrderId/:id', function(req, res) {
+  sql.query(
+    `CALL get_transactionsByOrderId(${JSON.stringify(req.params.id)})`,
+    (err, rows, fields) => {
+      if(!err){
+        res.send(rows[0]);
+      }else{
+        res.send(err);
+      }
+    });
+});
+
+router.get('/getTransactionById/:id', function(req, res) {
+  sql.query(
+    `CALL get_transactionById(${JSON.stringify(req.params.id)})`,
+    (err, rows, fields) => {
+      if(!err){
+        res.send(rows[0]);
+      }else{
+        res.send(err);
+      }
+    });
+});
+
 router.get('/getAllNotes', function(req, res, next) {
   sql.query(
     `CALL get_AllNotes()`,
@@ -1162,6 +1186,25 @@ router.post("/insertNotes",  function (req, res) {
     (err) => {
       if (!err) {
         res.send({message: 'Notes Inserted Successfully'});
+      } else {
+        res.send({message: err});
+      }
+    }
+  );
+});
+
+router.put("/updateOrderPaidAndBalanceAmount",  function (req, res) {  
+  var updateOrder = `UPDATE orders SET paymentStatus = ?, paidAmount=?, balanceAmount=? where order_id= ?`;
+    sql.query(updateOrder,
+    [
+      req.body.status,
+      req.body.paidAmount,
+      req.body.balanceAmount,
+      req.body.orderId,
+    ],
+    (err) => {
+      if (!err) {
+        res.send({message: '/updateOrderPaidAndBalanceAmount updated Successfully'});
       } else {
         res.send({message: err});
       }

@@ -62,6 +62,58 @@ router.post('/send', cors(), (req, res) => {
     });
 });
 
+router.post('/pod', cors(), (req, res) => {
+    const emailId = [];
+    // config.emails.forEach((configEmails)=>{
+    //     emailId.push(configEmails);
+    // });
+    emailId.push(req.body.email);
+    var outputData = req.body.template.template;
+
+    var subjectData = req.body.template.subject;
+
+    subjectData = subjectData.replace("{orderNo}", req.body.orderNo);
+
+    let orderDate = new Date(req.body.orderDate);
+
+    outputData = outputData.replace("{orderNo}", req.body.orderNo);
+    outputData = outputData.replace("{orderValue}", req.body.orderValue);
+    outputData = outputData.replace("{orderDate}", orderDate.getDate() +"-"+(orderDate.getMonth()+1)+"-"+orderDate.getFullYear());
+    outputData = outputData.replace("{paidAmount}", req.body.paidAmount);
+    outputData = outputData.replace("{balanceAmount}", req.body.balanceAmount);
+
+    let transporter = nodemailer.createTransport({
+        // host: 'mail.irentout.com',
+        service: 'Zoho',
+        host:'smtppro.zoho.com',
+        port: 587, //Note: change to port:465 when website runs in https://irentout.com
+        secure: true, //Note: may be true
+        auth: {
+            user: 'support@irentout.com',
+            pass: 'U4bnUeDDxnve'
+        }
+    });
+
+    let HelperOptions = {
+        from: '"Irentout" <support@irentout.com>',
+        to: emailId, 
+        subject: subjectData,
+        text: 'Hello',
+        html: outputData
+    };
+
+
+    transporter.sendMail(HelperOptions, (error, info) => {
+        if (error) {
+            console.log(error);
+            res.send({ message: 'Email sending failed', status: false, err: error });
+        }
+        else{
+            res.send({ message: 'Email sending succedded', status: true })
+        }                        
+    });
+});
+
 router.post('/notifyMailReturnOrder', cors(), (req, res) => {
   const emailId = req.body.email;
   requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/4`).then(function(templateRsponse) {

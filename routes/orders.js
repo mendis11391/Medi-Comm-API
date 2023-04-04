@@ -1485,6 +1485,19 @@ router.get('/getOrderByMyOrderIdAPI/:id', function(req, res) {
     );
 });
 
+router.get('/getTransactionByTransId/:id', function(req, res) {  
+  sql.query(
+      `CALL get_transactionsByTransId(${JSON.stringify(req.params.id)}) `,
+      (err, rows) => {
+        if (!err) {          
+          res.send(rows[0]);          
+        } else {
+          res.send({ error: 'Error' });
+        }      
+      }
+    );
+});
+
 router.get('/:id', function(req, res) {  
   let orders=[];
   let orderAddress=[];
