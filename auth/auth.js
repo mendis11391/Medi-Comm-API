@@ -27,7 +27,11 @@ var logger = winston.createLogger({
 
 // Verify token 
 function verifyToken(req, res, next) {
-  if(req.headers.origin===`${constants.frontendUrl}`){
+  logger.info({
+		message: req.headers.origin,
+		dateTime: new Date()
+	});
+  if(req.headers.origin===`${constants.frontendUrl}` || req.headers.origin.includes(`${constants.irefubUrl}`)){
     next();
   } else{
     return res.status(401).send("Unauthorized request");

@@ -32,13 +32,14 @@ router.post('/send', cors(), (req, res) => {
 
     let transporter = nodemailer.createTransport({
         // host: 'mail.irentout.com',
-        service: 'Zoho',
-        host:'smtppro.zoho.com',
+        service: 'Microsoft 365',
+        host:'smtp.office365.com',
         port: 587, //Note: change to port:465 when website runs in https://irentout.com
-        secure: true, //Note: may be true
+        secure: false, //Note: may be true
+        requireTLC:true,
         auth: {
             user: 'support@irentout.com',
-            pass: 'U4bnUeDDxnve'
+            pass: 'Fci@1234'
         }
     });
 
@@ -84,13 +85,14 @@ router.post('/pod', cors(), (req, res) => {
 
     let transporter = nodemailer.createTransport({
         // host: 'mail.irentout.com',
-        service: 'Zoho',
-        host:'smtppro.zoho.com',
+        service: 'Microsoft',
+        host:'smtp.office365.com',
         port: 587, //Note: change to port:465 when website runs in https://irentout.com
-        secure: true, //Note: may be true
+        secure: false, //Note: may be true        
+        requireTLC:true,
         auth: {
             user: 'support@irentout.com',
-            pass: 'U4bnUeDDxnve'
+            pass: 'Fci@1234'
         }
     });
 
@@ -136,13 +138,14 @@ router.post('/notifyMailReturnOrder', cors(), (req, res) => {
 
     let transporter = nodemailer.createTransport({
         // host: 'mail.irentout.com',
-        service: 'Zoho',
-        host:'smtppro.zoho.com',
+        service: 'Microsoft',
+        host:'smtp.office365.com',
         port: 587, //Note: change to port:465 when website runs in https://irentout.com
-        secure: true, //Note: may be true
+        secure: false, //Note: may be true        
+        requireTLC:true,
         auth: {
             user: 'support@irentout.com',
-            pass: 'U4bnUeDDxnve'
+            pass: 'Fci@1234'
         }
     });
 
@@ -188,14 +191,15 @@ router.post('/notifyMailReplaceOrder', cors(), (req, res) => {
     outputData = outputData.replace("{subscription}", req.body.subscription);
 
     let transporter = nodemailer.createTransport({
-        // host: 'mail.irentout.com',
-        service: 'Zoho',
-        host:'smtppro.zoho.com',
+        // host: 'mail.irentout.com',smtppro.zoho.com
+        service: 'Microsoft',
+        host:'smtp.office365.com',
         port: 587, //Note: change to port:465 when website runs in https://irentout.com
-        secure: true, //Note: may be true
+        secure: false, //Note: may be true
+        requireTLC:true,
         auth: {
             user: 'support@irentout.com',
-            pass: 'U4bnUeDDxnve'
+            pass: 'Fci@1234'
         }
     });
 
@@ -246,13 +250,14 @@ router.post('/rrRequest', cors(), (req, res) => {
 
   let transporter = nodemailer.createTransport({
       // host: 'mail.irentout.com',
-      service: 'Zoho',
-      host:'smtppro.zoho.com',
+      service: 'Microsoft',
+      host:'smtp.office365.com',
       port: 587, //Note: change to port:465 when website runs in https://irentout.com
-      secure: true, //Note: may be true
+      secure: false, //Note: may be true
+      requireTLC:true,
       auth: {
           user: 'support@irentout.com',
-          pass: 'U4bnUeDDxnve'
+          pass: 'Fci@1234'
       }
   });
 
@@ -286,13 +291,14 @@ router.post('/depositRefundedMail', cors(), (req, res) => {
   
     let transporter = nodemailer.createTransport({
         // host: 'mail.irentout.com',
-        service: 'Zoho',
-        host:'smtppro.zoho.com',
+        service: 'Microsoft',
+        host:'smtp.office365.com',
         port: 587, //Note: change to port:465 when website runs in https://irentout.com
-        secure: true, //Note: may be true
+        secure: false, //Note: may be true
+        requireTLC:true,
         auth: {
             user: 'support@irentout.com',
-            pass: 'U4bnUeDDxnve'
+            pass: 'Fci@1234'
         }
     });
   
@@ -327,13 +333,14 @@ router.post('/eKYCMail', cors(), (req, res) => {
 
   let transporter = nodemailer.createTransport({
       // host: 'mail.irentout.com',
-      service: 'Zoho',
-      host:'smtppro.zoho.com',
+      service: 'Microsoft',
+      host:'smtp.office365.com',
       port: 587, //Note: change to port:465 when website runs in https://irentout.com
-      secure: true, //Note: may be true
+      secure: false, //Note: may be true
+      requireTLC:true,
       auth: {
           user: 'support@irentout.com',
-          pass: 'U4bnUeDDxnve'
+          pass: 'Fci@1234'
       }
   });
 
@@ -364,13 +371,14 @@ router.post('/renewalReminder', cors(), async (req, res) => {
     var outputData = template[0].template;
     let transporter = nodemailer.createTransport({
         // host: 'mail.irentout.com',
-        service: 'Zoho',
-        host:'smtppro.zoho.com',
+        service: 'Microsoft',
+        host:'smtp.office365.com',
         port: 587, //Note: change to port:465 when website runs in https://irentout.com
-        secure: true, //Note: may be true
+        secure: false, //Note: may be true,
+        requireTLC:true,
         auth: {
             user: 'support@irentout.com',
-            pass: 'U4bnUeDDxnve'
+            pass: 'Fci@1234'
         }
     });
   
@@ -489,13 +497,14 @@ router.post('/eKYCSubmitMail', cors(), (req, res) => {
 
     let transporter = nodemailer.createTransport({
         // host: 'mail.irentout.com',
-        service: 'Zoho',
-        host:'smtppro.zoho.com',
+        service: 'Microsoft',
+        host:'smtp.office365.com',
         port: 587, //Note: change to port:465 when website runs in https://irentout.com
-        secure: true, //Note: may be true
+        secure: false, //Note: may be true
+        requireTLC:true,
         auth: {
             user: 'support@irentout.com',
-            pass: 'U4bnUeDDxnve'
+            pass: 'Fci@1234'
         }
     });
   

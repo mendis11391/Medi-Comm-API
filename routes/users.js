@@ -1168,10 +1168,10 @@ router.post('/kycDetailsSubmit', function(req, res) {
           });
         });
 
-        requestify.post(`${constants.apiUrl}forgotpassword/eKYCSubmitMail`, {
-          allImages:allImages,
-          kycDetails:req.body
-        });
+        // requestify.post(`${constants.apiUrl}forgotpassword/eKYCSubmitMail`, {
+        //   allImages:allImages,
+        //   kycDetails:req.body
+        // });
         // requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/1`).then(function(templateRsponse) {
 					
         //   let template = templateRsponse.getBody()[0]
