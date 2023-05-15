@@ -166,6 +166,20 @@ router.get("/", verifyToken,(req, res) => {
   );
 });
 
+
+// Get product by categories id
+router.get("/getAllTransactions", (req, res) => {
+  let queryDta = `CALL get_AllTransactions()`;
+
+  sql.query(queryDta, (err, rows) => {
+    if (!err) {
+      res.send(rows[0]);
+    } else {
+        res.send({ error: 'Error' });
+    }
+  });
+});
+
 router.get('/orderItemsByorderId/:id', function(req, res) {
   logger.info({
     message: '/orderItemsByorderId/:id api started',

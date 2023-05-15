@@ -158,6 +158,19 @@ router.get('/',verifyToken, function(req, res) {
     res.render('checkout.html', {orderid:ord});
 });
 
+router.get('/getAllPaymentMethods',verifyToken, function(req, res) {
+	sql.query(
+		`CALL get_allPaymentMethods()`,
+		(err, rows) => {
+		  if (!err) {          
+			res.send(rows[0]);
+		  } else {
+			res.send({ error: 'Error' });
+		  }
+		}
+	);
+});
+
 /************New code************ */
 router.post('/saveNewOrder',verifyToken, async function(req, res) {
 	logger.info({
@@ -588,7 +601,7 @@ router.post('/newReturn', verifyToken,function(req, res) {
 			message: '/newReturn posted in orders successfully',
 			dateTime: new Date()
 		});
-        res.send({message: 'Inserted Successfully', txnid: req.body.txnid, orderDBId: results.insertId});
+        res.send({message: 'Inserted Successfully',order_id:req.body.orderID, txnid: req.body.txnid, orderDBId: results.insertId});
       } else {
 		logger.info({
 			message: '/newReturn failed to post in orders query',
@@ -700,7 +713,7 @@ router.post('/newReplace',verifyToken, function(req, res) {
 			message: '/newReplace posted in orders successfully',
 			dateTime: new Date()
 		});
-        res.send({message: 'Inserted Successfully', txnid: req.body.txnid});
+        res.send({message: 'Inserted Successfully',order_id:req.body.orderID, txnid: req.body.txnid});
       } else {
 		logger.info({
 			message: '/newReplace failed to post',
@@ -1247,12 +1260,119 @@ router.post('/result',(req, res, next)=>{
 								// 	req.body.orderId,
 								// ]);
 
-								var updateOrder = `UPDATE orders SET paymentStatus = ?, paidamount=(SELECT * FROM(SELECT paidAmount from orders WHERE order_id=${JSON.stringify(req.body.orderId)}) AS t)+${req.body.orderAmount} where order_id= ?`;
+								var updateOrder = `UPDATE orders SET paidamount=(SELECT * FROM(SELECT paidAmount from orders WHERE order_id=${JSON.stringify(req.body.orderId)}) AS t)+${req.body.orderAmount} where order_id= ?`;
 								sql.query(updateOrder,
 								[
-									status,
 									req.body.orderId,
-								]);
+								],(errTransaction)=>{
+									if(!errTransaction){
+										requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${req.body.orderId}`).then(function(response) {
+											// Get the response body
+											var orderDetails = response.getBody()[0];
+											let prodNames;
+											var campaignName = 'Order Successful';
+											var customerFullName = orderDetails.firstName+' '+orderDetails.lastName;
+											var orderId = orderDetails.order_id;
+											var paidAmount = JSON.stringify(orderDetails.grandTotal);
+											var balanceAmount = 0;
+											var emailTemplate = {templateNo:1, templateUrl:'send'};
+											var templateParams = [customerFullName,paidAmount,orderId];
+				
+											requestify.post(`${constants.apiUrl}smsOrder`, {
+												customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
+											});
+											prodNames=orderDetails.orderItem.map((x) => x.prod_name).join(', ')
+				
+															
+											if(orderDetails.balanceAmount>0){
+												status=4;
+												campaignName = 'Pay on Delivery Order Success';
+												balanceAmount = JSON.stringify(orderDetails.balanceAmount);
+												paidAmount = JSON.stringify(orderDetails.paidAmount);
+												templateParams = [];
+												templateParams = [customerFullName,paidAmount,orderId,balanceAmount];
+												emailTemplate.templateNo = 12;
+												emailTemplate.templateUrl = 'pod';
+												logger.info({
+													message: `/verifyRazorPayPrimary  templateparams: ${templateParams}, emailTemplate: ${emailTemplate}`,
+													dateTime: new Date()
+												});
+											}
+											var updateOrder = `UPDATE orders SET paymentStatus = ? where order_id= ?`;
+											sql.query(updateOrder,
+											[
+												status,
+												req.body.orderId,
+											]);
+				
+											sql.query(`CALL insertSignalrQueue(${orderDetails.id},${orderDetails.grandTotal},${orderDetails.orderType_id},${JSON.stringify(prodNames)},${orderDetails.orderItem.length},${JSON.stringify(orderDetails.firstName)},${JSON.stringify(orderDetails.lastName)},${JSON.stringify(orderDetails.email)},${JSON.stringify(orderDetails.mobile)}, 0)`,
+												(errSignalRQ, results) => {
+													if (errSignalRQ) {						
+														// res.send({message: errSignalRQ});
+													}
+												}
+											);
+											// requestify.post(`${constants.apiUrl}waOrderPlaced`, {
+											// 	customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId, orderAmount:req.body.orderAmount
+											// });
+							
+											let mobileNos=[];
+											config.mobiles.forEach((configMobiles)=>{
+												mobileNos.push(configMobiles);
+											})
+							
+											// mobileNos = config.mobiles;
+											mobileNos.push(orderDetails.mobile);
+											mobileNos.forEach((mobileNumber)=>{
+												let template = {
+													"apiKey": constants.whatsappAPIKey,
+													"campaignName": campaignName,
+													"destination": mobileNumber,
+													"userName": "IRENTOUT",
+													"source": "Primary order",
+													"media": {
+														"url": "https://irentout.com/assets/images/slider/5.png",
+														"filename": "IROHOME"
+													},
+													"templateParams": templateParams,
+													"attributes": {
+														"InvoiceNo": "1234"
+													}
+												}
+												logger.info({
+													message: `/cashfree primaryorder: Sending whatsapp message: order#: ${orderDetails.order_id}, mobile:${mobileNumber}`,
+													dateTime: new Date()
+												});
+												requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
+											});
+							
+							
+											logger.info({
+												message: `/result primaryorder: whatsapp message sent: order#: ${req.body.orderId}`,
+												dateTime: new Date()
+											});
+							
+											requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/${emailTemplate.templateNo}`).then(function(templateRsponse) {
+												
+												let template = templateRsponse.getBody()[0];
+												requestify.post(`${constants.apiUrl}forgotpassword/${emailTemplate.templateUrl}`, {
+													email: orderDetails.email,
+													template: template,
+													orderNo: req.body.orderId,
+													orderDate: orderDetails.createdAt,
+													orderValue: orderDetails.grandTotal,
+													paidAmount:paidAmount,
+													balanceAmount:balanceAmount,
+													paymentStatus: 'Success',
+													orderType:orderDetails.orderType_id
+												});
+											});
+							
+										});
+									}
+								});
+
+								
 							} else {
 								res.send({message: err});
 							}
@@ -1281,76 +1401,7 @@ router.post('/result',(req, res, next)=>{
 							}
 						);
 			
-						requestify.get(`${constants.apiUrl}orders/getOrderByMyOrderIdAPI/${req.body.orderId}`).then(function(response) {
-							// Get the response body
-							let orderDetails = response.getBody()[0];
-							let prodNames;
-							requestify.post(`${constants.apiUrl}smsOrder`, {
-								customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId
-							});
-							prodNames=orderDetails.orderItem.map((x) => x.prod_name).join(', ')
-							
-							sql.query(`CALL insertSignalrQueue(${orderDetails.id},${orderDetails.grandTotal},${orderDetails.orderType_id},${JSON.stringify(prodNames)},${orderDetails.orderItem.length},${JSON.stringify(orderDetails.firstName)},${JSON.stringify(orderDetails.lastName)},${JSON.stringify(orderDetails.email)},${JSON.stringify(orderDetails.mobile)}, 0)`,
-								(errSignalRQ, results) => {
-									if (errSignalRQ) {						
-										// res.send({message: errSignalRQ});
-									}
-								}
-							);
-							// requestify.post(`${constants.apiUrl}waOrderPlaced`, {
-							// 	customerName: orderDetails.firstName, mobile:orderDetails.mobile, orderId:req.body.orderId, orderAmount:req.body.orderAmount
-							// });
-			
-							let mobileNos=[];
-							config.mobiles.forEach((configMobiles)=>{
-								mobileNos.push(configMobiles);
-							})
-			
-							// mobileNos = config.mobiles;
-							mobileNos.push(orderDetails.mobile);
-							mobileNos.forEach((mobileNumber)=>{
-								let template = {
-									"apiKey": constants.whatsappAPIKey,
-									"campaignName": "Order Successful",
-									"destination": mobileNumber,
-									"userName": "IRENTOUT",
-									"source": "Primary order",
-									"media": {
-									   "url": "https://irentout.com/assets/images/slider/5.png",
-									   "filename": "IROHOME"
-									},
-									"templateParams": [
-										orderDetails.firstName+' '+orderDetails.lastName, req.body.orderAmount, req.body.orderId
-									],
-									"attributes": {
-									  "InvoiceNo": "1234"
-									}
-								}
-				
-								requestify.post(`https://backend.aisensy.com/campaign/t1/api`, template);
-							});
-			
-			
-							logger.info({
-								message: `/result primaryorder: whatsapp message sent: order#: ${req.body.orderId}`,
-								dateTime: new Date()
-							});
-			
-							requestify.get(`${constants.apiUrl}forgotpassword/getEmailTemplates/1`).then(function(templateRsponse) {
-								
-								let template = templateRsponse.getBody()[0];
-								requestify.post(`${constants.apiUrl}forgotpassword/send`, {
-									email: orderDetails.email,
-									template: template,
-									orderNo: req.body.orderId,
-									orderDate: orderDetails.createdAt,
-									orderValue: orderDetails.grandTotal,
-									paymentStatus: 'Success',
-									orderType:orderDetails.orderType_id
-								});
-							});
-			
-						});
+						
 					}
 
 				});

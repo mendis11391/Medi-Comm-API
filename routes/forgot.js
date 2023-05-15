@@ -39,7 +39,7 @@ router.post('/send', cors(), (req, res) => {
         requireTLC:true,
         auth: {
             user: 'support@irentout.com',
-            pass: 'Fci@1234'
+            pass: 'Rent@421'
         }
     });
 
@@ -92,7 +92,7 @@ router.post('/pod', cors(), (req, res) => {
         requireTLC:true,
         auth: {
             user: 'support@irentout.com',
-            pass: 'Fci@1234'
+            pass: 'Rent@421'
         }
     });
 
@@ -145,7 +145,7 @@ router.post('/notifyMailReturnOrder', cors(), (req, res) => {
         requireTLC:true,
         auth: {
             user: 'support@irentout.com',
-            pass: 'Fci@1234'
+            pass: 'Rent@421'
         }
     });
 
@@ -199,7 +199,7 @@ router.post('/notifyMailReplaceOrder', cors(), (req, res) => {
         requireTLC:true,
         auth: {
             user: 'support@irentout.com',
-            pass: 'Fci@1234'
+            pass: 'Rent@421'
         }
     });
 
@@ -257,7 +257,7 @@ router.post('/rrRequest', cors(), (req, res) => {
       requireTLC:true,
       auth: {
           user: 'support@irentout.com',
-          pass: 'Fci@1234'
+          pass: 'Rent@421'
       }
   });
 
@@ -298,7 +298,7 @@ router.post('/depositRefundedMail', cors(), (req, res) => {
         requireTLC:true,
         auth: {
             user: 'support@irentout.com',
-            pass: 'Fci@1234'
+            pass: 'Rent@421'
         }
     });
   
@@ -340,7 +340,7 @@ router.post('/eKYCMail', cors(), (req, res) => {
       requireTLC:true,
       auth: {
           user: 'support@irentout.com',
-          pass: 'Fci@1234'
+          pass: 'Rent@421'
       }
   });
 
@@ -378,7 +378,7 @@ router.post('/renewalReminder', cors(), async (req, res) => {
         requireTLC:true,
         auth: {
             user: 'support@irentout.com',
-            pass: 'Fci@1234'
+            pass: 'Rent@421'
         }
     });
   
@@ -504,7 +504,7 @@ router.post('/eKYCSubmitMail', cors(), (req, res) => {
         requireTLC:true,
         auth: {
             user: 'support@irentout.com',
-            pass: 'Fci@1234'
+            pass: 'Rent@421'
         }
     });
   
