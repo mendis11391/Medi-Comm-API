@@ -982,9 +982,11 @@ router.get('/getReturnCustomerRequests', function(req, res) {
       (err, rows) => {
         if (!err) {
           let requests = rows[0];
+          
           for(let i=0;i<requests.length;i++){
             len++;
-            requests[i].renewals_timline=JSON.parse(requests[i].renewals_timline); 
+            // requests[i].renewals_timline=JSON.parse(requests[i].renewals_timline); 
+            
             if(len==requests.length){
               res.send(requests);   
             }
